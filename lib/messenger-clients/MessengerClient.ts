@@ -20,7 +20,7 @@ export abstract class MessengerClient<T> {
   protected privateClients = new Map<string, T>();
 
   get commonClient (): T {
-    if (! this.commonClient) {
+    if (! this._commonClient) {
       throw new PluginImplementationError(`${Inflector.upFirst(this.name)} common client is not initialized.`);
     }
 
@@ -43,6 +43,8 @@ export abstract class MessengerClient<T> {
   protected abstract _addAccount (name: string, ...args);
 
   protected abstract _initCommonClient (...args);
+
+  protected abstract getClientCtor (): new (...args) => T;
 
   addAccount (name: string, ...args) {
     if (this.privateClients.has(name)) {

@@ -51,7 +51,12 @@ export class SendgridClient extends MessengerClient<MailService> {
       throw new InternalError(`Common Sendgrid client must be initialized with the following params: "apiKey"`);
     }
 
-    this._commonClient = new MailService();
+    const Ctor = this.getClientCtor();
+    this._commonClient = new Ctor();
     this._commonClient.setApiKey(apiKey);
+  }
+
+  protected getClientCtor() {
+    return MailService;
   }
 }

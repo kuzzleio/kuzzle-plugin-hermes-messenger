@@ -19,6 +19,13 @@ export class TwilioClient extends MessengerClient<Twilio> {
     this.context = context;
   }
 
+  async test () {
+    console.log(await this.commonClient.messages.create({
+      from: 'LOL',
+      to: 'ahah'
+    }))
+  }
+
   async sendSms (from: string, to: string, text: string, { account }: { account?: string } = {}) {
     if (account && ! this.privateClients.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
@@ -49,6 +56,11 @@ export class TwilioClient extends MessengerClient<Twilio> {
       throw new InternalError(`Common Twilio client must be initialized with the following params: "accountSid", "authToken"`);
     }
 
-    this._commonClient = new Twilio(accountSid, authToken);
+    const Ctor = this.getClientCtor();
+    this._commonClient = new Ctor(accountSid, authToken);
+  }
+
+  protected getClientCtor () {
+    return Twilio;
   }
 }
