@@ -2,6 +2,6 @@
 code: false
 type: branch
 title: Controllers
-description: Kuzzle IoT Platform - Device Manager Controllers
+description: Kuzzle Plugin Hermes Messenger Controllers
 order: 200
 ---

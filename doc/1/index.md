@@ -2,8 +2,8 @@
 code: false
 type: root
 order: 0
-title: Kuzzle IoT Platform - Device Manager
-description: Kuzzle IoT Platform - Device Manager Documentation
+title: Kuzzle Plugin Hermes Messenger
+description: Plugin Hermes Messenger documentation to dispatch sms, email and various messages using external services
 ---
 
-<Redirect to="guides/devices" />
+<Redirect to="guides/overview" />
