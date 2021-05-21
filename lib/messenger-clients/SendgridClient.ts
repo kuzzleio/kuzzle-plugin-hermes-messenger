@@ -2,7 +2,6 @@ import { MailService } from '@sendgrid/mail';
 import {
   NotFoundError,
   ExternalServiceError,
-  InternalError,
 } from 'kuzzle';
 
 import { MessengerClient } from './MessengerClient';
@@ -14,11 +13,11 @@ export class SendgridClient extends MessengerClient<MailService> {
   }
 
   async sendEmail (account: string, from: string, to: string, subject: string, html: string) {
-    if (account && ! this.privateClients.has(account)) {
+    if (account && ! this.accounts.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
     }
 
-    const client = account ? this.privateClients.get(account) : this.commonClient;
+    const client = this.accounts.get(account);
 
     const email = {
       from,
@@ -27,7 +26,7 @@ export class SendgridClient extends MessengerClient<MailService> {
       html,
     };
 
-    this.context.log.debug(`EMAIL (${client === this.commonClient ? account : 'common'}): FROM ${from} TO ${to} SUBJECT ${subject}`);
+    this.context.log.debug(`EMAIL (${client}): FROM ${from} TO ${to} SUBJECT ${subject}`);
 
     try {
       await client.send(email);
@@ -41,22 +40,11 @@ export class SendgridClient extends MessengerClient<MailService> {
     }
   }
 
-  protected _addAccount (name: string, apiKey: string) {
-    this.privateClients.set(name, new MailService());
-    this.privateClients.get(name).setApiKey(apiKey);
-  }
+  protected _createAccount (apiKey: string): MailService {
+    const mailService = new MailService();
 
-  protected _initCommonClient (apiKey: string) {
-    if (typeof apiKey !== 'string') {
-      throw new InternalError(`Common Sendgrid client must be initialized with the following params: "apiKey"`);
-    }
+    mailService.setApiKey(apiKey);
 
-    const Ctor = this.getClientCtor();
-    this._commonClient = new Ctor();
-    this._commonClient.setApiKey(apiKey);
-  }
-
-  protected getClientCtor() {
-    return MailService;
+    return mailService;
   }
 }

@@ -4,7 +4,6 @@ import {
   PluginContext,
   NotFoundError,
   ExternalServiceError,
-  InternalError,
 } from 'kuzzle';
 
 import { MessengerClient } from './MessengerClient';
@@ -19,21 +18,14 @@ export class TwilioClient extends MessengerClient<Twilio> {
     this.context = context;
   }
 
-  async test () {
-    console.log(await this.commonClient.messages.create({
-      from: 'LOL',
-      to: 'ahah'
-    }))
-  }
-
-  async sendSms (from: string, to: string, text: string, { account }: { account?: string } = {}) {
-    if (account && ! this.privateClients.has(account)) {
+  async sendSms (account: string, from: string, to: string, text: string) {
+    if (account && ! this.accounts.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
     }
 
-    const client = account ? this.privateClients.get(account) : this.commonClient;
+    const client = this.accounts.get(account);
 
-    this.context.log.debug(`SMS (${client === this.commonClient ? account : 'common'}): FROM ${from} TO ${to}`);
+    this.context.log.debug(`SMS (${account}): FROM ${from} TO ${to}`);
 
     try {
       await client.messages.create({
@@ -47,20 +39,7 @@ export class TwilioClient extends MessengerClient<Twilio> {
     }
   }
 
-  protected _addAccount (name: string, accountSid: string, authToken: string) {
-    this.privateClients.set(name, new Twilio(accountSid, authToken));
-  }
-
-  protected _initCommonClient (accountSid: string, authToken: string) {
-    if (typeof accountSid !== 'string' || typeof authToken !== 'string') {
-      throw new InternalError(`Common Twilio client must be initialized with the following params: "accountSid", "authToken"`);
-    }
-
-    const Ctor = this.getClientCtor();
-    this._commonClient = new Ctor(accountSid, authToken);
-  }
-
-  protected getClientCtor () {
-    return Twilio;
+  protected _createAccount (accountSid: string, authToken: string) {
+    return new Twilio(accountSid, authToken);
   }
 }

@@ -52,18 +52,31 @@ export class TwilioController {
   }
 
   async sendSms (request: KuzzleRequest) {
+    const account = request.getString('account');
+    const from = request.getBodyString('from');
+    const to = request.getBodyString('to');
+    const text = request.getBodyString('text');
 
+    await this.twilioClient.sendSms(account, from, to, text);
   }
 
   async addAccount (request: KuzzleRequest) {
+    const account = request.getString('account');
+    const accountSid = request.getBodyString('accountSid');
+    const authToken = request.getBodyString('authToken');
 
+    this.twilioClient.addAccount(account, accountSid, authToken);
   }
 
   async removeAccount (request: KuzzleRequest) {
+    const account = request.getString('account');
 
+    this.twilioClient.removeAccount(account);
   }
 
-  async listAccounts (request: KuzzleRequest) {
+  async listAccounts () {
+    const accounts = this.twilioClient.listAccounts();
 
+    return { accounts };
   }
 }

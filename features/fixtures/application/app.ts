@@ -1,43 +1,22 @@
-import should from 'should';
-import 'sinon';
-import 'should-sinon';
 import { Backend, KuzzleRequest } from 'kuzzle';
 
 import { TwilioMock, SendgridMock } from './mocks';
 import { TwilioClient, SendgridClient } from '../../../lib/messenger-clients';
 
-TwilioClient.prototype['getClientCtor'] = () => TwilioMock as any;
-SendgridClient.prototype['getClientCtor'] = () => SendgridMock as any;
-
 import { HermesMessengerPlugin } from '../../../index';
+import { registerTestController } from './TestController';
+
+// Mock
+if (! process.env.DO_NOT_MOCK) {
+  TwilioClient.prototype['_createAccount'] = () => new TwilioMock() as any;
+  SendgridClient.prototype['_createAccount'] = () => new SendgridMock() as any;
+}
 
 const app = new Backend('kuzzle');
 
 const hermesMessengerPlugin = new HermesMessengerPlugin();
 
-hermesMessengerPlugin.clients.get('twilio').initCommonClient('accountSid', 'authToken');
-hermesMessengerPlugin.clients.get('sendgrid').initCommonClient('apiKey');
-
-app.controller.register('twilio-tests', {
-  actions: {
-    verifySendSms: {
-      handler: async (request: KuzzleRequest) => {
-        const { from, to, text } = request.getBody();
-        const account = request.getString('account', 'COMMON');
-
-        let client;
-        if (account === 'COMMON') {
-          client = hermesMessengerPlugin.clients.get('twilio').commonClient;
-        }
-        else {
-          client = hermesMessengerPlugin.clients.get('twilio')['privateClients'].get(account);
-        }
-
-        should(client.messages.send.getCall(0).args).be.eql([{ from, to, body: text }])
-      }
-    }
-  }
-})
+registerTestController(app, hermesMessengerPlugin);
 
 app.plugin.use(hermesMessengerPlugin);
 
@@ -49,6 +28,9 @@ app.config.set('plugins.kuzzle-plugin-logger.services.stdout.level', 'debug');
 
 app.start()
   .then(() => {
+    hermesMessengerPlugin.clients.get('twilio').initCommonClient('accountSid', 'authToken');
+    hermesMessengerPlugin.clients.get('sendgrid').initCommonClient('apiKey');
+
     app.log.info('Application started');
   })
   .catch(console.error);
