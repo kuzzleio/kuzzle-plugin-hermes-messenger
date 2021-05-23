@@ -1,6 +1,6 @@
 ---
 code: true
 type: branch
-title: twilio
-description: Hermes Messenger Plugin - Twilio Controller
+title: sendgrid
+description: Hermes Messenger Plugin - Sendgrid Controller
 ---
