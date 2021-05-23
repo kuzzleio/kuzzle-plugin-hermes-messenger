@@ -28,8 +28,8 @@ app.config.set('plugins.kuzzle-plugin-logger.services.stdout.level', 'debug');
 
 app.start()
   .then(() => {
-    hermesMessengerPlugin.clients.get('twilio').initCommonClient('accountSid', 'authToken');
-    hermesMessengerPlugin.clients.get('sendgrid').initCommonClient('apiKey');
+    hermesMessengerPlugin.clients.twilio.addAccount('common', 'accountSid', 'authToken');
+    hermesMessengerPlugin.clients.sendgrid.addAccount('common', 'apiKey');
 
     app.log.info('Application started');
   })

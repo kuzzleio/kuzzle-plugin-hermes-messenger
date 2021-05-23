@@ -18,6 +18,14 @@ export class TwilioClient extends MessengerClient<Twilio> {
     this.context = context;
   }
 
+  /**
+   * Sends a SMS using one of the registered accounts.
+   *
+   * @param account Account name
+   * @param from Twilio phone number
+   * @param to Recipient phone number
+   * @param text SMS content
+   */
   async sendSms (account: string, from: string, to: string, text: string) {
     if (account && ! this.accounts.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
@@ -37,6 +45,17 @@ export class TwilioClient extends MessengerClient<Twilio> {
     catch (error) {
       throw new ExternalServiceError(error);
     }
+  }
+
+  /**
+   * Adds an account to send email with.
+   *
+   * @param name Account name
+   * @param accountSid Twilio account sid
+   * @param authToken Twilio auth token
+   */
+  addAccount (name: string, accountSid: string, authToken: string) {
+    super.addAccount(name, accountSid, authToken);
   }
 
   protected _createAccount (accountSid: string, authToken: string) {

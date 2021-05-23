@@ -41,7 +41,7 @@ export class TwilioController {
         },
         removeAccount: {
           handler: this.removeAccount.bind(this),
-          http: [{ verb: 'delete', path: 'hermes/twilio/account/:accountId' }],
+          http: [{ verb: 'delete', path: 'hermes/twilio/account/:account' }],
         },
         listAccounts: {
           handler: this.listAccounts.bind(this),

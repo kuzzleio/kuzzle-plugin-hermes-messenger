@@ -12,6 +12,15 @@ export class SendgridClient extends MessengerClient<MailService> {
     super('sengrid');
   }
 
+  /**
+   * Sends an email using one of the registered accounts.
+   *
+   * @param account Account name
+   * @param from Sender email
+   * @param to Recipient email
+   * @param subject Email subject
+   * @param html Email content
+   */
   async sendEmail (account: string, from: string, to: string, subject: string, html: string) {
     if (account && ! this.accounts.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
@@ -38,6 +47,16 @@ export class SendgridClient extends MessengerClient<MailService> {
 
       throw new ExternalServiceError(error);
     }
+  }
+
+  /**
+   * Adds an account to send email with.
+   *
+   * @param name Account name
+   * @param apiKey Sendgrid API key
+   */
+   addAccount (name: string, apiKey: string) {
+    super.addAccount(name, apiKey);
   }
 
   protected _createAccount (apiKey: string): MailService {
