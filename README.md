@@ -1,6 +1,6 @@
 # Hermes Messenger 
 
-This Kuzzle plugin allows to send messages using various external providers.
+This Kuzzle plugin gives the application the ability to send messages using various external providers.
 
 Messages can be sent by using the exposed API. (e.g [hermes/twilio:sendSms](https://docs.kuzzle.io/official-plugins/hermes-messenger/1/controllers/twilio/sendSms))
 

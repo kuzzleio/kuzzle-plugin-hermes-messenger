@@ -8,7 +8,7 @@ order: 100
 
 # Hermes Messenger
 
-This plugin allows to send various types of messages (SMS, email) using external providers.
+This plugin gives the application the ability to send various types of messages (SMS, email) using external providers.
 
 Available providers SMS providers:
   - Twilio
@@ -18,7 +18,7 @@ Available email providers:
 
 ## Accounts Management
 
-It's possible to register differents accounts for each providers. Then API actions used to send messages can be used with different accounts.
+It is possible to register differents accounts for each provider. Then API actions used to send messages can be used with different accounts.
 
 In this way, several accounts with differents credentials can be used to send messages.
 

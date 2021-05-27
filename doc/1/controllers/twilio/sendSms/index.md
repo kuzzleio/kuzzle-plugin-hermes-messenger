@@ -2,12 +2,12 @@
 type: page
 code: true
 title: sendSms
-description: Send a SMS with a Twilio account
+description: Send an SMS with a Twilio account
 ---
 
 # sendSms
 
-Sends a SMS using one of the registered Twilio account.
+Sends an SMS using one of the registered Twilio account.
 
 ---
 

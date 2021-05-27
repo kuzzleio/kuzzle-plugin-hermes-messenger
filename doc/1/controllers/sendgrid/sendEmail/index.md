@@ -7,7 +7,7 @@ description: Send an email with a Sendgrid account
 
 # sendEmail
 
-Sends an email using one of the registered Sendgrid account.
+Sends an email using one of the registered Sendgrid accounts.
 
 ---
 
