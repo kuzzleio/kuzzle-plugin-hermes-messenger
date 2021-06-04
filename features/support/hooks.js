@@ -49,23 +49,6 @@ Before({ timeout: 30 * 1000 }, async function () {
 
   await this.sdk.connect();
 
-  if (await this.sdk.index.exists('tenant-kuzzle')) {
-    await this.sdk.index.delete('tenant-kuzzle');
-  }
-
-  await this.sdk.collection.truncate('device-manager', 'engines');
-  await this.sdk.collection.truncate('device-manager', 'devices');
-
-  if (await this.sdk.index.exists('tenant-ayse')) {
-    await this.sdk.index.delete('tenant-ayse');
-  }
-
-  await this.sdk.query({
-    controller: 'device-manager/engine',
-    action: 'create',
-    index: 'tenant-ayse'
-  });
-
   await this.sdk.query({
     controller: 'admin',
     action: 'loadFixtures',

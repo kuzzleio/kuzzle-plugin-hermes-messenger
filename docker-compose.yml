@@ -25,6 +25,7 @@ services:
       - kuzzle_services__memoryStorage__node__host=redis
       - NODE_ENV=${NODE_ENV:-development}
       - DEBUG=${DEBUG:-none}
+      - DO_NOT_MOCK
       # - DEBUG=${DEBUG:-kuzzle:*,-kuzzle:entry-point:protocols:websocket,-kuzzle:cluster:heartbeat}
 
   redis:

@@ -1,8 +1,8 @@
 {
   "name": "kuzzle-plugin-hermes-messenger",
   "version": "0.1.0",
-  "description": "",
-  "author": "",
+  "description": "Kuzzle plugin to send messages using various providers like Twilio, Sendgrid, etc",
+  "author": "The Kuzzle Team <support@kuzzle.io>",
   "scripts": {
     "npm:docker": "docker-compose run kuzzle npm",
     "install:docker": "npm run npm:docker install kuzzle",
@@ -30,6 +30,7 @@
     "twilio": "^3.62.0"
   },
   "devDependencies": {
+    "express": "^4.17.1",
     "@types/node": "^15.0.2",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
     "@typescript-eslint/parser": "^4.22.1",
