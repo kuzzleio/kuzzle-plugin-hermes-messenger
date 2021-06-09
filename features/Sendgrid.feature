@@ -9,25 +9,25 @@ Feature: Sendgrid Client
     When I successfully execute the action "hermes/sendgrid":"sendEmail" with args:
       | account      | "ilayda"            |
       | body.from    | "support@kuzzle.io" |
-      | body.to      | "jobs@kuzzle.io"    |
+      | body.to      | ["jobs@kuzzle.io"]  |
       | body.subject | "Merhaba"           |
       | body.html    | "<div> body </div>" |
     Then I successfully execute the action "tests":"verifySendSendgrid" with args:
       | account      | "ilayda"            |
       | body.from    | "support@kuzzle.io" |
-      | body.to      | "jobs@kuzzle.io"    |
+      | body.to      | ["jobs@kuzzle.io"]  |
       | body.subject | "Merhaba"           |
       | body.html    | "<div> body </div>" |
     When I successfully execute the action "hermes/sendgrid":"sendEmail" with args:
       | account      | "common"            |
       | body.from    | "support@kuzzle.io" |
-      | body.to      | "jobs@kuzzle.io"    |
+      | body.to      | ["jobs@kuzzle.io"]  |
       | body.subject | "Alo"               |
       | body.html    | "<div> body </div>" |
     Then I successfully execute the action "tests":"verifySendSendgrid" with args:
       | account      | "common"            |
       | body.from    | "support@kuzzle.io" |
-      | body.to      | "jobs@kuzzle.io"    |
+      | body.to      | ["jobs@kuzzle.io"]  |
       | body.subject | "Alo"               |
       | body.html    | "<div> body </div>" |
 
