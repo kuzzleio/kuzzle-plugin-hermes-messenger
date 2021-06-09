@@ -17,28 +17,23 @@ export class SendgridClient extends MessengerClient<MailService> {
    *
    * @param account Account name
    * @param from Sender email
-   * @param to Recipient email
+   * @param to Recipient email(s)
    * @param subject Email subject
    * @param html Email content
    */
-  async sendEmail (account: string, from: string, to: string, subject: string, html: string) {
+  async sendEmail (account: string, from: string, to: string[], subject: string, html: string) {
     if (account && ! this.accounts.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
     }
 
     const client = this.accounts.get(account);
 
-    const email = {
-      from,
-      to,
-      subject,
-      html,
-    };
+    const email = { from, to, subject, html };
 
-    this.context.log.debug(`EMAIL (${client}): FROM ${from} TO ${to} SUBJECT ${subject}`);
+    this.context.log.debug(`EMAIL (${client}): FROM ${from} TO ${to.join(', ')} SUBJECT ${subject}`);
 
     try {
-      await client.send(email);
+      await client.sendMultiple(email);
     }
     catch (error) {
       if (error.response) {

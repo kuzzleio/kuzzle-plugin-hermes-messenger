@@ -29,7 +29,7 @@ Method: POST
   "account": "<account name>",
   "body": {
     "from": "<sender email>",
-    "to": "<recipient email>",
+    "to": ["<recipient1 email>", "<recipient1 email>"],
     "subject": "<email subject>",
     "html": "<email body>",
   }
@@ -41,7 +41,7 @@ Method: POST
 ```bash
 kourou hermes/sendgrid:sendEmail -a account=<account name> --body '{
   "from": "<sender email>",
-  "to": "<recipient email>",
+  "to": ["<recipient1 email>", "<recipient1 email>"],
   "subject": "<email subject>",
   "html": "<email body>",
 }'
