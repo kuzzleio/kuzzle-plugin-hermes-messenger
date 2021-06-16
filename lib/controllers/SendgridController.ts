@@ -54,7 +54,7 @@ export class SendgridController {
   async sendEmail (request: KuzzleRequest) {
     const account = request.getString('account');
     const from = request.getBodyString('from');
-    const to = request.getBodyString('to');
+    const to = request.getBodyArray('to');
     const subject = request.getBodyString('subject');
     const html = request.getBodyString('html');
 
