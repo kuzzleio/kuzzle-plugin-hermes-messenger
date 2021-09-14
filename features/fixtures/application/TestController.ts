@@ -10,28 +10,36 @@ export function registerTestController (app: Backend, plugin: HermesMessengerPlu
     actions: {
       verifySendTwilio: {
         handler: async (request: KuzzleRequest) => {
+          sinon.restore();
           const { from, to, text } = request.getBody();
           const account = request.getString('account', 'common');
 
           const client = plugin.clients.twilio['accounts'].get(account) as TwilioMock;
 
-          should(client.messages.create.getCall(0).args)
+          try {
+            should(client.messages.create.getCall(0).args)
             .be.eql([{ from, to, body: text }]);
-
-          sinon.restore();
+          }
+          finally {
+            sinon.restore();
+          }
         }
       },
       verifySendSendgrid: {
         handler: async (request: KuzzleRequest) => {
-          const { from, to, subject, html } = request.getBody();
+          sinon.restore();
+          const body = request.getBody();
           const account = request.getString('account', 'common');
 
           const client = plugin.clients.sendgrid['accounts'].get(account) as SendgridMock;
 
-          should(client.send.getCall(0).args)
-            .be.eql([{ from, to, subject, html }]);
-
-          sinon.restore();
+          try {
+            should(client.sendMultiple.getCall(0).args)
+            .be.eql([body]);
+          }
+          finally {
+            sinon.restore();
+          }
         }
       }
     }
