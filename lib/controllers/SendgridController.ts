@@ -35,6 +35,10 @@ export class SendgridController {
           handler: this.sendEmail.bind(this),
           http: [{ verb: 'post', path: 'hermes/sendgrid/email' }],
         },
+        sendTemplatedEmail: {
+          handler: this.sendTemplatedEmail.bind(this),
+          http: [{ verb: 'post', path: 'hermes/sendgrid/templated-email' }],
+        },
         addAccount: {
           handler: this.addAccount.bind(this),
           http: [{ verb: 'post', path: 'hermes/sendgrid/accounts' }],
@@ -59,6 +63,16 @@ export class SendgridController {
     const html = request.getBodyString('html');
 
     await this.sendgridClient.sendEmail(account, from, to, subject, html);
+  }
+
+  async sendTemplatedEmail (request: KuzzleRequest) {
+    const account = request.getString('account');
+    const templateId = request.getBodyString('templateId');
+    const from = request.getBodyString('from');
+    const to = request.getBodyArray('to');
+    const templateData = request.getBodyObject('templateData', {});
+
+    await this.sendgridClient.sendTemplatedEmail(account, from, to, templateId, templateData);
   }
 
   async addAccount (request: KuzzleRequest) {
