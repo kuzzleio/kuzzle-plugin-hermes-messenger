@@ -24,9 +24,9 @@ export class TwilioClient extends MessengerClient<Twilio> {
    * @param account Account name
    * @param from Twilio phone number
    * @param to Recipient phone number
-   * @param text SMS content
+   * @param body SMS content
    */
-  async sendSms (account: string, from: string, to: string, text: string) {
+  async sendSms (account: string, from: string, to: string, body: string) {
     if (account && ! this.accounts.has(account)) {
       throw new NotFoundError(`Account "${account}" does not exists.`);
     }
@@ -36,11 +36,7 @@ export class TwilioClient extends MessengerClient<Twilio> {
     this.context.log.debug(`SMS (${account}): FROM ${from} TO ${to}`);
 
     try {
-      await client.messages.create({
-        from,
-        to,
-        body: text
-      });
+      await client.messages.create({ from, to, body });
     }
     catch (error) {
       throw new ExternalServiceError(error);
