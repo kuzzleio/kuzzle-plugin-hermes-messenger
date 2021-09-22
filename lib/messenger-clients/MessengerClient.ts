@@ -42,6 +42,8 @@ export abstract class MessengerClient<T> {
       throw new BadRequestError(`${Inflector.upFirst(this.name)} account "${name}" already exists.`);
     }
 
+    this.context.log.info(`${Inflector.upFirst(this.name)}: register account "${name}"`);
+
     this.accounts.set(name, this._createAccount(...args));
   }
 
@@ -54,6 +56,8 @@ export abstract class MessengerClient<T> {
     if (! this.accounts.has(name)) {
       throw new NotFoundError(`${Inflector.upFirst(this.name)} account "${name}" does not exists.`);
     }
+
+    this.context.log.info(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
 
     this.accounts.delete(name);
   }
