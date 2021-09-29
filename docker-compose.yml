@@ -1,7 +1,6 @@
-version: "3"
+version: "3.9"
 
-services:
-  kuzzle:
+x-kuzzle-node: &kuzzle-node
     image: kuzzleio/kuzzle-runner:14
     command: ${DOCKER_COMMAND:-npm run dev}
     cap_add:
@@ -25,13 +24,49 @@ services:
       - kuzzle_services__memoryStorage__node__host=redis
       - NODE_ENV=${NODE_ENV:-development}
       - DEBUG=${DEBUG:-none}
-      - DO_NOT_MOCK
       # - DEBUG=${DEBUG:-kuzzle:*,-kuzzle:entry-point:protocols:websocket,-kuzzle:cluster:heartbeat}
+      - kuzzle_cluster__minimumNodes=3
+
+services:
+
+  nginx:
+    image: nginx:1.19-alpine
+    container_name: kuzzle_nginx
+    logging:
+      driver: none
+    depends_on:
+      - kuzzle_node_1
+      - kuzzle_node_2
+      - kuzzle_node_3
+    ports:
+      - "7512:7512"
+    volumes:
+      - ./docker/nginx-dev:/etc/nginx/conf.d
+
+  kuzzle_node_1:
+    <<: *kuzzle-node
+    container_name: kuzzle_node_1
+    ports:
+      - "17510:7512"
+
+  kuzzle_node_2:
+    <<: *kuzzle-node
+    container_name: kuzzle_node_2
+    ports:
+      - "17511:7512"
+
+  kuzzle_node_3:
+    <<: *kuzzle-node
+    container_name: kuzzle_node_3
+    ports:
+      - "17512:7512"
 
   redis:
-    image: redis:5
+    image: redis:6
 
   elasticsearch:
     image: kuzzleio/elasticsearch:7
+    logging:
+      driver: none
     ulimits:
       nofile: 65536

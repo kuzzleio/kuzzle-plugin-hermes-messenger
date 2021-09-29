@@ -17,7 +17,7 @@ export interface SendgridAccount extends BaseAccount<MailService> {
 
 export class SendgridClient extends MessengerClient<SendgridAccount> {
   constructor () {
-    super('sengrid');
+    super('sendgrid');
   }
 
   /**
@@ -45,11 +45,11 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     this.context.log.debug(`EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(', ')} SUBJECT ${subject}`);
 
     try {
-      await account.client.sendMultiple(email);
+      await this.sendMessage(account, email);
     }
     catch (error) {
       if (error.response) {
-        throw new ExternalServiceError(error.response.body)
+        throw new ExternalServiceError('Sendgrid ' + JSON.stringify(error.response.body))
       }
 
       throw new ExternalServiceError(error);
@@ -81,7 +81,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     this.context.log.debug(`EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(', ')} TEMPLATE ${templateId}`);
 
     try {
-      await account.client.sendMultiple(email);
+      await this.sendMessage(account, email);
     }
     catch (error) {
       if (error.response) {
@@ -99,20 +99,34 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
    * @param apiKey Sendgrid API key
    * @param defaultSender Default sender email address
    */
-   addAccount (name: string, apiKey: string, defaultSender: string) {
+  addAccount (name: string, apiKey: string, defaultSender: string) {
     super.addAccount(name, apiKey, defaultSender);
   }
 
-  protected _createAccount (apiKey: string, defaultSender: string) {
+  protected _createAccount (name, apiKey: string, defaultSender: string) {
     const mailService = new MailService();
 
     mailService.setApiKey(apiKey);
 
     return {
+      name,
       client: mailService,
       options: {
         defaultSender,
       },
     };
+  }
+
+  private async sendMessage (account: SendgridAccount, email: any) {
+    if (await this.mockedAccount(account.name)) {
+      await this.sdk.document.createOrReplace(
+        this.config.adminIndex, 
+        'messages',
+        email.subject || email.templateId, 
+        { account: account.name, ...email });
+    }
+    else {
+      await account.client.sendMultiple(email);
+    }
   }
 }
