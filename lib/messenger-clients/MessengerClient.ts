@@ -12,6 +12,8 @@ export interface BaseAccount<T> {
   client: T;
 
   options: JSONObject;
+
+  name: string;
 }
 
 export abstract class MessengerClient<T> {
@@ -48,9 +50,9 @@ export abstract class MessengerClient<T> {
       throw new BadRequestError(`${Inflector.upFirst(this.name)} account "${name}" already exists.`);
     }
 
-    this.context.log.info(`${Inflector.upFirst(this.name)}: register account "${name}"`);
+    this.logInfo(`${Inflector.upFirst(this.name)}: register account "${name}"`);
 
-    this.accounts.set(name, this._createAccount(...args));
+    this.accounts.set(name, this._createAccount(name, ...args));
   }
 
   /**
@@ -63,7 +65,7 @@ export abstract class MessengerClient<T> {
       throw new NotFoundError(`${Inflector.upFirst(this.name)} account "${name}" does not exists.`);
     }
 
-    this.context.log.info(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
+    this.logInfo(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
 
     this.accounts.delete(name);
   }
@@ -89,5 +91,14 @@ export abstract class MessengerClient<T> {
     }
 
     return this.accounts.get(accountName);
+  }
+
+  private logInfo (message: string) {
+    if (this.context) {
+      this.context.log.info(message);
+    }
+    else {
+      console.log(`[hermes-messenger] ${message}`);
+    }
   }
 }

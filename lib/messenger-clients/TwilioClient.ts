@@ -53,7 +53,7 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     this.context.log.debug(`SMS (${accountName}): FROM ${fromNumber} TO ${to}`);
 
     try {
-      await account.client.messages.create({ from: fromNumber, to, body });
+      await this.sendMessage(account, { from: fromNumber, to, body });
     }
     catch (error) {
       throw new ExternalServiceError(error);
@@ -72,12 +72,26 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     super.addAccount(name, accountSid, authToken, defaultSender);
   }
 
-  protected _createAccount (accountSid: string, authToken: string, defaultSender: string) {
+  protected _createAccount (name: string, accountSid: string, authToken: string, defaultSender: string) {
     return {
+      name,
       client: new Twilio(accountSid, authToken),
       options: {
         defaultSender,
       },
     };
+  }
+
+  private async sendMessage (account: TwilioAccount, sms: any) {
+    if (this.config.mockMessages) {
+      await this.sdk.document.createOrReplace(
+        this.config.adminIndex, 
+        'messages', 
+        sms.body,
+        { account: account.name, ...sms });
+    }
+    else {
+      await account.client.messages.create(sms);
+    }
   }
 }
