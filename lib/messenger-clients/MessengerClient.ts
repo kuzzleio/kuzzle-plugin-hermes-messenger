@@ -1,12 +1,10 @@
 import {
   JSONObject,
   PluginContext,
-  EmbeddedSDK,
   Inflector,
   BadRequestError,
   NotFoundError,
 } from 'kuzzle';
-
 
 export interface BaseAccount<T> {
   client: T;
@@ -23,18 +21,46 @@ export abstract class MessengerClient<T> {
   protected name: string;
 
   protected accounts = new Map<string, T>();
+  
+  protected EVENT_ACCOUNT_ADD: string;
+  protected EVENT_ACCOUNT_REMOVE: string;
 
-  get sdk(): EmbeddedSDK {
+  get sdk () {
     return this.context.accessors.sdk;
+  }
+
+  get cluster () {
+    return this.context.accessors.cluster;
   }
 
   constructor (name: string) {
     this.name = name
+
+    this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
+    this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
   }
 
   async init (config: JSONObject, context: PluginContext) {
     this.config = config;
     this.context = context;
+
+    this.cluster.on(this.EVENT_ACCOUNT_ADD, async ({ name, args }) => {
+      try {
+        await this.nodeAddAccount(name, ...args);
+      }
+      catch (error) {
+        this.context.log.error(`${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`);
+      }
+    });
+
+    this.cluster.on(this.EVENT_ACCOUNT_REMOVE, async ({ name }) => {
+      try {
+        await this.nodeRemoveAccount(name);
+      }
+      catch (error) {
+        this.context.log.error(`${Inflector.upFirst(this.name)}: Cannot sync (remove) account "${name}"`);
+      }
+    });
   }
 
   protected abstract _createAccount ( ...args): T;
@@ -50,6 +76,19 @@ export abstract class MessengerClient<T> {
       throw new BadRequestError(`${Inflector.upFirst(this.name)} account "${name}" already exists.`);
     }
 
+    this.nodeAddAccount(name, ...args);
+
+    // Account can be registered in backend code and thus executed by every node 
+    // at startup
+    if (global.app.started) {
+      this.cluster.broadcast(this.EVENT_ACCOUNT_ADD, { name, args })
+        .catch(error => {
+          this.context.log.error(`${Inflector.upFirst(this.name)}: Cannot send sync message to add account "${name}": ${error}`);
+        });
+    }
+  }
+
+  private nodeAddAccount (name: string, ...args) {
     this.logInfo(`${Inflector.upFirst(this.name)}: register account "${name}"`);
 
     this.accounts.set(name, this._createAccount(name, ...args));
@@ -65,6 +104,17 @@ export abstract class MessengerClient<T> {
       throw new NotFoundError(`${Inflector.upFirst(this.name)} account "${name}" does not exists.`);
     }
 
+    this.nodeRemoveAccount(name);
+
+    if (global.app.started) {
+      this.cluster.broadcast(this.EVENT_ACCOUNT_REMOVE, { name })
+        .catch(error => {
+          this.context.log.error(`${Inflector.upFirst(this.name)}: Cannot send sync message to add account "${name}": ${error}`);
+        });
+    }
+}
+
+  private nodeRemoveAccount (name: string) {
     this.logInfo(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
 
     this.accounts.delete(name);
@@ -100,7 +150,7 @@ export abstract class MessengerClient<T> {
       this.config.configDocumentId);
 
     const mockedAccounts = configDocument._source['hermes-messenger'].mockedAccounts[this.name] || [];
-    
+
     return mockedAccounts.includes(accountName);
   }
 
