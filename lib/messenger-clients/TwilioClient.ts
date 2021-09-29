@@ -83,7 +83,7 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
   }
 
   private async sendMessage (account: TwilioAccount, sms: any) {
-    if (this.config.mockMessages) {
+    if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex, 
         'messages', 

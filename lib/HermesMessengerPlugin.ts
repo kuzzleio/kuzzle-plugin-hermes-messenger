@@ -67,8 +67,29 @@ export class HermesMessengerPlugin extends Plugin {
 
     this.defaultConfig = {
       adminIndex: 'hermes-messenger',
-      mockMessages: false,
+      configDocumentId: 'plugin--hermes-messenger',
       collections: {
+        // config collection
+        config: {
+          dynamic: 'strict',
+          properties: {
+            type: { type: 'keyword' },
+
+            'hermes-messenger': {
+              properties: {
+                // allows to mock messages for specific accounts
+                mockedAccounts: {
+                  dynamic: 'false',
+                  properties: {
+                    // example to mock sendgrid accounts
+                    // sengrid: ['commons', 'client-1']
+                  }
+                },
+              }
+            }
+          }
+        },
+        // collection for mocked messages
         messages: {
           dynamic: 'strict',
           properties: {
@@ -124,12 +145,11 @@ export class HermesMessengerPlugin extends Plugin {
       'hermes/sendgrid': this.sendgridController.definition,
     };
 
-    if (this.config.mockMessages) {
-      await this.createMockedMessagesCollection();
-    }
+    await this.initDatabase();
+    await this.initConfig();
   }
 
-  private async createMockedMessagesCollection () {
+  private async initDatabase () {
     const mutex = new Mutex('hermes-messenger/init-mock-database');
 
     await mutex.lock();
@@ -149,13 +169,41 @@ export class HermesMessengerPlugin extends Plugin {
         }
       }
 
-      await this.sdk.collection.create(this.config.adminIndex, 'messages', {
-        mappings: this.config.collections.messages,
-      });
+      await Promise.all([
+        this.sdk.collection.create(this.config.adminIndex, 'messages', {
+          mappings: this.config.collections.messages,
+        }),
+        this.sdk.collection.create(this.config.adminIndex, 'config', {
+          mappings: this.config.collections.config,
+        }),        
+      ]);
     }
     finally {
       await mutex.unlock();
     }
+  }
 
+  /**
+   * Initialize the config document if it does not exists
+   */
+  private async initConfig () {
+    const exists = await this.sdk.document.exists(
+      this.config.adminIndex,
+      'config',
+      this.config.configDocumentId);
+
+    if (! exists) {
+      await this.sdk.document.create(
+        this.config.adminIndex,
+        'config',
+        {
+          type: 'hermes-messenger',
+
+          'hermes-messenger': {
+            mockedAccounts: []
+          }
+        },
+        this.config.configDocumentId);
+    }
   }
 }

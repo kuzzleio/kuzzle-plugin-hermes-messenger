@@ -1,6 +1,9 @@
 Feature: Sendgrid Client
 
   Scenario: Register an account and send an email
+    Given an existing collection "hermes-messenger":"config"
+    Given I "update" the document "plugin--hermes-messenger" with content:
+      | hermes-messenger.mockedAccounts.sendgrid | ["common", "ilayda", "water-fairy"] |
     Given I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "ilayda" |
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
@@ -32,6 +35,9 @@ Feature: Sendgrid Client
       | html    | "<div> body </div>" |
 
   Scenario: Send a templated email
+    Given an existing collection "hermes-messenger":"config"
+    Given I "update" the document "plugin--hermes-messenger" with content:
+      | hermes-messenger.mockedAccounts.sendgrid | ["common", "ilayda", "water-fairy"] |
     Given I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "ilayda" |
     And I successfully execute the action "hermes/sendgrid":"addAccount" with args:

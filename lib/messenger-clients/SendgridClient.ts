@@ -17,7 +17,7 @@ export interface SendgridAccount extends BaseAccount<MailService> {
 
 export class SendgridClient extends MessengerClient<SendgridAccount> {
   constructor () {
-    super('sengrid');
+    super('sendgrid');
   }
 
   /**
@@ -49,7 +49,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     }
     catch (error) {
       if (error.response) {
-        throw new ExternalServiceError(error.response.body)
+        throw new ExternalServiceError('Sendgrid ' + JSON.stringify(error.response.body))
       }
 
       throw new ExternalServiceError(error);
@@ -118,7 +118,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
   }
 
   private async sendMessage (account: SendgridAccount, email: any) {
-    if (this.config.mockMessages) {
+    if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex, 
         'messages',

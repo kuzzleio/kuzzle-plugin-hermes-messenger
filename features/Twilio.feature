@@ -1,6 +1,9 @@
 Feature: Twilio Client
 
   Scenario: Register an account and send an email
+    Given an existing collection "hermes-messenger":"config"
+    Given I "update" the document "plugin--hermes-messenger" with content:
+      | hermes-messenger.mockedAccounts.twilio | ["common", "ilayda", "water-fairy"] |
     Given I execute the action "hermes/twilio":"removeAccount" with args:
       | account | "ilayda" |
     Given I successfully execute the action "hermes/twilio":"addAccount" with args:

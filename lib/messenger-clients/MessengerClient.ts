@@ -93,6 +93,17 @@ export abstract class MessengerClient<T> {
     return this.accounts.get(accountName);
   }
 
+  protected async mockedAccount (accountName: string): Promise<boolean> {
+    const configDocument = await this.sdk.document.get(
+      this.config.adminIndex,
+      'config',
+      this.config.configDocumentId);
+
+    const mockedAccounts = configDocument._source['hermes-messenger'].mockedAccounts[this.name] || [];
+    
+    return mockedAccounts.includes(accountName);
+  }
+
   private logInfo (message: string) {
     if (this.context) {
       this.context.log.info(message);
