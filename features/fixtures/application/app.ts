@@ -1,10 +1,6 @@
 import { Backend, KuzzleRequest } from 'kuzzle';
 
-import { TwilioMock, SendgridMock } from './mocks';
-import { TwilioClient, SendgridClient } from '../../../lib/messenger-clients';
-
 import { HermesMessengerPlugin } from '../../../index';
-import { registerTestController } from './TestController';
 
 const app = new Backend('kuzzle');
 
