@@ -29,7 +29,8 @@ Method: POST
   "account": "<account name>",
   "body": {
     "accountSid": "<twilio account sid>",
-    "authToken": "<twilio auth token>"
+    "authToken": "<twilio auth token>",
+    "defaultSender": "<default sender phone>"
   }
 }
 ```
@@ -39,7 +40,8 @@ Method: POST
 ```bash
 kourou hermes/twilio:addAccount -a account=<account name> --body '{
   "accountSid": "<twilio account sid>",
-  "authToken": "<twilio auth token>"
+  "authToken": "<twilio auth token>",
+  "defaultSender": "<default sender phone>"
 }'
 ```
 ---

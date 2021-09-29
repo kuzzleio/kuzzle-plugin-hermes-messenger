@@ -1,14 +1,21 @@
 import { MailService } from '@sendgrid/mail';
 import {
-  NotFoundError,
   ExternalServiceError,
   JSONObject,
 } from 'kuzzle';
 
-import { MessengerClient } from './MessengerClient';
+import { BaseAccount, MessengerClient } from './MessengerClient';
 
+export interface SendgridAccount extends BaseAccount<MailService> {
+  options: {
+    /**
+     * Default sender email address
+     */
+    defaultSender: string;
+  }
+}
 
-export class SendgridClient extends MessengerClient<MailService> {
+export class SendgridClient extends MessengerClient<SendgridAccount> {
   constructor () {
     super('sengrid');
   }
@@ -16,21 +23,29 @@ export class SendgridClient extends MessengerClient<MailService> {
   /**
    * Sends an email using one of the registered accounts.
    *
-   * @param account Account name
-   * @param from Sender email
+   * @param accountName Account name
    * @param to Recipient email(s)
    * @param subject Email subject
    * @param html Email content
+   * @param options.from Sender email
    */
-  async sendEmail (account: string, from: string, to: string[], subject: string, html: string) {
-    const client = this.getClient(account);
+  async sendEmail (
+    accountName: string, 
+    to: string[], 
+    subject: string, 
+    html: string, 
+    { from }: { from?: string } = {}
+  ) {
+    const account = this.getAccount(accountName);
 
-    const email = { from, to, subject, html };
+    const fromEmail = from || account.options.defaultSender;
 
-    this.context.log.debug(`EMAIL (${client}): FROM ${from} TO ${to.join(', ')} SUBJECT ${subject}`);
+    const email = { from: fromEmail, to, subject, html };
+
+    this.context.log.debug(`EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(', ')} SUBJECT ${subject}`);
 
     try {
-      await client.sendMultiple(email);
+      await account.client.sendMultiple(email);
     }
     catch (error) {
       if (error.response) {
@@ -44,21 +59,29 @@ export class SendgridClient extends MessengerClient<MailService> {
   /**
    * Sends a tempated email using one of the registered accounts.
    *
-   * @param account Account name
+   * @param accountName Account name
    * @param from Sender email
    * @param to Recipient email(s)
    * @param templateId Template ID
    * @param templateData Template placeholders values
    */
-  async sendTemplatedEmail (account: string, from: string, to: string[], templateId: string, templateData: JSONObject) {
-    const client = this.getClient(account);
+  async sendTemplatedEmail (
+    accountName: string, 
+    to: string[], 
+    templateId: string, 
+    templateData: JSONObject,
+    { from }: { from?: string } = {}
+  ) {
+    const account = this.getAccount(accountName);
 
-    const email = { from, to, templateId, dynamic_template_data: templateData };
+    const fromEmail = from || account.options.defaultSender;
 
-    this.context.log.debug(`EMAIL (${client}): FROM ${from} TO ${to.join(', ')} TEMPLATE ${templateId}`);
+    const email = { from: fromEmail, to, templateId, dynamic_template_data: templateData };
+
+    this.context.log.debug(`EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(', ')} TEMPLATE ${templateId}`);
 
     try {
-      await client.sendMultiple(email);
+      await account.client.sendMultiple(email);
     }
     catch (error) {
       if (error.response) {
@@ -74,24 +97,22 @@ export class SendgridClient extends MessengerClient<MailService> {
    *
    * @param name Account name
    * @param apiKey Sendgrid API key
+   * @param defaultSender Default sender email address
    */
-   addAccount (name: string, apiKey: string) {
-    super.addAccount(name, apiKey);
+   addAccount (name: string, apiKey: string, defaultSender: string) {
+    super.addAccount(name, apiKey, defaultSender);
   }
 
-  private getClient (account: string): MailService {
-    if (! this.accounts.has(account)) {
-      throw new NotFoundError(`Account "${account}" does not exists.`);
-    }
-
-    return this.accounts.get(account);
-  }
-
-  protected _createAccount (apiKey: string): MailService {
+  protected _createAccount (apiKey: string, defaultSender: string) {
     const mailService = new MailService();
 
     mailService.setApiKey(apiKey);
 
-    return mailService;
+    return {
+      client: mailService,
+      options: {
+        defaultSender,
+      },
+    };
   }
 }

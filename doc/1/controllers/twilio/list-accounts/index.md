@@ -47,8 +47,28 @@ Returns the names of registered accounts.
   "error": null,
   "controller": "hermes/twilio",
   "action": "listAccounts",
-  "result": { 
-    "accounts": ["ilayda", "aschen", "common"]
-  }
+  "result":  {
+  "accounts": [
+    {
+      "name": "common",
+      "options": {
+        "defaultSender": "+33629951621"
+      }
+    },
+    {
+      "name": "ilayda",
+      "options": {
+        "defaultSender": "+33629951621"
+      }
+    },
+    {
+      "name": "aschen",
+      "options": {
+        "defaultSender": "+33629951621"
+      }
+    }
+  ]
+}
+
 }
 ```

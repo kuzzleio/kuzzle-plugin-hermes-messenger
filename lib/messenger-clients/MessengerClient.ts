@@ -8,6 +8,12 @@ import {
 } from 'kuzzle';
 
 
+export interface BaseAccount<T> {
+  client: T;
+
+  options: JSONObject;
+}
+
 export abstract class MessengerClient<T> {
   protected config: JSONObject;
   protected context: PluginContext;
@@ -67,7 +73,21 @@ export abstract class MessengerClient<T> {
    *
    * @returns Account names
    */
-  listAccounts (): string[] {
-    return Array.from(this.accounts.keys()).sort();
+  listAccounts (): Array<{ name: string, options: JSONObject}> {
+    const accounts = [];
+
+    for (const [accountName, account] of this.accounts.entries() as any) {
+      accounts.push({ name: accountName, options: account.options });
+    }
+
+    return accounts;
+  }
+
+  protected getAccount (accountName: string): T {
+    if (! this.accounts.has(accountName)) {
+      throw new NotFoundError(`Account "${accountName}" does not exists.`);
+    }
+
+    return this.accounts.get(accountName);
   }
 }

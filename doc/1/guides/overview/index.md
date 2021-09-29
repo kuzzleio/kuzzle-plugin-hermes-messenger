@@ -38,10 +38,10 @@ Clients are available from getters on the plugin instance.
 app.start()
   .then(() => {
     // Add a "common" Twilio account
-    hermesMessengerPlugin.clients.twilio.addAccount('common', 'accountSid', 'authToken');
+    hermesMessengerPlugin.clients.twilio.addAccount('common', 'accountSid', 'authToken', '+33629951621');
 
     // Add a "common" Sendgrid account
-    hermesMessengerPlugin.clients.sendgrid.addAccount('common', 'apiKey');
+    hermesMessengerPlugin.clients.sendgrid.addAccount('common', 'apiKey', 'amaret@kuzzle.io');
   })
   .catch(console.error);
 ```

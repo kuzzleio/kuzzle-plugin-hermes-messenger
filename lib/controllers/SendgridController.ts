@@ -57,29 +57,34 @@ export class SendgridController {
 
   async sendEmail (request: KuzzleRequest) {
     const account = request.getString('account');
-    const from = request.getBodyString('from');
     const to = request.getBodyArray('to');
     const subject = request.getBodyString('subject');
     const html = request.getBodyString('html');
+    const fromEmail = request.getBodyString('from', '');
 
-    await this.sendgridClient.sendEmail(account, from, to, subject, html);
+    const from = fromEmail.length === 0 ? null : fromEmail;
+
+    await this.sendgridClient.sendEmail(account, to, subject, html, { from });
   }
 
   async sendTemplatedEmail (request: KuzzleRequest) {
     const account = request.getString('account');
     const templateId = request.getBodyString('templateId');
-    const from = request.getBodyString('from');
     const to = request.getBodyArray('to');
     const templateData = request.getBodyObject('templateData', {});
+    const fromEmail = request.getBodyString('from', '');
 
-    await this.sendgridClient.sendTemplatedEmail(account, from, to, templateId, templateData);
+    const from = fromEmail.length === 0 ? null : fromEmail;
+
+    await this.sendgridClient.sendTemplatedEmail(account, to, templateId, templateData, { from });
   }
 
   async addAccount (request: KuzzleRequest) {
     const account = request.getString('account');
     const apiKey = request.getBodyString('apiKey');
+    const defaultSender = request.getBodyString('defaultSender');
 
-    this.sendgridClient.addAccount(account, apiKey);
+    this.sendgridClient.addAccount(account, apiKey, defaultSender);
   }
 
   async removeAccount (request: KuzzleRequest) {

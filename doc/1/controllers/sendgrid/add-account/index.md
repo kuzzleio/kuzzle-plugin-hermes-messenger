@@ -28,7 +28,8 @@ Method: POST
   "action": "addAccount",
   "account": "<account name>",
   "body": {
-    "apiKey": "<sendgrid api key>"
+    "apiKey": "<sendgrid api key>",
+    "defaultSender": "<default sender email>"
   }
 }
 ```
@@ -37,7 +38,8 @@ Method: POST
 
 ```bash
 kourou hermes/sendgrid:addAccount -a account=<account name> --body '{
-  "apiKey": "<sendgrid api key>"
+  "apiKey": "<sendgrid api key>",
+  "defaultSender": "<default sender email>"
 }'
 ```
 ---
