@@ -1,6 +1,6 @@
 {
   "name": "kuzzle-plugin-hermes-messenger",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Kuzzle plugin to send messages using various providers like Twilio, Sendgrid, etc",
   "author": "The Kuzzle Team <support@kuzzle.io>",
   "scripts": {
