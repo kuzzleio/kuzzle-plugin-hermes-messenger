@@ -12,13 +12,17 @@ export function registerTestController (app: Backend, plugin: HermesMessengerPlu
         handler: async (request: KuzzleRequest) => {
           sinon.restore();
           const { from, to, text } = request.getBody();
-          const account = request.getString('account', 'common');
+          const accountName = request.getString('account', 'common');
 
-          const client = plugin.clients.twilio['accounts'].get(account) as TwilioMock;
+          const account = plugin.clients.twilio['accounts'].get(accountName);
+          const client = account.client as TwilioMock
 
           try {
-            should(client.messages.create.getCall(0).args)
-            .be.eql([{ from, to, body: text }]);
+            should(client.messages.create.getCall(0).args).be.eql([{ 
+              from, 
+              to, 
+              body: text 
+            }]);
           }
           finally {
             sinon.restore();
@@ -29,13 +33,13 @@ export function registerTestController (app: Backend, plugin: HermesMessengerPlu
         handler: async (request: KuzzleRequest) => {
           sinon.restore();
           const body = request.getBody();
-          const account = request.getString('account', 'common');
+          const accountName = request.getString('account', 'common');
 
-          const client = plugin.clients.sendgrid['accounts'].get(account) as SendgridMock;
+          const account = plugin.clients.sendgrid['accounts'].get(accountName);
+          const client = account.client as SendgridMock;
 
           try {
-            should(client.sendMultiple.getCall(0).args)
-            .be.eql([body]);
+            should(client.sendMultiple.getCall(0).args).be.eql([body]);
           }
           finally {
             sinon.restore();

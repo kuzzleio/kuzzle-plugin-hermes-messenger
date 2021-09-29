@@ -47,8 +47,28 @@ Returns the names of registered accounts.
   "error": null,
   "controller": "hermes/sendgrid",
   "action": "listAccounts",
-  "result": { 
-    "accounts": ["ilayda", "aschen", "common"]
-  }
+  "result": {
+  "accounts": [
+    {
+      "name": "common",
+      "options": {
+        "defaultSender": "amaret@kuzzle.io"
+      }
+    },
+    {
+      "name": "ilayda",
+      "options": {
+        "defaultSender": "ilayda@gmail.com"
+      }
+    },
+    {
+      "name": "aschen",
+      "options": {
+        "defaultSender": "aschen@gmail.com"
+      }
+    }
+  ]
+}
+
 }
 ```

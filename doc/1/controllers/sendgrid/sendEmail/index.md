@@ -28,10 +28,10 @@ Method: POST
   "action": "sendEmail",
   "account": "<account name>",
   "body": {
-    "from": "<sender email>",
     "to": ["<recipient1 email>", "<recipient2 email>"],
     "subject": "<email subject>",
     "html": "<email body>",
+    "from": "<sender email>", // optional
   }
 }
 ```
