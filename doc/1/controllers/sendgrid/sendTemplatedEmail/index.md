@@ -16,7 +16,7 @@ Sends a templated email using one of the registered Sendgrid accounts.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/sendgrid/templated-email/:templateId
+URL: http://kuzzle:7512/_/hermes/sendgrid/templated-email
 Method: POST
 ```
 
@@ -28,11 +28,12 @@ Method: POST
   "action": "sendTemplatedEmail",
   "account": "<account name>",
   "body": {
-    "from": "<sender email>",
     "to": ["<recipient1 email>", "<recipient2 email>"],
     "templateData": {
       // Template placeholders values
     },
+    "templateId": "<template ID>",
+    "from": "<sender email>", // optional
   }
 }
 ```
@@ -40,9 +41,10 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes/sendgrid:sendTemplatedEmail -a account=<account name> -a templateId=<template id>--body '{
+kourou hermes/sendgrid:sendTemplatedEmail -a account=<account name> --body '{
   "from": "<sender email>",
   "to": ["<recipient1 email>", "<recipient2 email>"],
+    "templateId": "<template ID>",
   "templateData": {},
 }'
 ```

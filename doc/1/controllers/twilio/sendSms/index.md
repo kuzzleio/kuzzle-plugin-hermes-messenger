@@ -28,7 +28,7 @@ Method: POST
   "action": "sendSms",
   "account": "<account name>",
   "body": {
-    "from": "<twilio phone number>",
+    "from": "<twilio phone number>", // optional
     "to": "<recipient phone number>",
     "text": "<sms content>"
   }

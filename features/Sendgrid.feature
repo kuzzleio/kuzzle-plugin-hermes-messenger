@@ -6,15 +6,15 @@ Feature: Sendgrid Client
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
       | account     | "ilayda" |
       | body.apiKey | "apiKey" |
+      | body.defaultSender | "ilayda@gmail.com" |
     When I successfully execute the action "hermes/sendgrid":"sendEmail" with args:
       | account      | "ilayda"            |
-      | body.from    | "support@kuzzle.io" |
       | body.to      | ["jobs@kuzzle.io"]  |
       | body.subject | "Merhaba"           |
       | body.html    | "<div> body </div>" |
     Then I successfully execute the action "tests":"verifySendSendgrid" with args:
       | account      | "ilayda"            |
-      | body.from    | "support@kuzzle.io" |
+      | body.from    | "ilayda@gmail.com" |
       | body.to      | ["jobs@kuzzle.io"]  |
       | body.subject | "Merhaba"           |
       | body.html    | "<div> body </div>" |
@@ -37,6 +37,7 @@ Feature: Sendgrid Client
     And I successfully execute the action "hermes/sendgrid":"addAccount" with args:
       | account     | "ilayda" |
       | body.apiKey | "apiKey" |
+      | body.defaultSender | "ilayda@gmail.com" |
     When I successfully execute the action "hermes/sendgrid":"sendTemplatedEmail" with args:
       | account           | "ilayda"            |
       | body.templateId   | "sales-42"          |
@@ -58,15 +59,22 @@ Feature: Sendgrid Client
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
       | account     | "ilayda" |
       | body.apiKey | "apiKey" |
+      | body.defaultSender | "ilayda@gmail.com" |
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
       | account     | "water-fairy" |
       | body.apiKey | "apiKey"      |
+      | body.defaultSender | "water-fairy@gmail.com" |
     When I successfully execute the action "hermes/sendgrid":"listAccounts"
-    Then I should receive a result matching:
-      | accounts | ["common", "ilayda", "water-fairy"] |
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "amaret@kuzzle.io" } |
+      | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
+      | "water-fairy" | { defaultSender: "water-fairy@gmail.com" } |
     When I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "water-fairy" |
     And I successfully execute the action "hermes/sendgrid":"listAccounts"
-    Then I should receive a result matching:
-      | accounts | ["common", "ilayda"] |
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "amaret@kuzzle.io" } |
+      | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
 

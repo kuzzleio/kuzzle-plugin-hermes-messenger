@@ -8,6 +8,12 @@ import {
 } from 'kuzzle';
 
 
+export interface BaseAccount<T> {
+  client: T;
+
+  options: JSONObject;
+}
+
 export abstract class MessengerClient<T> {
   protected config: JSONObject;
   protected context: PluginContext;
@@ -42,6 +48,8 @@ export abstract class MessengerClient<T> {
       throw new BadRequestError(`${Inflector.upFirst(this.name)} account "${name}" already exists.`);
     }
 
+    this.context.log.info(`${Inflector.upFirst(this.name)}: register account "${name}"`);
+
     this.accounts.set(name, this._createAccount(...args));
   }
 
@@ -55,6 +63,8 @@ export abstract class MessengerClient<T> {
       throw new NotFoundError(`${Inflector.upFirst(this.name)} account "${name}" does not exists.`);
     }
 
+    this.context.log.info(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
+
     this.accounts.delete(name);
   }
 
@@ -63,7 +73,21 @@ export abstract class MessengerClient<T> {
    *
    * @returns Account names
    */
-  listAccounts (): string[] {
-    return Array.from(this.accounts.keys()).sort();
+  listAccounts (): Array<{ name: string, options: JSONObject}> {
+    const accounts = [];
+
+    for (const [accountName, account] of this.accounts.entries() as any) {
+      accounts.push({ name: accountName, options: account.options });
+    }
+
+    return accounts;
+  }
+
+  protected getAccount (accountName: string): T {
+    if (! this.accounts.has(accountName)) {
+      throw new NotFoundError(`Account "${accountName}" does not exists.`);
+    }
+
+    return this.accounts.get(accountName);
   }
 }

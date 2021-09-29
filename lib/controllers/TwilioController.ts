@@ -53,19 +53,22 @@ export class TwilioController {
 
   async sendSms (request: KuzzleRequest) {
     const account = request.getString('account');
-    const from = request.getBodyString('from');
+    const fromNumber = request.getBodyString('from', '');
     const to = request.getBodyString('to');
     const text = request.getBodyString('text');
 
-    await this.twilioClient.sendSms(account, from, to, text);
+    const from = fromNumber.length === 0 ? null : fromNumber;
+
+    await this.twilioClient.sendSms(account, to, text, { from });
   }
 
   async addAccount (request: KuzzleRequest) {
     const account = request.getString('account');
     const accountSid = request.getBodyString('accountSid');
     const authToken = request.getBodyString('authToken');
+    const defaultSender = request.getBodyString('defaultSender');
 
-    this.twilioClient.addAccount(account, accountSid, authToken);
+    this.twilioClient.addAccount(account, accountSid, authToken, defaultSender);
   }
 
   async removeAccount (request: KuzzleRequest) {

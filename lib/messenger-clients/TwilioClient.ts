@@ -6,9 +6,19 @@ import {
   ExternalServiceError,
 } from 'kuzzle';
 
-import { MessengerClient } from './MessengerClient';
+import { MessengerClient, BaseAccount } from './MessengerClient';
 
-export class TwilioClient extends MessengerClient<Twilio> {
+export interface TwilioAccount extends BaseAccount<Twilio> {
+  options: {
+    /**
+     * Default sender phone number
+     */
+    defaultSender: string;
+  }
+}
+
+
+export class TwilioClient extends MessengerClient<TwilioAccount> {
   constructor () {
     super('twilio');
   }
@@ -21,22 +31,29 @@ export class TwilioClient extends MessengerClient<Twilio> {
   /**
    * Sends a SMS using one of the registered accounts.
    *
-   * @param account Account name
-   * @param from Twilio phone number
+   * @param accountName Account name
    * @param to Recipient phone number
    * @param body SMS content
+   * @param options.from Twilio phone number
    */
-  async sendSms (account: string, from: string, to: string, body: string) {
-    if (account && ! this.accounts.has(account)) {
-      throw new NotFoundError(`Account "${account}" does not exists.`);
+  async sendSms (
+    accountName: string, 
+    to: string, 
+    body: string, 
+    { from }: { from?: string } = {}
+  ) {
+    if (accountName && ! this.accounts.has(accountName)) {
+      throw new NotFoundError(`Account "${accountName}" does not exists.`);
     }
 
-    const client = this.accounts.get(account);
+    const account = this.getAccount(accountName);
 
-    this.context.log.debug(`SMS (${account}): FROM ${from} TO ${to}`);
+    const fromNumber = from || account.options.defaultSender; 
+
+    this.context.log.debug(`SMS (${accountName}): FROM ${fromNumber} TO ${to}`);
 
     try {
-      await client.messages.create({ from, to, body });
+      await account.client.messages.create({ from: fromNumber, to, body });
     }
     catch (error) {
       throw new ExternalServiceError(error);
@@ -49,12 +66,18 @@ export class TwilioClient extends MessengerClient<Twilio> {
    * @param name Account name
    * @param accountSid Twilio account sid
    * @param authToken Twilio auth token
+   * @param defaultSender Default number to send SMS
    */
-  addAccount (name: string, accountSid: string, authToken: string) {
-    super.addAccount(name, accountSid, authToken);
+  addAccount (name: string, accountSid: string, authToken: string, defaultSender: string) {
+    super.addAccount(name, accountSid, authToken, defaultSender);
   }
 
-  protected _createAccount (accountSid: string, authToken: string) {
-    return new Twilio(accountSid, authToken);
+  protected _createAccount (accountSid: string, authToken: string, defaultSender: string) {
+    return {
+      client: new Twilio(accountSid, authToken),
+      options: {
+        defaultSender,
+      },
+    };
   }
 }
