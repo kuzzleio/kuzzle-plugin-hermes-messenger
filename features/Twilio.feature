@@ -31,7 +31,9 @@ Feature: Twilio Client
       | to   | "+33629951621"  |
       | body | "Alo"           |
 
+  @cluster
   Scenario: List accounts
+    Given I target "node1"
     Given I execute the action "hermes/twilio":"removeAccount" with args:
       | account | "ilayda" |
     And I execute the action "hermes/twilio":"removeAccount" with args:
@@ -59,4 +61,15 @@ Feature: Twilio Client
       | name | options |
       | "common" | { defaultSender: "+33629951621" } |
       | "ilayda" | { defaultSender: "+9053365366473" } |
-
+    Given I target "node2"
+    And I successfully execute the action "hermes/twilio":"listAccounts"
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "+33629951621" } |
+      | "ilayda" | { defaultSender: "+9053365366473" } |
+    Given I target "node3"
+    And I successfully execute the action "hermes/twilio":"listAccounts"
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "+33629951621" } |
+      | "ilayda" | { defaultSender: "+9053365366473" } |

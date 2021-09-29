@@ -57,7 +57,9 @@ Feature: Sendgrid Client
       | to                    | ["jobs@kuzzle.io"]  |
       | dynamic_template_data | { foo: "bar" }      |
 
+  @cluster
   Scenario: List accounts
+    Given I target "node1"
     Given I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "ilayda" |
     And I execute the action "hermes/sendgrid":"removeAccount" with args:
@@ -83,4 +85,20 @@ Feature: Sendgrid Client
       | name | options |
       | "common" | { defaultSender: "amaret@kuzzle.io" } |
       | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
-
+    And I successfully execute the action "hermes/sendgrid":"listAccounts"
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "amaret@kuzzle.io" } |
+      | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
+    When I target "node2"
+    And I successfully execute the action "hermes/sendgrid":"listAccounts"
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "amaret@kuzzle.io" } |
+      | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
+    When I target "node3"
+    And I successfully execute the action "hermes/sendgrid":"listAccounts"
+    Then I should receive a "accounts" array of objects matching:
+      | name | options |
+      | "common" | { defaultSender: "amaret@kuzzle.io" } |
+      | "ilayda" | { defaultSender: "ilayda@gmail.com" } |

@@ -23,11 +23,6 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     super('twilio');
   }
 
-  async init (config: JSONObject, context: PluginContext) {
-    this.config = config;
-    this.context = context;
-  }
-
   /**
    * Sends a SMS using one of the registered accounts.
    *
