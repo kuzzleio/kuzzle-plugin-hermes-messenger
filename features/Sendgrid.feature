@@ -7,31 +7,31 @@ Feature: Sendgrid Client
     Given I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "ilayda" |
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
-      | account     | "ilayda" |
-      | body.apiKey | "apiKey" |
+      | account            | "ilayda"           |
+      | body.apiKey        | "apiKey"           |
       | body.defaultSender | "ilayda@gmail.com" |
     When I successfully execute the action "hermes/sendgrid":"sendEmail" with args:
       | account      | "ilayda"            |
       | body.to      | ["jobs@kuzzle.io"]  |
-      | body.subject | "Merhaba-email"           |
+      | body.subject | "Merhaba-email"     |
       | body.html    | "<div> body </div>" |
     Then The document "hermes-messenger":"messages":"Merhaba-email" content match:
-      | account      | "ilayda"            |
-      | from    | "ilayda@gmail.com" |
+      | account | "ilayda"            |
+      | from    | "ilayda@gmail.com"  |
       | to      | ["jobs@kuzzle.io"]  |
-      | subject | "Merhaba-email"           |
+      | subject | "Merhaba-email"     |
       | html    | "<div> body </div>" |
     When I successfully execute the action "hermes/sendgrid":"sendEmail" with args:
       | account      | "common"            |
       | body.from    | "support@kuzzle.io" |
       | body.to      | ["jobs@kuzzle.io"]  |
-      | body.subject | "Alo-email"               |
+      | body.subject | "Alo-email"         |
       | body.html    | "<div> body </div>" |
     Then The document "hermes-messenger":"messages":"Alo-email" content match:
-      | account      | "common"            |
+      | account | "common"            |
       | from    | "support@kuzzle.io" |
       | to      | ["jobs@kuzzle.io"]  |
-      | subject | "Alo-email"               |
+      | subject | "Alo-email"         |
       | html    | "<div> body </div>" |
 
   Scenario: Send a templated email
@@ -41,8 +41,8 @@ Feature: Sendgrid Client
     Given I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "ilayda" |
     And I successfully execute the action "hermes/sendgrid":"addAccount" with args:
-      | account     | "ilayda" |
-      | body.apiKey | "apiKey" |
+      | account            | "ilayda"           |
+      | body.apiKey        | "apiKey"           |
       | body.defaultSender | "ilayda@gmail.com" |
     When I successfully execute the action "hermes/sendgrid":"sendTemplatedEmail" with args:
       | account           | "ilayda"            |
@@ -51,7 +51,7 @@ Feature: Sendgrid Client
       | body.to           | ["jobs@kuzzle.io"]  |
       | body.templateData | { foo: "bar" }      |
     Then The document "hermes-messenger":"messages":"sales-42" content match:
-      | account                    | "ilayda"            |
+      | account               | "ilayda"            |
       | templateId            | "sales-42"          |
       | from                  | "support@kuzzle.io" |
       | to                    | ["jobs@kuzzle.io"]  |
@@ -65,40 +65,40 @@ Feature: Sendgrid Client
     And I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "water-fairy" |
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
-      | account     | "ilayda" |
-      | body.apiKey | "apiKey" |
+      | account            | "ilayda"           |
+      | body.apiKey        | "apiKey"           |
       | body.defaultSender | "ilayda@gmail.com" |
     Given I successfully execute the action "hermes/sendgrid":"addAccount" with args:
-      | account     | "water-fairy" |
-      | body.apiKey | "apiKey"      |
+      | account            | "water-fairy"           |
+      | body.apiKey        | "apiKey"                |
       | body.defaultSender | "water-fairy@gmail.com" |
     When I successfully execute the action "hermes/sendgrid":"listAccounts"
     Then I should receive a "accounts" array of objects matching:
-      | name | options |
-      | "common" | { defaultSender: "amaret@kuzzle.io" } |
-      | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
+      | name          | options                                    |
+      | "common"      | { defaultSender: "amaret@kuzzle.io" }      |
+      | "ilayda"      | { defaultSender: "ilayda@gmail.com" }      |
       | "water-fairy" | { defaultSender: "water-fairy@gmail.com" } |
     When I execute the action "hermes/sendgrid":"removeAccount" with args:
       | account | "water-fairy" |
     And I successfully execute the action "hermes/sendgrid":"listAccounts"
     Then I should receive a "accounts" array of objects matching:
-      | name | options |
+      | name     | options                               |
       | "common" | { defaultSender: "amaret@kuzzle.io" } |
       | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
     And I successfully execute the action "hermes/sendgrid":"listAccounts"
     Then I should receive a "accounts" array of objects matching:
-      | name | options |
+      | name     | options                               |
       | "common" | { defaultSender: "amaret@kuzzle.io" } |
       | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
     When I target "node2"
     And I successfully execute the action "hermes/sendgrid":"listAccounts"
     Then I should receive a "accounts" array of objects matching:
-      | name | options |
+      | name     | options                               |
       | "common" | { defaultSender: "amaret@kuzzle.io" } |
       | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
     When I target "node3"
     And I successfully execute the action "hermes/sendgrid":"listAccounts"
     Then I should receive a "accounts" array of objects matching:
-      | name | options |
+      | name     | options                               |
       | "common" | { defaultSender: "amaret@kuzzle.io" } |
       | "ilayda" | { defaultSender: "ilayda@gmail.com" } |
