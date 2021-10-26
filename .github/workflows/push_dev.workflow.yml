@@ -1,9 +1,9 @@
-name: Push to master
+name: Push to dev branch
 
 on:
   push:
     branches:
-      - master
+      - 1-dev
 
 jobs:
   lint:
@@ -27,39 +27,8 @@ jobs:
           node-version: "14"
       - uses: ./.github/actions/functional-test
 
-  npm-deploy:
-    name: Publish Package to NPM.js
-    runs-on: ubuntu-18.04
-    timeout-minutes: 30
-    needs: [functional-tests]
-    if: ${{ !startsWith( github.event.head_commit.message, '[no-deploy]') }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.npm
-            **/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - uses: actions/setup-node@v1
-        with:
-          node-version: "12.x"
-          registry-url: "https://registry.npmjs.org"
-      - run: npm ci
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   doc-deploy:
-    name: Deploy Doc to PROD
+    name: Deploy Doc to NEXT
     runs-on: ubuntu-latest
     needs: [functional-tests]
     steps:
@@ -79,5 +48,5 @@ jobs:
           repo: documentation
           github_token: ${{ secrets.ACCESS_TOKEN_CI }}
           workflow_file_name: child_repo.workflow.yml
-          ref: master
+          ref: develop
           inputs: '{"repo_name": "${{ steps.extract-refs.outputs.repo }}", "branch": "${{ steps.extract-refs.outputs.branch }}", "version": "${{ steps.extract-refs.outputs.version }}"}'
