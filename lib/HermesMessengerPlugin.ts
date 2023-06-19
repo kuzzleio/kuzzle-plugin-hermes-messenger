@@ -29,7 +29,7 @@ export class MessengerClients {
    */
   get sendgrid (): SendgridClient {
     if (! this.clients.has('sendgrid')) {
-      throw new InternalError('Twilio client is not available yet. Are you trying to access it before the application has started?');
+      throw new InternalError('Sendgrid client is not available yet. Are you trying to access it before the application has started?');
     }
 
     return this.clients.get('sendgrid') as SendgridClient;
