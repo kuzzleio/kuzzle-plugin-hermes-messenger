@@ -1,7 +1,7 @@
-const should = require('should');
-const { Then } = require('cucumber');
+const should = require("should");
+const { Then } = require("cucumber");
 
-Then('I target {string}', async function (node) {
+Then("I target {string}", async function (node) {
   should(this).have.property(node);
 
   this.sdk = this[node];

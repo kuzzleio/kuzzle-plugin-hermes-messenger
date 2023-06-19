@@ -1,24 +1,34 @@
-import { Backend, KuzzleRequest } from 'kuzzle';
+import { Backend, KuzzleRequest } from "kuzzle";
 
-import { HermesMessengerPlugin } from '../../../index';
+import { HermesMessengerPlugin } from "../../../index";
 
-const app = new Backend('kuzzle');
+const app = new Backend("kuzzle");
 
 const hermesMessengerPlugin = new HermesMessengerPlugin();
 
 app.plugin.use(hermesMessengerPlugin);
 
-app.hook.register('request:onError', async (request: KuzzleRequest) => {
+app.hook.register("request:onError", async (request: KuzzleRequest) => {
   app.log.error(request.error);
 });
 
-app.config.set('plugins.kuzzle-plugin-logger.services.stdout.level', 'debug');
+app.config.set("plugins.kuzzle-plugin-logger.services.stdout.level", "debug");
 
-hermesMessengerPlugin.clients.twilio.addAccount('common', 'AC-accountSid', 'authToken', '+33629951621');
-hermesMessengerPlugin.clients.sendgrid.addAccount('common', 'SG.apiKey', 'amaret@kuzzle.io');
+hermesMessengerPlugin.clients.twilio.addAccount(
+  "common",
+  "AC-accountSid",
+  "authToken",
+  "+33629951621"
+);
+hermesMessengerPlugin.clients.sendgrid.addAccount(
+  "common",
+  "SG.apiKey",
+  "amaret@kuzzle.io"
+);
 
-app.start()
+app
+  .start()
   .then(() => {
-    app.log.info('Application started');
+    app.log.info("Application started");
   })
   .catch(console.error);

@@ -11,3 +11,5 @@ features/fixtures/application/**/*.js.map
 index.d.ts
 index.js
 index.js.map
+
+features/**

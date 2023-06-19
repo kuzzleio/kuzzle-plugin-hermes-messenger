@@ -1,16 +1,14 @@
 {
   "root": true,
-  "parser": "@typescript-eslint/parser",
   "plugins": [
-    "@typescript-eslint"
+    "kuzzle"
   ],
   "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:kuzzle/default",
+    "plugin:kuzzle/node",
+    "plugin:kuzzle/typescript"
   ],
   "rules": {
-    "@typescript-eslint/no-explicit-any": 0,
-    "@typescript-eslint/explicit-module-boundary-types": 0
+    "sort-keys": 0
   }
 }
