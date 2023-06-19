@@ -8,11 +8,11 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -26,12 +26,12 @@ jobs:
 
   functional-tests:
     name: Functional Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [lint]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache node modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -48,34 +48,34 @@ jobs:
     runs-on: ubuntu-latest
     needs: [functional-tests]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Extract references from context
         shell: bash
         id: extract-refs
         run: |
-          echo "::set-output name=version::$(git describe --abbrev=0 --tags | cut -d. -f 1)"
-          echo "::set-output name=repo::$(echo $GITHUB_REPOSITORY | cut -d/ -f 2)"
-          echo "::set-output name=branch::$(echo $GITHUB_REF | cut -d/ -f 3)"
-      - uses: convictional/trigger-workflow-and-wait@v1.3.0
+          echo "version=$(git describe --abbrev=0 --tags | cut -d. -f 1)" >> $GITHUB_OUTPUT
+          echo "repo=$(echo $GITHUB_REPOSITORY | cut -d/ -f 2)" >> $GITHUB_OUTPUT
+          echo "branch=$(echo $GITHUB_REF | cut -d/ -f 3)" >> $GITHUB_OUTPUT
+      - uses: convictional/trigger-workflow-and-wait@v1.6.5
         with:
           owner: kuzzleio
           repo: documentation
           github_token: ${{ secrets.ACCESS_TOKEN_CI }}
           workflow_file_name: child_repo.workflow.yml
           ref: master
-          inputs: '{"repo_name": "${{ steps.extract-refs.outputs.repo }}", "branch": "${{ steps.extract-refs.outputs.branch }}", "version": "${{ steps.extract-refs.outputs.version }}"}'
+          client_payload: '{"repo_name": "${{ steps.extract-refs.outputs.repo }}", "branch": "${{ steps.extract-refs.outputs.branch }}", "version": "${{ steps.extract-refs.outputs.version }}"}'
 
   publish-npm:
     name: Deploy package to the NPM registry
     runs-on: ubuntu-latest
     needs: [functional-tests]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: 18
           registry-url: "https://registry.npmjs.org"
       - run: npm run docker npm ci
       - run: npm run docker npm run build
