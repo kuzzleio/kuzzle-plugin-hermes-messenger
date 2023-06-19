@@ -3,6 +3,12 @@
   "version": "0.3.0",
   "description": "Kuzzle plugin to send messages using various providers like Twilio, Sendgrid, etc",
   "author": "The Kuzzle Team <support@kuzzle.io>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "docker": "docker-compose run kuzzle_node_1 ",
     "dev": "NODE_ENV=development ergol tests/application/app.ts -c ergol.config.json",
@@ -13,14 +19,7 @@
     "prettier": "npx prettier lib/ tests/ --write",
     "build": "tsc --build tsconfig.json",
     "postinstall": "node -e \"process.exit(require('fs').existsSync('./dist') ? 1 : 0)\" && npm run build || true",
-    "prepack": "npm run build",
-    "clean": "touch index.ts && npm run build | grep TSFILE | cut -d' ' -f 2 | xargs rm",
-    "doc:prepare": "npx kuzdoc framework:install",
-    "doc:dev": "npx kuzdoc repo:dev -d /official-plugins/hermes-messenger/1/ -v 1",
-    "doc:build": "npx kuzdoc repo:build -d /official-plugins/hermes-messenger/1/ -v 1",
-    "doc:upload": "npx kuzdoc repo:deploy -d /official-plugins/hermes-messenger/1/ -v 1",
-    "doc:cloudfront": "npx kuzdoc repo:cloudfront -d /official-plugins/hermes-messenger/1/*",
-    "doc:deploy": "npm run doc:upload && npm run doc:cloudfront"
+    "prepack": "npm run build"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -48,10 +47,6 @@
     "kuzzle": "^2.14.5"
   },
   "files": [
-    "index.js",
-    "index.d.ts",
-    "lib/**/*.js",
-    "lib/**/*.d.ts",
-    "lib/**/*.json"
+    "dist/**/*"
   ]
 }
