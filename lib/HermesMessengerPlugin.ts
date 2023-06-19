@@ -1,17 +1,18 @@
-import _ from "lodash";
 import {
+  InternalError,
+  JSONObject,
+  Mutex,
   Plugin,
   PluginContext,
-  JSONObject,
-  InternalError,
-  Mutex,
 } from "kuzzle";
+import _ from "lodash";
 
-import { TwilioController, SendgridController } from "./controllers";
+import { SendgridController, TwilioController } from "./controllers";
 import {
+  MessengerClient,
+  SMTPClient,
   SendgridClient,
   TwilioClient,
-  MessengerClient,
 } from "./messenger-clients";
 
 export class MessengerClients {
@@ -43,14 +44,29 @@ export class MessengerClients {
     return this.clients.get("sendgrid") as SendgridClient;
   }
 
+  /**
+   * Returns the SMTP client.
+   */
+  get smtp(): SMTPClient {
+    if (!this.clients.has("smtp")) {
+      throw new InternalError(
+        "SMTP client is not available yet. Are you trying to access it before the application has started?"
+      );
+    }
+
+    return this.clients.get("smtp") as SMTPClient;
+  }
+
   constructor() {
     this.clients.set("twilio", new TwilioClient());
     this.clients.set("sendgrid", new SendgridClient());
+    this.clients.set("smtp", new SMTPClient());
   }
 
   async init(config: JSONObject, context: PluginContext) {
     await this.twilio.init(config, context);
     await this.sendgrid.init(config, context);
+    await this.smtp.init(config, context);
   }
 }
 
