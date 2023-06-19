@@ -1,6 +1,6 @@
 import { Backend, KuzzleRequest } from "kuzzle";
 
-import { HermesMessengerPlugin } from "../../../index";
+import { HermesMessengerPlugin } from "../../index";
 
 const app = new Backend("kuzzle");
 
@@ -31,4 +31,4 @@ app
   .then(() => {
     app.log.info("Application started");
   })
-  .catch(console.error);
+  .catch(console.error); //eslint-disable-line no-console

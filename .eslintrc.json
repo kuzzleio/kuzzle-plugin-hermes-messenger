@@ -1,12 +1,15 @@
 {
   "root": true,
   "plugins": [
-    "kuzzle"
+    "kuzzle",
+    "jest"
   ],
   "extends": [
     "plugin:kuzzle/default",
     "plugin:kuzzle/node",
-    "plugin:kuzzle/typescript"
+    "plugin:kuzzle/typescript",
+    "plugin:jest/recommended",
+    "plugin:jest/style"
   ],
   "rules": {
     "sort-keys": 0
