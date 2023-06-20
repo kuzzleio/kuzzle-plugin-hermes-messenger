@@ -57,9 +57,10 @@ export class SMTPController {
     const subject = request.getBodyString("subject");
     const html = request.getBodyString("html");
     const fromEmail = request.getBodyString("from", "");
-    const attachments = request.getBodyArray("attachments");
+    const attachmentsEmail = request.getBodyArray("attachments", []);
 
     const from = fromEmail.length === 0 ? null : fromEmail;
+    const attachments = attachmentsEmail.length === 0 ? null : attachmentsEmail;
 
     await this.smtpClient.sendEmail(account, to, subject, html, {
       attachments,
