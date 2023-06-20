@@ -15,6 +15,7 @@ Available providers SMS providers:
 
 Available email providers:
   - Sendgrid
+  - SMTP
 
 ## Accounts Management
 
@@ -42,6 +43,9 @@ app.start()
 
     // Add a "common" Sendgrid account
     hermesMessengerPlugin.clients.sendgrid.addAccount('common', 'apiKey', 'amaret@kuzzle.io');
+
+    // Add a "common" SMTP account
+    hermesMessengerPlugin.clients.smtp.addAccount('common', 'smtp.example.com', 587, 'dummyUser', 'dummyPass', 'amaret@kuzzle.io');
   })
   .catch(console.error);
 ```
