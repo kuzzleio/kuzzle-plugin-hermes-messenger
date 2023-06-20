@@ -2,8 +2,9 @@ import { ExternalServiceError } from "kuzzle";
 import { BaseAccount, MessengerClient } from "./MessengerClient";
 
 import { Transporter, createTransport } from "nodemailer";
-import Mail, { Attachment } from "nodemailer/lib/mailer";
+import Mail from "nodemailer/lib/mailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { Attachment } from "../types";
 
 export interface SMTPAccount
   extends BaseAccount<Transporter<SMTPTransport.SentMessageInfo>> {

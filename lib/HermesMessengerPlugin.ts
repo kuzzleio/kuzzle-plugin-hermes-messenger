@@ -7,7 +7,11 @@ import {
 } from "kuzzle";
 import _ from "lodash";
 
-import { SendgridController, TwilioController } from "./controllers";
+import {
+  SMTPController,
+  SendgridController,
+  TwilioController,
+} from "./controllers";
 import {
   MessengerClient,
   SMTPClient,
@@ -75,6 +79,7 @@ export class HermesMessengerPlugin extends Plugin {
 
   private twilioController: TwilioController;
   private sendgridController: SendgridController;
+  private smtpController: SMTPController;
 
   /**
    * Instantiated messenger clients
@@ -120,10 +125,20 @@ export class HermesMessengerPlugin extends Plugin {
             account: { type: "keyword" },
             from: { type: "keyword" },
             to: { type: "keyword" },
-
-            // sendgrid specific
             subject: { type: "keyword" },
             html: { type: "keyword" },
+            attachments: {
+              dynamic: "strict",
+              properties: {
+                content: { type: "keyword" },
+                contentType: { type: "keyword" },
+                filename: { type: "keyword" },
+                contentDisposition: { type: "keyword" },
+                cid: { type: "keyword" },
+              },
+            },
+
+            // sendgrid specific
             templateId: { type: "keyword" },
             dynamic_template_data: {
               dynamic: "false",
@@ -164,11 +179,18 @@ export class HermesMessengerPlugin extends Plugin {
       this.context,
       this.clients.sendgrid
     );
+    this.smtpController = new SMTPController(
+      this.config,
+      this.context,
+      this.clients.smtp
+    );
 
     this.api = {
       "hermes/twilio": this.twilioController.definition,
 
       "hermes/sendgrid": this.sendgridController.definition,
+
+      "hermes/smtp": this.smtpController.definition,
     };
 
     await this.initDatabase();
