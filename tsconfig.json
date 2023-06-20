@@ -8,12 +8,13 @@
     "sourceMap": true,
     "baseUrl": ".",
     "resolveJsonModule": true,
+    "outDir": "dist/",
     "esModuleInterop": true
   },
   "rootDir": "lib/",
   "include": [
     "lib/**/*.ts",
-    "features/**/*.ts",
+    "tests/application/**/*.ts",
     "index.ts"
   ],
   "exclude": [

@@ -1,10 +1,7 @@
-import { MailService } from '@sendgrid/mail';
-import {
-  ExternalServiceError,
-  JSONObject,
-} from 'kuzzle';
+import { MailService } from "@sendgrid/mail";
+import { ExternalServiceError, JSONObject } from "kuzzle";
 
-import { BaseAccount, MessengerClient } from './MessengerClient';
+import { BaseAccount, MessengerClient } from "./MessengerClient";
 
 export interface SendgridAccount extends BaseAccount<MailService> {
   options: {
@@ -12,12 +9,12 @@ export interface SendgridAccount extends BaseAccount<MailService> {
      * Default sender email address
      */
     defaultSender: string;
-  }
+  };
 }
 
 export class SendgridClient extends MessengerClient<SendgridAccount> {
-  constructor () {
-    super('sendgrid');
+  constructor() {
+    super("sendgrid");
   }
 
   /**
@@ -29,11 +26,11 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
    * @param html Email content
    * @param options.from Sender email
    */
-  async sendEmail (
-    accountName: string, 
-    to: string[], 
-    subject: string, 
-    html: string, 
+  async sendEmail(
+    accountName: string,
+    to: string[],
+    subject: string,
+    html: string,
     { from }: { from?: string } = {}
   ) {
     const account = this.getAccount(accountName);
@@ -42,14 +39,19 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
 
     const email = { from: fromEmail, to, subject, html };
 
-    this.context.log.debug(`EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(', ')} SUBJECT ${subject}`);
+    this.context.log.debug(
+      `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
+        ", "
+      )} SUBJECT ${subject}`
+    );
 
     try {
       await this.sendMessage(account, email);
-    }
-    catch (error) {
+    } catch (error) {
       if (error.response) {
-        throw new ExternalServiceError('Sendgrid ' + JSON.stringify(error.response.body))
+        throw new ExternalServiceError(
+          "Sendgrid " + JSON.stringify(error.response.body)
+        );
       }
 
       throw new ExternalServiceError(error);
@@ -65,10 +67,10 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
    * @param templateId Template ID
    * @param templateData Template placeholders values
    */
-  async sendTemplatedEmail (
-    accountName: string, 
-    to: string[], 
-    templateId: string, 
+  async sendTemplatedEmail(
+    accountName: string,
+    to: string[],
+    templateId: string,
     templateData: JSONObject,
     { from }: { from?: string } = {}
   ) {
@@ -76,16 +78,24 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
 
     const fromEmail = from || account.options.defaultSender;
 
-    const email = { from: fromEmail, to, templateId, dynamic_template_data: templateData };
+    const email = {
+      from: fromEmail,
+      to,
+      templateId,
+      dynamic_template_data: templateData,
+    };
 
-    this.context.log.debug(`EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(', ')} TEMPLATE ${templateId}`);
+    this.context.log.debug(
+      `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
+        ", "
+      )} TEMPLATE ${templateId}`
+    );
 
     try {
       await this.sendMessage(account, email);
-    }
-    catch (error) {
+    } catch (error) {
       if (error.response) {
-        throw new ExternalServiceError(error.response.body)
+        throw new ExternalServiceError(error.response.body);
       }
 
       throw new ExternalServiceError(error);
@@ -99,11 +109,11 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
    * @param apiKey Sendgrid API key
    * @param defaultSender Default sender email address
    */
-  addAccount (name: string, apiKey: string, defaultSender: string) {
+  addAccount(name: string, apiKey: string, defaultSender: string) {
     super.addAccount(name, apiKey, defaultSender);
   }
 
-  protected _createAccount (name, apiKey: string, defaultSender: string) {
+  protected _createAccount(name, apiKey: string, defaultSender: string) {
     const mailService = new MailService();
 
     mailService.setApiKey(apiKey);
@@ -117,15 +127,15 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     };
   }
 
-  private async sendMessage (account: SendgridAccount, email: any) {
+  private async sendMessage(account: SendgridAccount, email: any) {
     if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(
-        this.config.adminIndex, 
-        'messages',
-        email.subject || email.templateId, 
-        { account: account.name, ...email });
-    }
-    else {
+        this.config.adminIndex,
+        "messages",
+        email.subject || email.templateId,
+        { account: account.name, ...email }
+      );
+    } else {
       await account.client.sendMultiple(email);
     }
   }
