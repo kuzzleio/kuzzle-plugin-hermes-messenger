@@ -1,12 +1,7 @@
-import { Twilio } from 'twilio';
-import {
-  JSONObject,
-  PluginContext,
-  NotFoundError,
-  ExternalServiceError,
-} from 'kuzzle';
+import { ExternalServiceError, NotFoundError } from "kuzzle";
+import { Twilio } from "twilio";
 
-import { MessengerClient, BaseAccount } from './MessengerClient';
+import { BaseAccount, MessengerClient } from "./MessengerClient";
 
 export interface TwilioAccount extends BaseAccount<Twilio> {
   options: {
@@ -14,13 +9,12 @@ export interface TwilioAccount extends BaseAccount<Twilio> {
      * Default sender phone number
      */
     defaultSender: string;
-  }
+  };
 }
 
-
 export class TwilioClient extends MessengerClient<TwilioAccount> {
-  constructor () {
-    super('twilio');
+  constructor() {
+    super("twilio");
   }
 
   /**
@@ -31,26 +25,25 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
    * @param body SMS content
    * @param options.from Twilio phone number
    */
-  async sendSms (
-    accountName: string, 
-    to: string, 
-    body: string, 
+  async sendSms(
+    accountName: string,
+    to: string,
+    body: string,
     { from }: { from?: string } = {}
   ) {
-    if (accountName && ! this.accounts.has(accountName)) {
+    if (accountName && !this.accounts.has(accountName)) {
       throw new NotFoundError(`Account "${accountName}" does not exists.`);
     }
 
     const account = this.getAccount(accountName);
 
-    const fromNumber = from || account.options.defaultSender; 
+    const fromNumber = from || account.options.defaultSender;
 
     this.context.log.debug(`SMS (${accountName}): FROM ${fromNumber} TO ${to}`);
 
     try {
       await this.sendMessage(account, { from: fromNumber, to, body });
-    }
-    catch (error) {
+    } catch (error) {
       throw new ExternalServiceError(error);
     }
   }
@@ -63,11 +56,21 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
    * @param authToken Twilio auth token
    * @param defaultSender Default number to send SMS
    */
-  addAccount (name: string, accountSid: string, authToken: string, defaultSender: string) {
+  addAccount(
+    name: string,
+    accountSid: string,
+    authToken: string,
+    defaultSender: string
+  ) {
     super.addAccount(name, accountSid, authToken, defaultSender);
   }
 
-  protected _createAccount (name: string, accountSid: string, authToken: string, defaultSender: string) {
+  protected _createAccount(
+    name: string,
+    accountSid: string,
+    authToken: string,
+    defaultSender: string
+  ) {
     return {
       name,
       client: new Twilio(accountSid, authToken),
@@ -77,15 +80,15 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     };
   }
 
-  private async sendMessage (account: TwilioAccount, sms: any) {
+  private async sendMessage(account: TwilioAccount, sms: any) {
     if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(
-        this.config.adminIndex, 
-        'messages', 
+        this.config.adminIndex,
+        "messages",
         sms.body,
-        { account: account.name, ...sms });
-    }
-    else {
+        { account: account.name, ...sms }
+      );
+    } else {
       await account.client.messages.create(sms);
     }
   }

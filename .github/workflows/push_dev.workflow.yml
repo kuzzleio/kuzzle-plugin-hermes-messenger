@@ -1,9 +1,9 @@
-name: Push to master
+name: Push to dev branch
 
 on:
   push:
     branches:
-      - master
+      - 1-dev
 
 jobs:
   lint:
@@ -44,7 +44,7 @@ jobs:
       - uses: ./.github/actions/functional-test
 
   doc-deploy:
-    name: Deploy Doc to PROD
+    name: Deploy Doc to NEXT
     runs-on: ubuntu-latest
     needs: [functional-tests]
     steps:
@@ -64,21 +64,5 @@ jobs:
           repo: documentation
           github_token: ${{ secrets.ACCESS_TOKEN_CI }}
           workflow_file_name: child_repo.workflow.yml
-          ref: master
+          ref: develop
           client_payload: '{"repo_name": "${{ steps.extract-refs.outputs.repo }}", "branch": "${{ steps.extract-refs.outputs.branch }}", "version": "${{ steps.extract-refs.outputs.version }}"}'
-
-  publish-npm:
-    name: Deploy package to the NPM registry
-    runs-on: ubuntu-latest
-    needs: [functional-tests]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: "https://registry.npmjs.org"
-      - run: npm run docker npm ci
-      - run: npm run docker npm run build
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

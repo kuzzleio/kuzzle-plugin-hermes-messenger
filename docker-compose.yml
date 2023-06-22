@@ -1,7 +1,7 @@
 version: "3.9"
 
 x-kuzzle-node: &kuzzle-node
-    image: kuzzleio/kuzzle-runner:14
+    image: kuzzleio/kuzzle-runner:18
     command: ${DOCKER_COMMAND:-npm run dev}
     cap_add:
       - SYS_PTRACE
