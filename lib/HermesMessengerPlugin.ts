@@ -1,17 +1,22 @@
-import _ from "lodash";
 import {
+  InternalError,
+  JSONObject,
+  Mutex,
   Plugin,
   PluginContext,
-  JSONObject,
-  InternalError,
-  Mutex,
 } from "kuzzle";
+import _ from "lodash";
 
-import { TwilioController, SendgridController } from "./controllers";
 import {
+  SMTPController,
+  SendgridController,
+  TwilioController,
+} from "./controllers";
+import {
+  MessengerClient,
+  SMTPClient,
   SendgridClient,
   TwilioClient,
-  MessengerClient,
 } from "./messenger-clients";
 
 export class MessengerClients {
@@ -43,14 +48,29 @@ export class MessengerClients {
     return this.clients.get("sendgrid") as SendgridClient;
   }
 
+  /**
+   * Returns the SMTP client.
+   */
+  get smtp(): SMTPClient {
+    if (!this.clients.has("smtp")) {
+      throw new InternalError(
+        "SMTP client is not available yet. Are you trying to access it before the application has started?"
+      );
+    }
+
+    return this.clients.get("smtp") as SMTPClient;
+  }
+
   constructor() {
     this.clients.set("twilio", new TwilioClient());
     this.clients.set("sendgrid", new SendgridClient());
+    this.clients.set("smtp", new SMTPClient());
   }
 
   async init(config: JSONObject, context: PluginContext) {
     await this.twilio.init(config, context);
     await this.sendgrid.init(config, context);
+    await this.smtp.init(config, context);
   }
 }
 
@@ -59,6 +79,7 @@ export class HermesMessengerPlugin extends Plugin {
 
   private twilioController: TwilioController;
   private sendgridController: SendgridController;
+  private smtpController: SMTPController;
 
   /**
    * Instantiated messenger clients
@@ -104,10 +125,20 @@ export class HermesMessengerPlugin extends Plugin {
             account: { type: "keyword" },
             from: { type: "keyword" },
             to: { type: "keyword" },
-
-            // sendgrid specific
             subject: { type: "keyword" },
             html: { type: "keyword" },
+            attachments: {
+              dynamic: "strict",
+              properties: {
+                content: { type: "keyword" },
+                contentType: { type: "keyword" },
+                filename: { type: "keyword" },
+                contentDisposition: { type: "keyword" },
+                cid: { type: "keyword" },
+              },
+            },
+
+            // sendgrid specific
             templateId: { type: "keyword" },
             dynamic_template_data: {
               dynamic: "false",
@@ -148,11 +179,18 @@ export class HermesMessengerPlugin extends Plugin {
       this.context,
       this.clients.sendgrid
     );
+    this.smtpController = new SMTPController(
+      this.config,
+      this.context,
+      this.clients.smtp
+    );
 
     this.api = {
       "hermes/twilio": this.twilioController.definition,
 
       "hermes/sendgrid": this.sendgridController.definition,
+
+      "hermes/smtp": this.smtpController.definition,
     };
 
     await this.initDatabase();
