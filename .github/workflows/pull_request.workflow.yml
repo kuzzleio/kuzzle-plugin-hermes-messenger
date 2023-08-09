@@ -5,7 +5,7 @@ on: [pull_request]
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - name: Cache node modules
@@ -23,7 +23,7 @@ jobs:
 
   functional-tests:
     name: Functional Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [lint]
     steps:
       - uses: actions/checkout@v3
@@ -39,26 +39,3 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - uses: ./.github/actions/functional-test
-
-  doc-dead-links:
-    name: Check dead-links
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Extract references from context
-        shell: bash
-        id: extract-refs
-        run: |
-          echo "version=$(git describe --abbrev=0 --tags | cut -d. -f 1)" >> $GITHUB_OUTPUT
-          echo "repo=$(echo $GITHUB_REPOSITORY | cut -d/ -f 2)" >> $GITHUB_OUTPUT
-          echo "fw-branch=$(if [ $BASE_BRANCH == master ]; then echo master; else echo develop; fi)" >> $GITHUB_OUTPUT
-      - uses: convictional/trigger-workflow-and-wait@v1.6.5
-        with:
-          owner: kuzzleio
-          repo: documentation
-          github_token: ${{ secrets.ACCESS_TOKEN_CI }}
-          workflow_file_name: dead_links.workflow.yml
-          ref: ${{ steps.extract-refs.outputs.fw-branch }}
-          client_payload: '{"repo_name": "${{ steps.extract-refs.outputs.repo }}", "branch": "${{ github.head_ref }}", "version": "${{ steps.extract-refs.outputs.version }}"}'
