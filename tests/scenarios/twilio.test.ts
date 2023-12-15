@@ -124,12 +124,18 @@ describe("Twilio", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "+33629951621" } },
-        { name: "ilayda", options: { defaultSender: "+9053365366473" } },
-        { name: "water-fairy", options: { defaultSender: "+9053365366472" } },
-      ],
+    expect(response.result.accounts).toHaveLength(3);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "+33629951621" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "+9053365366473" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "water-fairy",
+      options: { defaultSender: "+9053365366472" },
     });
 
     await node1.query({
@@ -143,11 +149,14 @@ describe("Twilio", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "+33629951621" } },
-        { name: "ilayda", options: { defaultSender: "+9053365366473" } },
-      ],
+    expect(response.result.accounts).toHaveLength(2);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "+33629951621" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "+9053365366473" },
     });
 
     response = await node2.query({
@@ -155,11 +164,14 @@ describe("Twilio", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "+33629951621" } },
-        { name: "ilayda", options: { defaultSender: "+9053365366473" } },
-      ],
+    expect(response.result.accounts).toHaveLength(2);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "+33629951621" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "+9053365366473" },
     });
 
     response = await node3.query({
@@ -167,11 +179,14 @@ describe("Twilio", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "+33629951621" } },
-        { name: "ilayda", options: { defaultSender: "+9053365366473" } },
-      ],
+    expect(response.result.accounts).toHaveLength(2);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "+33629951621" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "+9053365366473" },
     });
   });
 });

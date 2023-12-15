@@ -226,17 +226,26 @@ describe("SMTP", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "starttls", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "tls", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "ilayda", options: { defaultSender: "ilayda@gmail.com" } },
-        {
-          name: "water-fairy",
-          options: { defaultSender: "water-fairy@gmail.com" },
-        },
-      ],
+    expect(response.result.accounts).toHaveLength(5);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "ilayda@gmail.com" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "water-fairy",
+      options: { defaultSender: "water-fairy@gmail.com" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "starttls",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "tls",
+      options: { defaultSender: "amaret@kuzzle.io" },
     });
 
     await node1.query({
@@ -250,11 +259,22 @@ describe("SMTP", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "ilayda", options: { defaultSender: "ilayda@gmail.com" } },
-      ],
+    expect(response.result.accounts).toHaveLength(4);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "ilayda@gmail.com" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "starttls",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "tls",
+      options: { defaultSender: "amaret@kuzzle.io" },
     });
 
     response = await node1.query({
@@ -262,11 +282,22 @@ describe("SMTP", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "ilayda", options: { defaultSender: "ilayda@gmail.com" } },
-      ],
+    expect(response.result.accounts).toHaveLength(4);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "ilayda@gmail.com" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "starttls",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "tls",
+      options: { defaultSender: "amaret@kuzzle.io" },
     });
 
     response = await node2.query({
@@ -274,11 +305,22 @@ describe("SMTP", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "ilayda", options: { defaultSender: "ilayda@gmail.com" } },
-      ],
+    expect(response.result.accounts).toHaveLength(4);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "ilayda@gmail.com" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "starttls",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "tls",
+      options: { defaultSender: "amaret@kuzzle.io" },
     });
 
     response = await node3.query({
@@ -286,11 +328,22 @@ describe("SMTP", () => {
       action: "listAccounts",
     });
 
-    expect(response.result).toMatchObject({
-      accounts: [
-        { name: "common", options: { defaultSender: "amaret@kuzzle.io" } },
-        { name: "ilayda", options: { defaultSender: "ilayda@gmail.com" } },
-      ],
+    expect(response.result.accounts).toHaveLength(4);
+    expect(response.result.accounts).toContainEqual({
+      name: "common",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "ilayda",
+      options: { defaultSender: "ilayda@gmail.com" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "starttls",
+      options: { defaultSender: "amaret@kuzzle.io" },
+    });
+    expect(response.result.accounts).toContainEqual({
+      name: "tls",
+      options: { defaultSender: "amaret@kuzzle.io" },
     });
   });
 });
