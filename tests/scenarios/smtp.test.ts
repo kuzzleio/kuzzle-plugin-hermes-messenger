@@ -226,8 +226,6 @@ describe("SMTP", () => {
       action: "listAccounts",
     });
 
-    console.log(response.result);
-
     expect(response.result).toMatchObject({
       accounts: [
         { name: "common", options: { defaultSender: "amaret@kuzzle.io" } },
