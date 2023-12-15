@@ -46,6 +46,12 @@ app.start()
 
     // Add a "common" SMTP account
     hermesMessengerPlugin.clients.smtp.addAccount('common', 'smtp.example.com', 587, 'dummyUser', 'dummyPass', 'amaret@kuzzle.io');
+
+    // Add a "starttls" SMTP account
+    hermesMessengerPlugin.clients.smtp.addAccount('starttls', 'smtp.example.com', 587, 'dummyUser', 'dummyPass', 'amaret@kuzzle.io', 'starttls');
+
+    // Add a "ssl" SMTP account
+    hermesMessengerPlugin.clients.smtp.addAccount('ssl', 'smtp.example.com', 465, 'dummyUser', 'dummyPass', 'amaret@kuzzle.io', 'ssl');
   })
   .catch(console.error);
 ```

@@ -1,6 +1,6 @@
 import { Backend, KuzzleRequest } from "kuzzle";
 
-import { HermesMessengerPlugin } from "../../index";
+import { HermesMessengerPlugin, SMTPClientSSLMode } from "../../index";
 
 const app = new Backend("kuzzle");
 
@@ -31,7 +31,28 @@ hermesMessengerPlugin.clients.smtp.addAccount(
   587,
   "dummyUser",
   "dummyPass",
-  "amaret@kuzzle.io"
+  "amaret@kuzzle.io",
+  SMTPClientSSLMode.NONE
+);
+
+hermesMessengerPlugin.clients.smtp.addAccount(
+  "starttls",
+  "smtp.example.com",
+  587,
+  "dummyUser",
+  "dummyPass",
+  "amaret@kuzzle.io",
+  SMTPClientSSLMode.STARTTLS
+);
+
+hermesMessengerPlugin.clients.smtp.addAccount(
+  "tls",
+  "smtp.example.com",
+  465,
+  "dummyUser",
+  "dummyPass",
+  "amaret@kuzzle.io",
+  SMTPClientSSLMode.TLS
 );
 
 

@@ -16,6 +16,21 @@ export interface SMTPAccount
   };
 }
 
+export enum SMTPClientSSLMode {
+  /**
+   * Do not use SSL
+   */
+  NONE = "none",
+  /**
+   * Use StartTLS
+   */
+  STARTTLS = "starttls",
+  /**
+   * Use TLS on dedicated port
+   */
+  TLS = "tls",
+}
+
 export class SMTPClient extends MessengerClient<SMTPAccount> {
   constructor() {
     super("smtp");
@@ -78,13 +93,14 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
    * @param pass SMTP server password
    * @param defaultSender Default sender email address
    */
-  addAccount(
+  override addAccount(
     name: string,
     host: string,
     port: number,
     user: string,
     pass: string,
-    defaultSender: string
+    defaultSender: string,
+    ssl: SMTPClientSSLMode = SMTPClientSSLMode.NONE
   ) {
     super.addAccount(name, host, port, user, pass, defaultSender);
   }
@@ -95,8 +111,11 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     port: number,
     user: string,
     pass: string,
-    defaultSender: string
+    defaultSender: string,
+    ssl: SMTPClientSSLMode = SMTPClientSSLMode.NONE
   ): SMTPAccount {
+
+
     const transporter = createTransport({
       auth: {
         pass,
@@ -104,7 +123,9 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
       },
       host,
       port,
-      secure: port === 465,
+      secure: ssl === SMTPClientSSLMode.TLS,
+      requiredTls: ssl === SMTPClientSSLMode.STARTTLS,
+      ignoreTLS: ssl === SMTPClientSSLMode.NONE,
     });
 
     return {
