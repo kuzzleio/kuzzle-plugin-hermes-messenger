@@ -102,7 +102,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     defaultSender: string,
     ssl: SMTPClientSSLMode = SMTPClientSSLMode.NONE
   ) {
-    super.addAccount(name, host, port, user, pass, defaultSender);
+    super.addAccount(name, host, port, user, pass, defaultSender, ssl);
   }
 
   protected _createAccount(
@@ -114,8 +114,6 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     defaultSender: string,
     ssl: SMTPClientSSLMode = SMTPClientSSLMode.NONE
   ): SMTPAccount {
-
-
     const transporter = createTransport({
       auth: {
         pass,
@@ -124,7 +122,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
       host,
       port,
       secure: ssl === SMTPClientSSLMode.TLS,
-      requiredTls: ssl === SMTPClientSSLMode.STARTTLS,
+      requireTLS: ssl === SMTPClientSSLMode.STARTTLS,
       ignoreTLS: ssl === SMTPClientSSLMode.NONE,
     });
 
