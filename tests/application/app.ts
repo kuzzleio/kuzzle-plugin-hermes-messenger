@@ -25,6 +25,7 @@ hermesMessengerPlugin.clients.sendgrid.addAccount(
   "SG.apiKey",
   "amaret@kuzzle.io"
 );
+
 hermesMessengerPlugin.clients.smtp.addAccount(
   "common",
   "smtp.example.com",
