@@ -1,19 +1,11 @@
-import {
-  KuzzleRequest,
-  EmbeddedSDK,
-  JSONObject,
-  PluginContext,
-  ControllerDefinition,
-} from "kuzzle";
-
+import { KuzzleRequest, EmbeddedSDK, JSONObject, PluginContext, ControllerDefinition } from "kuzzle";
 import { SendgridClient } from "../messenger-clients";
+import { Attachment, SendgridAttachment } from "lib/types";
 
 export class SendgridController {
   private context: PluginContext;
   private config: JSONObject;
-
   private sendgridClient: SendgridClient;
-
   definition: ControllerDefinition;
 
   get sdk(): EmbeddedSDK {
@@ -64,7 +56,15 @@ export class SendgridController {
 
     const from = fromEmail.length === 0 ? null : fromEmail;
 
-    await this.sendgridClient.sendEmail(account, to, subject, html, { from });
+    const attachments = request.getBodyArray("attachments", []).map((attachment: Attachment): SendgridAttachment => ({
+      content: attachment.content,
+      filename: attachment.filename,
+      type: attachment.contentType,
+      disposition: attachment.contentDisposition,
+      content_id: attachment.cid,
+    }));
+
+    await this.sendgridClient.sendEmail(account, to, subject, html, { from, attachments });
   }
 
   async sendTemplatedEmail(request: KuzzleRequest) {
@@ -76,13 +76,15 @@ export class SendgridController {
 
     const from = fromEmail.length === 0 ? null : fromEmail;
 
-    await this.sendgridClient.sendTemplatedEmail(
-      account,
-      to,
-      templateId,
-      templateData,
-      { from }
-    );
+    const attachments = request.getBodyArray("attachments", []).map((attachment: Attachment): SendgridAttachment => ({
+      content: attachment.content,
+      filename: attachment.filename,
+      type: attachment.contentType,
+      disposition: attachment.contentDisposition,
+      content_id: attachment.cid,
+    }));
+
+    await this.sendgridClient.sendTemplatedEmail(account, to, templateId, templateData, { from, attachments });
   }
 
   async addAccount(request: KuzzleRequest) {

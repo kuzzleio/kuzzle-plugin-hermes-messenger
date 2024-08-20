@@ -2,6 +2,7 @@ import { MailService } from "@sendgrid/mail";
 import { ExternalServiceError, JSONObject } from "kuzzle";
 
 import { BaseAccount, MessengerClient } from "./MessengerClient";
+import { SendgridAttachment } from "lib/types";
 
 export interface SendgridAccount extends BaseAccount<MailService> {
   options: {
@@ -25,24 +26,31 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
    * @param subject Email subject
    * @param html Email content
    * @param options.from Sender email
+   * @param options.attachments Attachments to be included in the email
    */
   async sendEmail(
     accountName: string,
     to: string[],
     subject: string,
     html: string,
-    { from }: { from?: string } = {}
+    { from, attachments }: { from?: string; attachments?: SendgridAttachment[] } = {}
   ) {
     const account = this.getAccount(accountName);
 
     const fromEmail = from || account.options.defaultSender;
 
-    const email = { from: fromEmail, to, subject, html };
+    const email = {
+      from: fromEmail,
+      to,
+      subject,
+      html,
+      attachments,
+    };
 
     this.context.log.debug(
       `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
         ", "
-      )} SUBJECT ${subject}`
+      )} SUBJECT ${subject} ATTACHMENTS ${attachments?.length || 0}`
     );
 
     try {
@@ -59,20 +67,21 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
   }
 
   /**
-   * Sends a tempated email using one of the registered accounts.
+   * Sends a templated email using one of the registered accounts.
    *
    * @param accountName Account name
-   * @param from Sender email
    * @param to Recipient email(s)
    * @param templateId Template ID
    * @param templateData Template placeholders values
+   * @param options.from Sender email
+   * @param options.attachments Attachments to be included in the email
    */
   async sendTemplatedEmail(
     accountName: string,
     to: string[],
     templateId: string,
     templateData: JSONObject,
-    { from }: { from?: string } = {}
+    { from, attachments }: { from?: string; attachments?: SendgridAttachment[] } = {}
   ) {
     const account = this.getAccount(accountName);
 
@@ -83,12 +92,13 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
       to,
       templateId,
       dynamic_template_data: templateData,
+      attachments,
     };
 
     this.context.log.debug(
       `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
         ", "
-      )} TEMPLATE ${templateId}`
+      )} TEMPLATE ${templateId} ATTACHMENTS ${attachments?.length || 0}`
     );
 
     try {
@@ -127,7 +137,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     };
   }
 
-  private async sendMessage(account: SendgridAccount, email: any) {
+  private async sendMessage(account: SendgridAccount, email) {
     if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex,
