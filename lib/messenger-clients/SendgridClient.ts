@@ -33,7 +33,10 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     to: string[],
     subject: string,
     html: string,
-    { from, attachments }: { from?: string; attachments?: SendgridAttachment[] } = {}
+    {
+      from,
+      attachments,
+    }: { from?: string; attachments?: SendgridAttachment[] } = {}
   ) {
     const account = this.getAccount(accountName);
 
@@ -81,7 +84,10 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     to: string[],
     templateId: string,
     templateData: JSONObject,
-    { from, attachments }: { from?: string; attachments?: SendgridAttachment[] } = {}
+    {
+      from,
+      attachments,
+    }: { from?: string; attachments?: SendgridAttachment[] } = {}
   ) {
     const account = this.getAccount(accountName);
 

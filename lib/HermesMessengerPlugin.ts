@@ -137,7 +137,7 @@ export class HermesMessengerPlugin extends Plugin {
                 contentDisposition: { type: "keyword" },
                 disposition: { type: "keyword" },
                 cid: { type: "keyword" },
-                content_id: { type: "keyword" }
+                content_id: { type: "keyword" },
               },
             },
 
