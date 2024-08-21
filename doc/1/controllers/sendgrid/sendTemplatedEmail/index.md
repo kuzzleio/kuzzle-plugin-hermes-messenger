@@ -34,6 +34,15 @@ Method: POST
     },
     "templateId": "<template ID>",
     "from": "<sender email>", // optional
+    "attachments": [ // optional
+      {
+        "content": "<base64 encoded attachment content>",
+        "contentType": "<attachment content type>",
+        "filename": "<attachment file name>",
+        "contentDisposition": "attachment" | "inline",
+        "cid": "<content ID if inline attachment>" // optional
+      }
+    ]
   }
 }
 ```

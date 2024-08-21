@@ -5,3 +5,11 @@ export interface Attachment {
   contentDisposition: "attachment" | "inline";
   cid?: string;
 }
+
+export interface SendgridAttachment {
+  content: string;
+  type: string;
+  filename: string;
+  disposition: "attachment" | "inline";
+  content_id?: string;
+}

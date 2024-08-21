@@ -132,9 +132,12 @@ export class HermesMessengerPlugin extends Plugin {
               properties: {
                 content: { type: "keyword" },
                 contentType: { type: "keyword" },
+                type: { type: "keyword" },
                 filename: { type: "keyword" },
                 contentDisposition: { type: "keyword" },
+                disposition: { type: "keyword" },
                 cid: { type: "keyword" },
+                content_id: { type: "keyword" },
               },
             },
 

@@ -127,6 +127,15 @@ describe("Sendgrid", () => {
         from: "support@kuzzle.io",
         to: ["jobs@kuzzle.io"],
         templateData: { foo: "bar" },
+        attachments: [
+          {
+            content: "base64filecontent",
+            filename: "dummyfile.pdf",
+            contentType: "pdf",
+            contentDisposition: "inline",
+            content_id: "dummyCid",
+          },
+        ],
       },
     });
 
