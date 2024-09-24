@@ -58,13 +58,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     try {
       await this.sendMessage(account, email);
     } catch (error) {
-      if (error.response) {
-        throw new ExternalServiceError(
-          "SMTP " + JSON.stringify(error.response.body)
-        );
-      }
-
-      throw new ExternalServiceError(error);
+      throw new ExternalServiceError(`SMTP: ${JSON.stringify(error)}`);
     }
   }
 
