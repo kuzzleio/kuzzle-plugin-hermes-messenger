@@ -7,11 +7,12 @@ import {
 } from "kuzzle";
 
 import { SMTPClient } from "../messenger-clients";
+import TaskQueue from "../helper/TaskQueue";
 
 export class SMTPController {
   private context: PluginContext;
   private config: JSONObject;
-
+  private queue: TaskQueue;
   private smtpClient: SMTPClient;
 
   definition: ControllerDefinition;
@@ -28,6 +29,7 @@ export class SMTPController {
     this.config = config;
     this.context = context;
     this.smtpClient = smtpClient;
+    this.queue = new TaskQueue();
 
     this.definition = {
       actions: {
@@ -62,10 +64,12 @@ export class SMTPController {
     const from = fromEmail.length === 0 ? null : fromEmail;
     const attachments = attachmentsEmail.length === 0 ? null : attachmentsEmail;
 
-    await this.smtpClient.sendEmail(account, to, subject, html, {
-      attachments,
-      from,
-    });
+    this.queue.add(() =>
+      this.smtpClient.sendEmail(account, to, subject, html, {
+        attachments,
+        from,
+      })
+    );
   }
 
   async addAccount(request: KuzzleRequest) {
