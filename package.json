@@ -10,7 +10,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "docker": "docker-compose run kuzzle_node_1 ",
+    "docker": "docker compose run kuzzle_node_1 ",
     "dev": "NODE_ENV=development ergol tests/application/app.ts -c ergol.config.json",
     "prod": "node ./dist/tests/application/app.js",
     "test": "jest --runInBand",

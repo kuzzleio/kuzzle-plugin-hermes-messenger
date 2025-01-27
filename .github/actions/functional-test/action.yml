@@ -7,6 +7,6 @@ runs:
       shell: bash
       run: |
         npm run docker npm ci
-        docker-compose up -d
+        docker compose up -d
         bash tests/wait-kuzzle.sh
         npm run test
