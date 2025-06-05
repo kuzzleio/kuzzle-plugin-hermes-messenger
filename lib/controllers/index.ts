@@ -4,4 +4,4 @@ export * from "./TwilioController";
 
 export * from "./SMTPController";
 
-export * from "./SmsEnvoiController";
+export * from "./SMSEnvoiController";
