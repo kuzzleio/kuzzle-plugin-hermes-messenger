@@ -48,7 +48,7 @@ describe("SMSEnvoi", () => {
       controller: "hermes/smsenvoi",
       action: "sendSms",
       account: "test",
-      body: { message: "test message", recipients: "+33629951621" },
+      body: { text: "test message", recipients: "+33629951621" },
     });
 
     await expect(
@@ -57,7 +57,7 @@ describe("SMSEnvoi", () => {
       _source: {
         account: "test",
         recipients: "+33629951621",
-        message: "test message",
+        text: "test message",
       },
     });
   });
