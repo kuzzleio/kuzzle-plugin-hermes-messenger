@@ -29,7 +29,7 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     accountName: string,
     to: string,
     body: string,
-    { from }: { from?: string } = {}
+    { from }: { from?: string } = {},
   ) {
     if (accountName && !this.accounts.has(accountName)) {
       throw new NotFoundError(`Account "${accountName}" does not exists.`);
@@ -60,7 +60,7 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     name: string,
     accountSid: string,
     authToken: string,
-    defaultSender: string
+    defaultSender: string,
   ) {
     super.addAccount(name, accountSid, authToken, defaultSender);
   }
@@ -69,7 +69,7 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
     name: string,
     accountSid: string,
     authToken: string,
-    defaultSender: string
+    defaultSender: string,
   ) {
     return {
       name,
@@ -86,7 +86,7 @@ export class TwilioClient extends MessengerClient<TwilioAccount> {
         this.config.adminIndex,
         "messages",
         sms.body,
-        { account: account.name, ...sms }
+        { account: account.name, ...sms },
       );
     } else {
       await account.client.messages.create(sms);

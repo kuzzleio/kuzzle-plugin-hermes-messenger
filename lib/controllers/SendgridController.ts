@@ -21,7 +21,7 @@ export class SendgridController {
   constructor(
     config: JSONObject,
     context: PluginContext,
-    sendgridClient: SendgridClient
+    sendgridClient: SendgridClient,
   ) {
     this.config = config;
     this.context = context;
@@ -69,7 +69,7 @@ export class SendgridController {
         type: attachment.contentType,
         disposition: attachment.contentDisposition,
         content_id: attachment.cid,
-      })
+      }),
     );
 
     await this.sendgridClient.sendEmail(account, to, subject, html, {
@@ -94,7 +94,7 @@ export class SendgridController {
         type: attachment.contentType,
         disposition: attachment.contentDisposition,
         content_id: attachment.cid,
-      })
+      }),
     );
 
     await this.sendgridClient.sendTemplatedEmail(
@@ -102,7 +102,7 @@ export class SendgridController {
       to,
       templateId,
       templateData,
-      { from, attachments }
+      { from, attachments },
     );
   }
 

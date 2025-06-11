@@ -28,7 +28,7 @@ export class MessengerClients {
   get twilio(): TwilioClient {
     if (!this.clients.has("twilio")) {
       throw new InternalError(
-        "Twilio client is not available yet. Are you trying to access it before the application has started?"
+        "Twilio client is not available yet. Are you trying to access it before the application has started?",
       );
     }
 
@@ -41,7 +41,7 @@ export class MessengerClients {
   get sendgrid(): SendgridClient {
     if (!this.clients.has("sendgrid")) {
       throw new InternalError(
-        "Sendgrid client is not available yet. Are you trying to access it before the application has started?"
+        "Sendgrid client is not available yet. Are you trying to access it before the application has started?",
       );
     }
 
@@ -54,7 +54,7 @@ export class MessengerClients {
   get smtp(): SMTPClient {
     if (!this.clients.has("smtp")) {
       throw new InternalError(
-        "SMTP client is not available yet. Are you trying to access it before the application has started?"
+        "SMTP client is not available yet. Are you trying to access it before the application has started?",
       );
     }
 
@@ -175,17 +175,17 @@ export class HermesMessengerPlugin extends Plugin {
     this.twilioController = new TwilioController(
       this.config,
       this.context,
-      this.clients.twilio
+      this.clients.twilio,
     );
     this.sendgridController = new SendgridController(
       this.config,
       this.context,
-      this.clients.sendgrid
+      this.clients.sendgrid,
     );
     this.smtpController = new SMTPController(
       this.config,
       this.context,
-      this.clients.smtp
+      this.clients.smtp,
     );
 
     this.api = {
@@ -239,7 +239,7 @@ export class HermesMessengerPlugin extends Plugin {
     const exists = await this.sdk.document.exists(
       this.config.adminIndex,
       "config",
-      this.config.configDocumentId
+      this.config.configDocumentId,
     );
 
     if (!exists) {
@@ -253,7 +253,7 @@ export class HermesMessengerPlugin extends Plugin {
             mockedAccounts: [],
           },
         },
-        this.config.configDocumentId
+        this.config.configDocumentId,
       );
     }
   }

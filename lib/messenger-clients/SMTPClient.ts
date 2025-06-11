@@ -35,7 +35,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     to: string[],
     subject: string,
     html: string,
-    { attachments, from }: { attachments?: Attachment[]; from?: string } = {}
+    { attachments, from }: { attachments?: Attachment[]; from?: string } = {},
   ) {
     const account = this.getAccount(accountName);
 
@@ -51,8 +51,8 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
 
     this.context.log.debug(
       `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
-        ", "
-      )} SUBJECT ${subject}`
+        ", ",
+      )} SUBJECT ${subject}`,
     );
 
     try {
@@ -62,12 +62,12 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
         `An error occured while trying to send a message: ${JSON.stringify(
           error,
           null,
-          2
-        )}`
+          2,
+        )}`,
       );
       if (error.response?.body) {
         throw new ExternalServiceError(
-          "SMTP " + JSON.stringify(error.response.body)
+          "SMTP " + JSON.stringify(error.response.body),
         );
       }
 
@@ -91,7 +91,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     port: number,
     user: string,
     pass: string,
-    defaultSender: string
+    defaultSender: string,
   ) {
     super.addAccount(name, host, port, user, pass, defaultSender);
   }
@@ -102,7 +102,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
     port: number,
     user: string,
     pass: string,
-    defaultSender: string
+    defaultSender: string,
   ): SMTPAccount {
     const transporter = createTransport({
       auth: {
@@ -129,7 +129,7 @@ export class SMTPClient extends MessengerClient<SMTPAccount> {
         this.config.adminIndex,
         "messages",
         email.subject || email.templateId,
-        { account: account.name, ...email }
+        { account: account.name, ...email },
       );
     } else {
       try {

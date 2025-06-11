@@ -8,7 +8,7 @@ describe("Sendgrid", () => {
     await expect(node1.index.exists("hermes-messenger")).resolves.toBe(true);
 
     await expect(
-      node1.collection.exists("hermes-messenger", "config")
+      node1.collection.exists("hermes-messenger", "config"),
     ).resolves.toBe(true);
 
     await node1.document.update(
@@ -19,7 +19,7 @@ describe("Sendgrid", () => {
         "hermes-messenger": {
           mockedAccounts: { sendgrid: ["common", "ilayda", "water-fairy"] },
         },
-      }
+      },
     );
 
     try {
@@ -49,7 +49,7 @@ describe("Sendgrid", () => {
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "Merhaba-email")
+      node1.document.get("hermes-messenger", "messages", "Merhaba-email"),
     ).resolves.toMatchObject({
       _source: {
         account: "ilayda",
@@ -73,7 +73,7 @@ describe("Sendgrid", () => {
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "Alo-email")
+      node1.document.get("hermes-messenger", "messages", "Alo-email"),
     ).resolves.toMatchObject({
       _source: {
         account: "common",
@@ -89,7 +89,7 @@ describe("Sendgrid", () => {
     await expect(node1.index.exists("hermes-messenger")).resolves.toBe(true);
 
     await expect(
-      node1.collection.exists("hermes-messenger", "config")
+      node1.collection.exists("hermes-messenger", "config"),
     ).resolves.toBe(true);
 
     await node1.document.update(
@@ -100,7 +100,7 @@ describe("Sendgrid", () => {
         "hermes-messenger": {
           mockedAccounts: { sendgrid: ["common", "ilayda", "water-fairy"] },
         },
-      }
+      },
     );
 
     await node1.query({
@@ -138,7 +138,7 @@ describe("Sendgrid", () => {
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "sales-42")
+      node1.document.get("hermes-messenger", "messages", "sales-42"),
     ).resolves.toMatchObject({
       _source: {
         account: "ilayda",

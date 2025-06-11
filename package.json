@@ -39,7 +39,8 @@
     "ts-node": "10.9.2",
     "typescript": "5.4.*",
     "tsx": "4.19.4",
-    "vitest": "3.2.3"
+    "vitest": "3.2.3",
+    "jest": "30.0.0"
   },
   "peerDependencies": {
     "kuzzle": ">=2.41.0"
