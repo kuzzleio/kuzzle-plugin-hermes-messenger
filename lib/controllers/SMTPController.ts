@@ -23,7 +23,7 @@ export class SMTPController {
   constructor(
     config: JSONObject,
     context: PluginContext,
-    smtpClient: SMTPClient
+    smtpClient: SMTPClient,
   ) {
     this.config = config;
     this.context = context;

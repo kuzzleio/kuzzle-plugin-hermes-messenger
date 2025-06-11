@@ -36,7 +36,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     {
       from,
       attachments,
-    }: { from?: string; attachments?: SendgridAttachment[] } = {}
+    }: { from?: string; attachments?: SendgridAttachment[] } = {},
   ) {
     const account = this.getAccount(accountName);
 
@@ -52,8 +52,8 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
 
     this.context.log.debug(
       `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
-        ", "
-      )} SUBJECT ${subject} ATTACHMENTS ${attachments?.length || 0}`
+        ", ",
+      )} SUBJECT ${subject} ATTACHMENTS ${attachments?.length || 0}`,
     );
 
     try {
@@ -61,7 +61,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     } catch (error) {
       if (error.response) {
         throw new ExternalServiceError(
-          "Sendgrid " + JSON.stringify(error.response.body)
+          "Sendgrid " + JSON.stringify(error.response.body),
         );
       }
 
@@ -87,7 +87,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
     {
       from,
       attachments,
-    }: { from?: string; attachments?: SendgridAttachment[] } = {}
+    }: { from?: string; attachments?: SendgridAttachment[] } = {},
   ) {
     const account = this.getAccount(accountName);
 
@@ -103,8 +103,8 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
 
     this.context.log.debug(
       `EMAIL (${accountName}): FROM ${fromEmail} TO ${to.join(
-        ", "
-      )} TEMPLATE ${templateId} ATTACHMENTS ${attachments?.length || 0}`
+        ", ",
+      )} TEMPLATE ${templateId} ATTACHMENTS ${attachments?.length || 0}`,
     );
 
     try {
@@ -149,7 +149,7 @@ export class SendgridClient extends MessengerClient<SendgridAccount> {
         this.config.adminIndex,
         "messages",
         email.subject || email.templateId,
-        { account: account.name, ...email }
+        { account: account.name, ...email },
       );
     } else {
       await account.client.sendMultiple(email);

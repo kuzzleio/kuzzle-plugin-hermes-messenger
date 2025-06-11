@@ -1,8 +1,6 @@
 import { ResponsePayload } from "kuzzle-sdk";
 import { setupHooks } from "../helpers";
 
-jest.setTimeout(10000);
-
 describe("Twilio", () => {
   const { node1, node2, node3 } = setupHooks();
 
@@ -10,7 +8,7 @@ describe("Twilio", () => {
     await expect(node1.index.exists("hermes-messenger")).resolves.toBe(true);
 
     await expect(
-      node1.collection.exists("hermes-messenger", "config")
+      node1.collection.exists("hermes-messenger", "config"),
     ).resolves.toBe(true);
 
     await node1.document.update(
@@ -21,7 +19,7 @@ describe("Twilio", () => {
         "hermes-messenger": {
           mockedAccounts: { twilio: ["common", "ilayda", "water-fairy"] },
         },
-      }
+      },
     );
 
     try {
@@ -51,7 +49,7 @@ describe("Twilio", () => {
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "Merhaba-1")
+      node1.document.get("hermes-messenger", "messages", "Merhaba-1"),
     ).resolves.toMatchObject({
       _source: {
         account: "ilayda",
@@ -69,7 +67,7 @@ describe("Twilio", () => {
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "Alo")
+      node1.document.get("hermes-messenger", "messages", "Alo"),
     ).resolves.toMatchObject({
       _source: {
         account: "common",

@@ -49,7 +49,7 @@ export abstract class MessengerClient<T> {
         await this.nodeAddAccount(name, ...args);
       } catch (error) {
         this.context.log.error(
-          `${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`
+          `${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`,
         );
       }
     });
@@ -60,8 +60,8 @@ export abstract class MessengerClient<T> {
       } catch (error) {
         this.context.log.error(
           `${Inflector.upFirst(
-            this.name
-          )}: Cannot sync (remove) account "${name}"`
+            this.name,
+          )}: Cannot sync (remove) account "${name}"`,
         );
       }
     });
@@ -78,7 +78,7 @@ export abstract class MessengerClient<T> {
   addAccount(name: string, ...args) {
     if (this.accounts.has(name)) {
       throw new BadRequestError(
-        `${Inflector.upFirst(this.name)} account "${name}" already exists.`
+        `${Inflector.upFirst(this.name)} account "${name}" already exists.`,
       );
     }
 
@@ -92,8 +92,8 @@ export abstract class MessengerClient<T> {
         .catch((error) => {
           this.context.log.error(
             `${Inflector.upFirst(
-              this.name
-            )}: Cannot send sync message to add account "${name}": ${error}`
+              this.name,
+            )}: Cannot send sync message to add account "${name}": ${error}`,
           );
         });
     }
@@ -113,7 +113,7 @@ export abstract class MessengerClient<T> {
   removeAccount(name: string) {
     if (!this.accounts.has(name)) {
       throw new NotFoundError(
-        `${Inflector.upFirst(this.name)} account "${name}" does not exists.`
+        `${Inflector.upFirst(this.name)} account "${name}" does not exists.`,
       );
     }
 
@@ -125,8 +125,8 @@ export abstract class MessengerClient<T> {
         .catch((error) => {
           this.context.log.error(
             `${Inflector.upFirst(
-              this.name
-            )}: Cannot send sync message to add account "${name}": ${error}`
+              this.name,
+            )}: Cannot send sync message to add account "${name}": ${error}`,
           );
         });
     }
@@ -165,7 +165,7 @@ export abstract class MessengerClient<T> {
     const configDocument = await this.sdk.document.get(
       this.config.adminIndex,
       "config",
-      this.config.configDocumentId
+      this.config.configDocumentId,
     );
 
     const mockedAccounts =

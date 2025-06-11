@@ -23,7 +23,7 @@ export class TwilioController {
   constructor(
     config: JSONObject,
     context: PluginContext,
-    twilioClient: TwilioClient
+    twilioClient: TwilioClient,
   ) {
     this.config = config;
     this.context = context;
