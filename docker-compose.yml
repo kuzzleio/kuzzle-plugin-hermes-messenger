@@ -1,7 +1,7 @@
-version: "3.9"
+name: hermes-messenger
 
 x-kuzzle-node: &kuzzle-node
-    image: kuzzleio/kuzzle-runner:20
+    image: kuzzleio/kuzzle-runner:22
     command: ${DOCKER_COMMAND:-npm run dev}
     cap_add:
       - SYS_PTRACE
@@ -28,10 +28,8 @@ x-kuzzle-node: &kuzzle-node
       - kuzzle_cluster__minimumNodes=3
 
 services:
-
   nginx:
     image: nginx:1.19-alpine
-    container_name: kuzzle_nginx
     logging:
       driver: none
     depends_on:
@@ -45,19 +43,16 @@ services:
 
   kuzzle_node_1:
     <<: *kuzzle-node
-    container_name: kuzzle_node_1
     ports:
       - "17510:7512"
 
   kuzzle_node_2:
     <<: *kuzzle-node
-    container_name: kuzzle_node_2
     ports:
       - "17511:7512"
 
   kuzzle_node_3:
     <<: *kuzzle-node
-    container_name: kuzzle_node_3
     ports:
       - "17512:7512"
 

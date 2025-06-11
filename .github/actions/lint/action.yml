@@ -6,6 +6,5 @@ runs:
     - name: Install deps
       shell: bash
       run: |
-        npm run docker npm ci
-        npm run docker npm run build
-        npm run docker npm run lint
+        npm ci
+        npm run lint
