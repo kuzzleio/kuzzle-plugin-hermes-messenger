@@ -9,13 +9,15 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "outDir": "dist/",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
   },
   "rootDir": "lib/",
   "include": [
     "lib/**/*.ts",
     "tests/application/**/*.ts",
-    "index.ts"
+    "index.ts",
+    "vitest.config.ts",
   ],
   "exclude": [
     "node_modules"
