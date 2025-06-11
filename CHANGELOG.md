@@ -1,3 +1,10 @@
+## [1.2.0-beta.1](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.1.0...v1.2.0-beta.1) (2025-06-11)
+
+
+### Features
+
+* bump deps ([ac85d8c](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/ac85d8ce4a82a09b44614396d9c64768ee342d36))
+
 # [1.1.0](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.0.0...v1.1.0) (2025-03-06)
 
 
