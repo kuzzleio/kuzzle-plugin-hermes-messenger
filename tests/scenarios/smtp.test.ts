@@ -3,8 +3,6 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { setupHooks } from "../helpers";
 
-jest.setTimeout(10000);
-
 describe("SMTP", () => {
   const { node1, node2, node3 } = setupHooks();
 

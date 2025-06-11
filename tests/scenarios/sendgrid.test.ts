@@ -1,8 +1,6 @@
 import { ResponsePayload } from "kuzzle-sdk";
 import { setupHooks } from "../helpers";
 
-jest.setTimeout(10000);
-
 describe("Sendgrid", () => {
   const { node1, node2, node3 } = setupHooks();
 

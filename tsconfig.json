@@ -15,7 +15,8 @@
   "include": [
     "lib/**/*.ts",
     "tests/application/**/*.ts",
-    "index.ts"
+    "index.ts",
+    "vitest.config.ts",
   ],
   "exclude": [
     "node_modules"
