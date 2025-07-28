@@ -11,12 +11,14 @@ import {
   SMTPController,
   SendgridController,
   TwilioController,
+  SMSEnvoiController,
 } from "./controllers";
 import {
   MessengerClient,
   SMTPClient,
   SendgridClient,
   TwilioClient,
+  SMSEnvoiClient,
 } from "./messenger-clients";
 
 export class MessengerClients {
@@ -33,6 +35,19 @@ export class MessengerClients {
     }
 
     return this.clients.get("twilio") as TwilioClient;
+  }
+
+  /**
+   * Returns the SmsEnvoi client.
+   */
+  get smsenvoi(): SMSEnvoiClient {
+    if (!this.clients.has("smsenvoi")) {
+      throw new InternalError(
+        "SmsEnvoi client is not available yet. Are you trying to access it before the application has started?"
+      );
+    }
+
+    return this.clients.get("smsenvoi") as SMSEnvoiClient;
   }
 
   /**
@@ -63,12 +78,14 @@ export class MessengerClients {
 
   constructor() {
     this.clients.set("twilio", new TwilioClient());
+    this.clients.set("smsenvoi", new SMSEnvoiClient());
     this.clients.set("sendgrid", new SendgridClient());
     this.clients.set("smtp", new SMTPClient());
   }
 
   async init(config: JSONObject, context: PluginContext) {
     await this.twilio.init(config, context);
+    await this.smsenvoi.init(config, context);
     await this.sendgrid.init(config, context);
     await this.smtp.init(config, context);
   }
@@ -76,7 +93,7 @@ export class MessengerClients {
 
 export class HermesMessengerPlugin extends Plugin {
   private defaultConfig: JSONObject;
-
+  private smsenvoiController: SMSEnvoiController;
   private twilioController: TwilioController;
   private sendgridController: SendgridController;
   private smtpController: SMTPController;
@@ -188,12 +205,20 @@ export class HermesMessengerPlugin extends Plugin {
       this.clients.smtp,
     );
 
+    this.smsenvoiController = new SMSEnvoiController(
+      this.config,
+      this.context,
+      this.clients.smsenvoi
+    );
+
     this.api = {
       "hermes/twilio": this.twilioController.definition,
 
       "hermes/sendgrid": this.sendgridController.definition,
 
       "hermes/smtp": this.smtpController.definition,
+
+      "hermes/smsenvoi": this.smsenvoiController.definition,
     };
 
     await this.initDatabase();

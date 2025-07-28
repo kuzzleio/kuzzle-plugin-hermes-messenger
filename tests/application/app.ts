@@ -33,7 +33,11 @@ hermesMessengerPlugin.clients.smtp.addAccount(
   "dummyPass",
   "amaret@kuzzle.io"
 );
-
+hermesMessengerPlugin.clients.smsenvoi.addAccount(
+  "common",
+  "amaret@kuzzle.io",
+  "dummyPass"
+);
 
 app
   .start()
