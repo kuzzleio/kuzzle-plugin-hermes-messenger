@@ -33,7 +33,7 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
             username: email,
             password: password,
           },
-        }
+        },
       );
 
       const tokenParts = tokenResponse.data.split(";");
@@ -57,7 +57,7 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
       const response = await axios.post(
         "https://api.smsenvoi.com/API/v1.0/REST/sms",
         payload,
-        { headers }
+        { headers },
       );
 
       return response.data;
@@ -75,7 +75,7 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
   protected _createAccount(
     name: string,
     email: string,
-    password: string
+    password: string,
   ): SMSEnvoiAccount {
     return {
       name,

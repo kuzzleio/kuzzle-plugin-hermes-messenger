@@ -10,7 +10,7 @@ describe("SMSEnvoi", () => {
     await expect(node1.index.exists("hermes-messenger")).resolves.toBe(true);
 
     await expect(
-      node1.collection.exists("hermes-messenger", "config")
+      node1.collection.exists("hermes-messenger", "config"),
     ).resolves.toBe(true);
 
     await node1.document.update(
@@ -23,7 +23,7 @@ describe("SMSEnvoi", () => {
             smsenvoi: ["test", "common", "fairy-tail"],
           },
         },
-      }
+      },
     );
 
     try {
@@ -52,7 +52,7 @@ describe("SMSEnvoi", () => {
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "test message")
+      node1.document.get("hermes-messenger", "messages", "test message"),
     ).resolves.toMatchObject({
       _source: {
         account: "test",

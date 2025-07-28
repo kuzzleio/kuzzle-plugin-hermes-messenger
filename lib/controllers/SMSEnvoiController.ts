@@ -22,7 +22,7 @@ export class SMSEnvoiController {
   constructor(
     config: JSONObject,
     context: PluginContext,
-    smsClient: SMSEnvoiClient
+    smsClient: SMSEnvoiClient,
   ) {
     this.config = config;
     this.context = context;
