@@ -104,9 +104,18 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
-        { name: "test", options: { email: "test@kuzzle.io" } },
-        { name: "fairy-tail", options: { email: "fairytail@kuzzle.io" } },
+        {
+          name: "common",
+          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+        },
+        {
+          name: "test",
+          options: { email: "test@kuzzle.io", password: "dummyPass" },
+        },
+        {
+          name: "fairy-tail",
+          options: { email: "fairytail@kuzzle.io", password: "dummyPass" },
+        },
       ],
     });
 
@@ -123,8 +132,14 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
-        { name: "test", options: { email: "test@kuzzle.io" } },
+        {
+          name: "common",
+          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+        },
+        {
+          name: "test",
+          options: { email: "test@kuzzle.io", password: "dummyPass" },
+        },
       ],
     });
 
@@ -135,8 +150,14 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
-        { name: "test", options: { email: "test@kuzzle.io" } },
+        {
+          name: "common",
+          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+        },
+        {
+          name: "test",
+          options: { email: "test@kuzzle.io", password: "dummyPass" },
+        },
       ],
     });
 
@@ -147,8 +168,14 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
-        { name: "test", options: { email: "test@kuzzle.io" } },
+        {
+          name: "common",
+          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+        },
+        {
+          name: "test",
+          options: { email: "test@kuzzle.io", password: "dummyPass" },
+        },
       ],
     });
   });
