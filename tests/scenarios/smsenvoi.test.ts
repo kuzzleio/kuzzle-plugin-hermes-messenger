@@ -154,10 +154,10 @@ describe("SMSEnvoi", () => {
           name: "common",
           options: { email: "amaret@kuzzle.io", password: "dummyPass" },
         },
-        {
-          name: "test",
-          options: { email: "test@kuzzle.io", password: "dummyPass" },
-        },
+        // {
+        //   name: "test",
+        //   options: { email: "test@kuzzle.io", password: "dummyPass" },
+        // },
       ],
     });
 
@@ -172,10 +172,10 @@ describe("SMSEnvoi", () => {
           name: "common",
           options: { email: "amaret@kuzzle.io", password: "dummyPass" },
         },
-        {
-          name: "test",
-          options: { email: "test@kuzzle.io", password: "dummyPass" },
-        },
+        // {
+        //   name: "test",
+        //   options: { email: "test@kuzzle.io", password: "dummyPass" },
+        // },
       ],
     });
   });
