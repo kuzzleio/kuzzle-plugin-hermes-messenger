@@ -104,8 +104,8 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
         { name: "common", options: { email: "amaret@kuzzle.io" } },
+        { name: "test", options: { email: "test@kuzzle.io" } },
         { name: "fairy-tail", options: { email: "fairytail@kuzzle.io" } },
       ],
     });
@@ -123,8 +123,8 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
         { name: "common", options: { email: "amaret@kuzzle.io" } },
+        { name: "test", options: { email: "test@kuzzle.io" } },
       ],
     });
 
@@ -135,8 +135,8 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
         { name: "common", options: { email: "amaret@kuzzle.io" } },
+        { name: "test", options: { email: "test@kuzzle.io" } },
       ],
     });
 
@@ -147,8 +147,8 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
         { name: "common", options: { email: "amaret@kuzzle.io" } },
+        { name: "test", options: { email: "test@kuzzle.io" } },
       ],
     });
   });
