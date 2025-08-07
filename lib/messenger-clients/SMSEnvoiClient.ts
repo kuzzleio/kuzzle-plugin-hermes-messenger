@@ -4,8 +4,8 @@ import { BaseAccount, MessengerClient } from "./MessengerClient";
 
 export interface SMSEnvoiAccount extends BaseAccount<null> {
   options: {
-    email: string;
-    password: string;
+    userKey: string;
+    accessToken: string;
   };
 }
 
@@ -23,27 +23,12 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
     }
 
     const account = this.getAccount(accountName);
-    const { email, password } = account.options;
+    const { userKey: user_key, accessToken: Access_token } = account.options;
 
     try {
-      const tokenResponse = await axios.get<string>(
-        "https://api.smsenvoi.com/API/v1.0/REST/token",
-        {
-          auth: {
-            username: email,
-            password: password,
-          },
-        },
-      );
-
-      const tokenParts = tokenResponse.data.split(";");
-      if (tokenParts.length < 2) {
-        throw new Error("Invalid token format received from SMSEnvoi.");
-      }
-
       const headers = {
-        user_key: tokenParts[0],
-        Access_token: tokenParts[1],
+        user_key,
+        Access_token,
         "Content-type": "application/json",
       };
 
@@ -53,6 +38,17 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
         recipient: recipients,
         returnCredits: true,
       };
+
+      if (await this.mockedAccount(account.name)) {
+        await this.sdk.document.createOrReplace(
+          this.config.adminIndex,
+          "messages",
+          message,
+          { account: account.name, recipients },
+        );
+
+        return;
+      }
 
       const response = await axios.post(
         "https://api.smsenvoi.com/API/v1.0/REST/sms",
@@ -67,20 +63,20 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
     }
   }
 
-  addAccount(name: string, email: string, password: string) {
-    const account = this._createAccount(name, email, password);
+  addAccount(name: string, userKey: string, accessToken: string) {
+    const account = this._createAccount(name, userKey, accessToken);
     this.accounts.set(name, account);
   }
 
   protected _createAccount(
     name: string,
-    email: string,
-    password: string,
+    userKey: string,
+    accessToken: string,
   ): SMSEnvoiAccount {
     return {
       name,
       client: null,
-      options: { email, password },
+      options: { userKey, accessToken },
     };
   }
 }

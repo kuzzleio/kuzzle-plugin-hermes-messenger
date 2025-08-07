@@ -61,10 +61,10 @@ export class SMSEnvoiController {
 
   async addAccount(request: KuzzleRequest) {
     const account = request.getString("account");
-    const email = request.getBodyString("email");
-    const password = request.getBodyString("password");
+    const userKey = request.getBodyString("userKey");
+    const accessToken = request.getBodyString("accessToken");
 
-    this.smsClient.addAccount(account, email, password);
+    this.smsClient.addAccount(account, userKey, accessToken);
   }
 
   async removeAccount(request: KuzzleRequest) {
