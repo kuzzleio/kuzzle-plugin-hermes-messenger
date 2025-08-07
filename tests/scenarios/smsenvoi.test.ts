@@ -4,7 +4,7 @@ import { setupHooks } from "../helpers";
 describe("SMSEnvoi", () => {
   const { node1, node2, node3 } = setupHooks();
 
-  it("Register an account and send an email", async () => {
+  it("Register an account and send an sms", async () => {
     await expect(node1.index.exists("hermes-messenger")).resolves.toBe(true);
 
     await expect(
@@ -37,8 +37,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "test",
       body: {
-        email: "test@kuzzle.io",
-        password: "dummyPass",
+        userKey: "myuserKey",
+        accessToken: "myaccessToken",
+        defaultSender: "+330645986521",
       },
     });
 
@@ -82,8 +83,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "test",
       body: {
-        email: "test@kuzzle.io",
-        password: "dummyPass",
+        userKey: "myuserKey",
+        accessToken: "theaccessToken",
+        defaultSender: "+33612345678",
       },
     });
 
@@ -92,8 +94,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "fairy-tail",
       body: {
-        email: "fairytail@kuzzle.io",
-        password: "dummyPass",
+        userKey: "mykeyfairytail",
+        accessToken: "dummyaccessToken",
+        defaultSender: "+33687654321",
       },
     });
 
@@ -106,15 +109,18 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+          options: { userKey: "yes", accessToken: "dontknow" },
         },
         {
           name: "test",
-          options: { email: "test@kuzzle.io", password: "dummyPass" },
+          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
         },
         {
           name: "fairy-tail",
-          options: { email: "fairytail@kuzzle.io", password: "dummyPass" },
+          options: {
+            userKey: "mykeyfairytail",
+            accessToken: "dummyaccessToken",
+          },
         },
       ],
     });
@@ -134,11 +140,11 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+          options: { userKey: "yes", accessToken: "dontknow" },
         },
         {
           name: "test",
-          options: { email: "test@kuzzle.io", password: "dummyPass" },
+          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
         },
       ],
     });
@@ -152,12 +158,12 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+          options: { userKey: "yes", accessToken: "dontknow" },
         },
-        // {
-        //   name: "test",
-        //   options: { email: "test@kuzzle.io", password: "dummyPass" },
-        // },
+        {
+          name: "test",
+          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
+        },
       ],
     });
 
@@ -170,12 +176,12 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { email: "amaret@kuzzle.io", password: "dummyPass" },
+          options: { userKey: "yes", accessToken: "dontknow" },
         },
-        // {
-        //   name: "test",
-        //   options: { email: "test@kuzzle.io", password: "dummyPass" },
-        // },
+        {
+          name: "test",
+          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
+        },
       ],
     });
   });
