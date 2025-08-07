@@ -37,8 +37,8 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "test",
       body: {
-        userKey: "myuserKey",
-        accessToken: "myaccessToken",
+        userKey: "testUserKey",
+        accessToken: "testAccessToken",
         defaultSender: "+330645986521",
       },
     });
@@ -47,7 +47,7 @@ describe("SMSEnvoi", () => {
       controller: "hermes/smsenvoi",
       action: "sendSms",
       account: "test",
-      body: { text: "test message", recipients: "+33629951621" },
+      body: { to: "+33629951621", text: "test message" },
     });
 
     await expect(
@@ -55,8 +55,27 @@ describe("SMSEnvoi", () => {
     ).resolves.toMatchObject({
       _source: {
         account: "test",
-        recipients: "+33629951621",
-        text: "test message",
+        from: "+330645986521",
+        to: "+33629951621",
+        body: "test message",
+      },
+    });
+
+    await node1.query({
+      controller: "hermes/smsenvoi",
+      action: "sendSms",
+      account: "common",
+      body: { from: "+33701020304", to: "+33701020304", text: "Myself" },
+    });
+
+    await expect(
+      node1.document.get("hermes-messenger", "messages", "Myself"),
+    ).resolves.toMatchObject({
+      _source: {
+        account: "common",
+        from: "+33701020304",
+        to: "+33701020304",
+        body: "Myself",
       },
     });
   });
@@ -83,9 +102,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "test",
       body: {
-        userKey: "myuserKey",
-        accessToken: "theaccessToken",
-        defaultSender: "+33612345678",
+        userKey: "testUserKey",
+        accessToken: "testAccessToken",
+        defaultSender: "+330645986521",
       },
     });
 
@@ -94,8 +113,8 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "fairy-tail",
       body: {
-        userKey: "mykeyfairytail",
-        accessToken: "dummyaccessToken",
+        userKey: "fairytailUserKey",
+        accessToken: "fairyTailAccessToken",
         defaultSender: "+33687654321",
       },
     });
@@ -109,20 +128,34 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { userKey: "yes", accessToken: "dontknow" },
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
         },
         {
           name: "test",
-          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
         },
         {
           name: "fairy-tail",
           options: {
-            userKey: "mykeyfairytail",
-            accessToken: "dummyaccessToken",
+            userKey: "fairytailUserKey",
+            accessToken: "fairyTailAccessToken",
+            defaultSender: "+33687654321",
           },
         },
       ],
+    });
+
+    response = await node1.query({
+      controller: "hermes/smsenvoi",
+      action: "listAccounts",
     });
 
     await node1.query({
@@ -140,11 +173,19 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { userKey: "yes", accessToken: "dontknow" },
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
         },
         {
           name: "test",
-          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
         },
       ],
     });
@@ -158,11 +199,19 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { userKey: "yes", accessToken: "dontknow" },
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
         },
         {
           name: "test",
-          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
         },
       ],
     });
@@ -176,11 +225,19 @@ describe("SMSEnvoi", () => {
       accounts: [
         {
           name: "common",
-          options: { userKey: "yes", accessToken: "dontknow" },
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
         },
         {
           name: "test",
-          options: { userKey: "myuserKey", accessToken: "theaccessToken" },
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
         },
       ],
     });

@@ -35,8 +35,9 @@ hermesMessengerPlugin.clients.smtp.addAccount(
 );
 hermesMessengerPlugin.clients.smsenvoi.addAccount(
   "common",
-  "amaret@kuzzle.io",
-  "dummyPass"
+  "commonUserKey",
+  "commonAccessToken",
+  "+33701020304"
 );
 
 app
