@@ -1,16 +1,14 @@
 import { ResponsePayload } from "kuzzle-sdk";
 import { setupHooks } from "../helpers";
 
-jest.setTimeout(10000);
-
 describe("SMSEnvoi", () => {
   const { node1, node2, node3 } = setupHooks();
 
-  it("Register an account and send an email", async () => {
+  it("Register an account and send an sms", async () => {
     await expect(node1.index.exists("hermes-messenger")).resolves.toBe(true);
 
     await expect(
-      node1.collection.exists("hermes-messenger", "config")
+      node1.collection.exists("hermes-messenger", "config"),
     ).resolves.toBe(true);
 
     await node1.document.update(
@@ -23,7 +21,7 @@ describe("SMSEnvoi", () => {
             smsenvoi: ["test", "common", "fairy-tail"],
           },
         },
-      }
+      },
     );
 
     try {
@@ -39,8 +37,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "test",
       body: {
-        email: "test@kuzzle.io",
-        password: "dummyPass",
+        userKey: "testUserKey",
+        accessToken: "testAccessToken",
+        defaultSender: "+330645986521",
       },
     });
 
@@ -48,16 +47,35 @@ describe("SMSEnvoi", () => {
       controller: "hermes/smsenvoi",
       action: "sendSms",
       account: "test",
-      body: { text: "test message", recipients: "+33629951621" },
+      body: { to: "+33629951621", text: "test message" },
     });
 
     await expect(
-      node1.document.get("hermes-messenger", "messages", "test message")
+      node1.document.get("hermes-messenger", "messages", "test message"),
     ).resolves.toMatchObject({
       _source: {
         account: "test",
-        recipients: "+33629951621",
-        text: "test message",
+        from: "+330645986521",
+        to: "+33629951621",
+        body: "test message",
+      },
+    });
+
+    await node1.query({
+      controller: "hermes/smsenvoi",
+      action: "sendSms",
+      account: "common",
+      body: { from: "+33701020304", to: "+33701020304", text: "Myself" },
+    });
+
+    await expect(
+      node1.document.get("hermes-messenger", "messages", "Myself"),
+    ).resolves.toMatchObject({
+      _source: {
+        account: "common",
+        from: "+33701020304",
+        to: "+33701020304",
+        body: "Myself",
       },
     });
   });
@@ -84,8 +102,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "test",
       body: {
-        email: "test@kuzzle.io",
-        password: "dummyPass",
+        userKey: "testUserKey",
+        accessToken: "testAccessToken",
+        defaultSender: "+330645986521",
       },
     });
 
@@ -94,8 +113,9 @@ describe("SMSEnvoi", () => {
       action: "addAccount",
       account: "fairy-tail",
       body: {
-        email: "fairytail@kuzzle.io",
-        password: "dummyPass",
+        userKey: "fairytailUserKey",
+        accessToken: "fairyTailAccessToken",
+        defaultSender: "+33687654321",
       },
     });
 
@@ -106,10 +126,36 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
-        { name: "fairy-tail", options: { email: "fairytail@kuzzle.io" } },
+        {
+          name: "common",
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
+        },
+        {
+          name: "test",
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
+        },
+        {
+          name: "fairy-tail",
+          options: {
+            userKey: "fairytailUserKey",
+            accessToken: "fairyTailAccessToken",
+            defaultSender: "+33687654321",
+          },
+        },
       ],
+    });
+
+    response = await node1.query({
+      controller: "hermes/smsenvoi",
+      action: "listAccounts",
     });
 
     await node1.query({
@@ -125,8 +171,22 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
+        {
+          name: "common",
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
+        },
+        {
+          name: "test",
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
+        },
       ],
     });
 
@@ -137,8 +197,22 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
+        {
+          name: "common",
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
+        },
+        {
+          name: "test",
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
+        },
       ],
     });
 
@@ -149,8 +223,22 @@ describe("SMSEnvoi", () => {
 
     expect(response.result).toMatchObject({
       accounts: [
-        { name: "test", options: { email: "test@kuzzle.io" } },
-        { name: "common", options: { email: "amaret@kuzzle.io" } },
+        {
+          name: "common",
+          options: {
+            userKey: "commonUserKey",
+            accessToken: "commonAccessToken",
+            defaultSender: "+33701020304",
+          },
+        },
+        {
+          name: "test",
+          options: {
+            userKey: "testUserKey",
+            accessToken: "testAccessToken",
+            defaultSender: "+330645986521",
+          },
+        },
       ],
     });
   });

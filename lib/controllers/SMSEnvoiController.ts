@@ -22,7 +22,7 @@ export class SMSEnvoiController {
   constructor(
     config: JSONObject,
     context: PluginContext,
-    smsClient: SMSEnvoiClient
+    smsClient: SMSEnvoiClient,
   ) {
     this.config = config;
     this.context = context;
@@ -52,19 +52,22 @@ export class SMSEnvoiController {
 
   async sendSms(request: KuzzleRequest) {
     const account = request.getString("account");
-    const message = request.getBodyString("text");
-    const recipientsStr = request.getBodyString("recipients");
-    const recipients = recipientsStr.split(",").map((r) => r.trim());
+    const fromNumber = request.getBodyString("from", "");
+    const to = request.getBodyString("to");
+    const text = request.getBodyString("text");
 
-    await this.smsClient.sendSms(account, recipients, message);
+    const from = fromNumber.length === 0 ? null : fromNumber;
+
+    await this.smsClient.sendSms(account, to, text, { from });
   }
 
   async addAccount(request: KuzzleRequest) {
     const account = request.getString("account");
-    const email = request.getBodyString("email");
-    const password = request.getBodyString("password");
+    const userKey = request.getBodyString("userKey");
+    const accessToken = request.getBodyString("accessToken");
+    const defaultSender = request.getBodyString("defaultSender");
 
-    this.smsClient.addAccount(account, email, password);
+    this.smsClient.addAccount(account, userKey, accessToken, defaultSender);
   }
 
   async removeAccount(request: KuzzleRequest) {

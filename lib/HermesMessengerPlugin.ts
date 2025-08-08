@@ -43,7 +43,7 @@ export class MessengerClients {
   get smsenvoi(): SMSEnvoiClient {
     if (!this.clients.has("smsenvoi")) {
       throw new InternalError(
-        "SmsEnvoi client is not available yet. Are you trying to access it before the application has started?"
+        "SmsEnvoi client is not available yet. Are you trying to access it before the application has started?",
       );
     }
 
@@ -208,7 +208,7 @@ export class HermesMessengerPlugin extends Plugin {
     this.smsenvoiController = new SMSEnvoiController(
       this.config,
       this.context,
-      this.clients.smsenvoi
+      this.clients.smsenvoi,
     );
 
     this.api = {
