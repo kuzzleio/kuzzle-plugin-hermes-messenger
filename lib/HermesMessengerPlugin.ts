@@ -8,10 +8,10 @@ import {
 import _ from "lodash";
 
 import { ProviderController } from "./controllers";
-import { BaseMessengerClient } from "./providers";
+import { BaseProvider } from "./providers";
 
 export class MessengerClients {
-  private clients = new Map<string, BaseMessengerClient<any>>();
+  private clients = new Map<string, BaseProvider<any>>();
 
   constructor() {}
 
@@ -21,14 +21,14 @@ export class MessengerClients {
     }
   }
 
-  set(clientName: string, clientInstance: BaseMessengerClient<any>) {
+  set(clientName: string, clientInstance: BaseProvider<any>) {
     this.clients.set(clientName, clientInstance);
   }
 
-  get(clientName: string): BaseMessengerClient<any> {
+  get(clientName: string): BaseProvider<any> {
     if (!this.clients.has(clientName)) {
       throw new InternalError(
-        `${clientName} client is not available yet. Are you trying to access it before the application has started?`,
+        `${clientName} client is not available yet. Are you trying to access it before the application has started ?`,
       );
     }
 

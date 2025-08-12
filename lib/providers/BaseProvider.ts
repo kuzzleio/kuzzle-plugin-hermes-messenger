@@ -14,7 +14,7 @@ export interface BaseAccount<T> {
   name: string;
 }
 
-export abstract class BaseMessengerClient<T> {
+export abstract class BaseProvider<T> {
   protected config: JSONObject;
   protected context: PluginContext;
 
