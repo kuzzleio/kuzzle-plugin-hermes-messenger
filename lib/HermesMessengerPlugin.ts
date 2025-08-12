@@ -7,105 +7,40 @@ import {
 } from "kuzzle";
 import _ from "lodash";
 
-import {
-  SMTPController,
-  SendgridController,
-  TwilioController,
-  SMSEnvoiController,
-} from "./controllers";
-import {
-  MessengerClient,
-  SMTPClient,
-  SendgridClient,
-  TwilioClient,
-  SMSEnvoiClient,
-} from "./messenger-clients";
+import { ProviderController } from "./controllers";
+import { BaseMessengerClient } from "./providers";
 
 export class MessengerClients {
-  private clients = new Map<string, MessengerClient<any>>();
+  private clients = new Map<string, BaseMessengerClient<any>>();
 
-  /**
-   * Returns the Twilio client.
-   */
-  get twilio(): TwilioClient {
-    if (!this.clients.has("twilio")) {
+  constructor() {}
+
+  async init(config: JSONObject, context: PluginContext): Promise<void> {
+    for (const [, value] of this.clients) {
+      await value.init(config, context);
+    }
+  }
+
+  set(clientName: string, clientInstance: BaseMessengerClient<any>) {
+    this.clients.set(clientName, clientInstance);
+  }
+
+  get(clientName: string): BaseMessengerClient<any> {
+    if (!this.clients.has(clientName)) {
       throw new InternalError(
-        "Twilio client is not available yet. Are you trying to access it before the application has started?",
+        `${clientName} client is not available yet. Are you trying to access it before the application has started?`,
       );
     }
 
-    return this.clients.get("twilio") as TwilioClient;
-  }
-
-  /**
-   * Returns the SmsEnvoi client.
-   */
-  get smsenvoi(): SMSEnvoiClient {
-    if (!this.clients.has("smsenvoi")) {
-      throw new InternalError(
-        "SmsEnvoi client is not available yet. Are you trying to access it before the application has started?",
-      );
-    }
-
-    return this.clients.get("smsenvoi") as SMSEnvoiClient;
-  }
-
-  /**
-   * Returns the Sendgrid client.
-   */
-  get sendgrid(): SendgridClient {
-    if (!this.clients.has("sendgrid")) {
-      throw new InternalError(
-        "Sendgrid client is not available yet. Are you trying to access it before the application has started?",
-      );
-    }
-
-    return this.clients.get("sendgrid") as SendgridClient;
-  }
-
-  /**
-   * Returns the SMTP client.
-   */
-  get smtp(): SMTPClient {
-    if (!this.clients.has("smtp")) {
-      throw new InternalError(
-        "SMTP client is not available yet. Are you trying to access it before the application has started?",
-      );
-    }
-
-    return this.clients.get("smtp") as SMTPClient;
-  }
-
-  constructor() {
-    this.clients.set("twilio", new TwilioClient());
-    this.clients.set("smsenvoi", new SMSEnvoiClient());
-    this.clients.set("sendgrid", new SendgridClient());
-    this.clients.set("smtp", new SMTPClient());
-  }
-
-  async init(config: JSONObject, context: PluginContext) {
-    await this.twilio.init(config, context);
-    await this.smsenvoi.init(config, context);
-    await this.sendgrid.init(config, context);
-    await this.smtp.init(config, context);
+    return this.clients.get(clientName);
   }
 }
 
 export class HermesMessengerPlugin extends Plugin {
   private defaultConfig: JSONObject;
-  private smsenvoiController: SMSEnvoiController;
-  private twilioController: TwilioController;
-  private sendgridController: SendgridController;
-  private smtpController: SMTPController;
-
-  /**
-   * Instantiated messenger clients
-   */
+  private controller: ProviderController;
   clients: MessengerClients;
 
-  /**
-   * Constructor
-   */
   constructor() {
     super({
       kuzzleVersion: ">=2.12.0 <3",
@@ -173,6 +108,12 @@ export class HermesMessengerPlugin extends Plugin {
     };
 
     this.clients = new MessengerClients();
+
+    this.controller = new ProviderController(
+      this.config,
+      this.context,
+      this.clients,
+    );
   }
 
   get sdk() {
@@ -189,37 +130,7 @@ export class HermesMessengerPlugin extends Plugin {
 
     await this.clients.init(this.config, this.context);
 
-    this.twilioController = new TwilioController(
-      this.config,
-      this.context,
-      this.clients.twilio,
-    );
-    this.sendgridController = new SendgridController(
-      this.config,
-      this.context,
-      this.clients.sendgrid,
-    );
-    this.smtpController = new SMTPController(
-      this.config,
-      this.context,
-      this.clients.smtp,
-    );
-
-    this.smsenvoiController = new SMSEnvoiController(
-      this.config,
-      this.context,
-      this.clients.smsenvoi,
-    );
-
-    this.api = {
-      "hermes/twilio": this.twilioController.definition,
-
-      "hermes/sendgrid": this.sendgridController.definition,
-
-      "hermes/smtp": this.smtpController.definition,
-
-      "hermes/smsenvoi": this.smsenvoiController.definition,
-    };
+    this.api = {};
 
     await this.initDatabase();
     await this.initConfig();
