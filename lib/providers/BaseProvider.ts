@@ -14,7 +14,7 @@ export interface BaseAccount<T> {
   name: string;
 }
 
-export abstract class MessengerClient<T> {
+export abstract class BaseMessengerClient<T> {
   protected config: JSONObject;
   protected context: PluginContext;
 
@@ -67,6 +67,12 @@ export abstract class MessengerClient<T> {
     });
   }
 
+  getName(): string {
+    return this.name;
+  }
+
+  abstract send(account: string, to: string[], ...args): Promise<void>;
+
   protected abstract _createAccount(...args): T;
 
   /**
@@ -105,11 +111,6 @@ export abstract class MessengerClient<T> {
     this.accounts.set(name, this._createAccount(name, ...args));
   }
 
-  /**
-   * Removes an account
-   *
-   * @param name Account name
-   */
   removeAccount(name: string) {
     if (!this.accounts.has(name)) {
       throw new NotFoundError(
@@ -138,11 +139,6 @@ export abstract class MessengerClient<T> {
     this.accounts.delete(name);
   }
 
-  /**
-   * Lists available accounts
-   *
-   * @returns Account names
-   */
   listAccounts(): Array<{ name: string; options: JSONObject }> {
     const accounts = [];
 

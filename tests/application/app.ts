@@ -14,18 +14,18 @@ app.hook.register("request:onError", async (request: KuzzleRequest) => {
 
 app.config.set("plugins.kuzzle-plugin-logger.services.stdout.level", "debug");
 
-hermesMessengerPlugin.clients.twilio.addAccount(
+hermesMessengerPlugin.clients.get('twilio').addAccount(
   "common",
   "AC-accountSid",
   "authToken",
   "+33629951621"
 );
-hermesMessengerPlugin.clients.sendgrid.addAccount(
+hermesMessengerPlugin.clients.get('sendgrid').addAccount(
   "common",
   "SG.apiKey",
   "amaret@kuzzle.io"
 );
-hermesMessengerPlugin.clients.smtp.addAccount(
+hermesMessengerPlugin.clients.get('smtp').addAccount(
   "common",
   "smtp.example.com",
   587,
@@ -33,7 +33,7 @@ hermesMessengerPlugin.clients.smtp.addAccount(
   "dummyPass",
   "amaret@kuzzle.io"
 );
-hermesMessengerPlugin.clients.smsenvoi.addAccount(
+hermesMessengerPlugin.clients.get('smsenvoi').addAccount(
   "common",
   "commonUserKey",
   "commonAccessToken",
