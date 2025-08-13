@@ -84,17 +84,22 @@ export class SMSEnvoiClient extends MessengerClient<SMSEnvoiAccount> {
       const payload = {
         message_type: "PRM",
         message: sms.body,
-        recipient: sms.to,
+        recipient: [sms.to],
         returnCredits: true,
+        sender: sms.from,
       };
 
-      const response = await axios.post(
-        "https://api.smsenvoi.com/API/v1.0/REST/sms",
-        payload,
-        { headers },
-      );
+      try {
+        const response = await axios.post(
+          "https://api.smsenvoi.com/API/v1.0/REST/sms",
+          payload,
+          { headers },
+        );
 
-      return response.data;
+        return response.data;
+      } catch (e) {
+        throw Error(e.resonse.data.result);
+      }
     }
   }
 }
