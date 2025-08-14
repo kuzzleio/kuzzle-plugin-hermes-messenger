@@ -1,3 +1,19 @@
+## [1.3.0](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.2.0...v1.3.0) (2025-08-14)
+
+
+### Features
+
+* **smsenvoi:** Added tests ([dbc5e2c](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/dbc5e2c30e42965293480e6281cee1ae70a9b452))
+* **smsenvoi:** fix replacing message by text ([13cb5ee](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/13cb5ee8cce11b331d138bc3b45975a4f5332159))
+* **smsenvoi:** replace SmsEnvoi by SMSEnvoi ([2fe82f3](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/2fe82f309cf032306a5a2f2625cbf53a1905458d))
+
+
+### Bug Fixes
+
+* smsenvoi implementation and test ([#35](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/35)) ([14ed0c7](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/14ed0c7339a2609bbe7796821d0d791e0556626c))
+* update config ([#39](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/39)) ([b49875c](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b49875c40cb0fc0c6f8a9ea428e1222bc525a152))
+* update smsenvoi payload ([#37](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/37)) ([9ad28fa](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/9ad28fa3f4298c17e601180772b7dd0118a5c4a9))
+
 ## [1.2.0](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.1.0...v1.2.0) (2025-06-11)
 
 
