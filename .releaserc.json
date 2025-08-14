@@ -4,8 +4,12 @@
     "master",
     { "name": "beta", "prerelease": true },
     {
-      "name": "+([0-9])-dev",
+      "name": "1-dev",
       "prerelease": "dev"
+    },
+    {
+      "name": "2-dev",
+      "prerelease": "2-dev"
     }
   ]
 }
