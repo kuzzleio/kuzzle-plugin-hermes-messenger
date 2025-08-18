@@ -5,13 +5,13 @@ import {
   PluginContext,
   ControllerDefinition,
 } from "kuzzle";
-import { MessengerClients } from "lib/HermesMessengerPlugin";
+import { ProviderManager } from "lib/HermesMessengerPlugin";
 
 export class ProviderController {
   protected context: PluginContext;
   private config: JSONObject;
 
-  private clients: MessengerClients;
+  private providerManager: ProviderManager;
 
   definition: ControllerDefinition;
 
@@ -22,11 +22,11 @@ export class ProviderController {
   constructor(
     config: JSONObject,
     context: PluginContext,
-    clients: MessengerClients,
+    providerManager: ProviderManager,
   ) {
     this.config = config;
     this.context = context;
-    this.clients = clients;
+    this.providerManager = providerManager;
 
     this.definition = {
       actions: {
@@ -68,27 +68,31 @@ export class ProviderController {
 
     const params = request.getObject("params");
 
-    this.clients.get(provider).send(account, to, ...Object.values(params));
+    this.providerManager
+      .get(provider)
+      .send(account, to, ...Object.values(params));
   }
 
   async addAccount(request: KuzzleRequest): Promise<void> {
     const provider = request.getString("provider");
     const params = request.getObject("params");
 
-    this.clients.get(provider).addAccount(provider, ...Object.values(params));
+    this.providerManager
+      .get(provider)
+      .addAccount(provider, ...Object.values(params));
   }
 
   async removeAccount(request: KuzzleRequest) {
     const provider = request.getString("provider");
     const account = request.getString("account");
 
-    this.clients.get(provider).removeAccount(account);
+    this.providerManager.get(provider).removeAccount(account);
   }
 
   async listAccounts(request: KuzzleRequest) {
     const provider = request.getString("provider");
 
-    const accounts = this.clients.get(provider).listAccounts();
+    const accounts = this.providerManager.get(provider).listAccounts();
 
     return { accounts };
   }

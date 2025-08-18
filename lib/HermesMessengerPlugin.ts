@@ -10,36 +10,36 @@ import _ from "lodash";
 import { ProviderController } from "./controllers";
 import { BaseProvider } from "./providers";
 
-export class MessengerClients {
-  private clients = new Map<string, BaseProvider<any>>();
+export class ProviderManager {
+  private providers = new Map<string, BaseProvider<any>>();
 
   constructor() {}
 
   async init(config: JSONObject, context: PluginContext): Promise<void> {
-    for (const [, value] of this.clients) {
+    for (const [, value] of this.providers) {
       await value.init(config, context);
     }
   }
 
-  set(clientName: string, clientInstance: BaseProvider<any>) {
-    this.clients.set(clientName, clientInstance);
+  set(providerName: string, providerInstance: BaseProvider<any>) {
+    this.providers.set(providerName, providerInstance);
   }
 
-  get(clientName: string): BaseProvider<any> {
-    if (!this.clients.has(clientName)) {
+  get(providerName: string): BaseProvider<any> {
+    if (!this.providers.has(providerName)) {
       throw new InternalError(
-        `${clientName} client is not available yet. Are you trying to access it before the application has started ?`,
+        `${providerName} provider is not available yet. Are you trying to access it before the application has started ?`,
       );
     }
 
-    return this.clients.get(clientName);
+    return this.providers.get(providerName);
   }
 }
 
 export class HermesMessengerPlugin extends Plugin {
   private defaultConfig: JSONObject;
   private controller: ProviderController;
-  clients: MessengerClients;
+  private providerManager: ProviderManager;
 
   constructor() {
     super({
@@ -63,7 +63,7 @@ export class HermesMessengerPlugin extends Plugin {
                   dynamic: "false",
                   properties: {
                     // example to mock sendgrid accounts
-                    // sengrid: ['commons', 'client-1']
+                    // sengrid: ['commons', 'provider-1']
                   },
                 },
               },
@@ -107,12 +107,12 @@ export class HermesMessengerPlugin extends Plugin {
       },
     };
 
-    this.clients = new MessengerClients();
+    this.providerManager = new ProviderManager();
 
     this.controller = new ProviderController(
       this.config,
       this.context,
-      this.clients,
+      this.providerManager,
     );
   }
 
@@ -128,12 +128,20 @@ export class HermesMessengerPlugin extends Plugin {
 
     this.context = context;
 
-    await this.clients.init(this.config, this.context);
+    await this.providerManager.init(this.config, this.context);
 
     this.api = {};
 
     await this.initDatabase();
     await this.initConfig();
+  }
+
+  registerProvider(name: string, provider: BaseProvider<any>) {
+    this.providerManager.set(name, provider);
+  }
+
+  getProvider(name: string) {
+    return this.providerManager.get(name);
   }
 
   private async initDatabase() {

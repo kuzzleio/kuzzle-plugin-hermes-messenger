@@ -7,7 +7,7 @@ import {
 } from "kuzzle";
 
 export interface BaseAccount<T> {
-  client: T;
+  provider: T;
 
   options: JSONObject;
 
@@ -79,7 +79,7 @@ export abstract class BaseProvider<T> {
    * Adds an account to send message with.
    *
    * @param name Account name
-   * @param args Any credentials needed to initialize the associated client
+   * @param args Any credentials needed to initialize the associated provider
    */
   addAccount(name: string, ...args) {
     if (this.accounts.has(name)) {
