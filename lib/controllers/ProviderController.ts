@@ -66,20 +66,23 @@ export class ProviderController {
     const account = request.getString("account");
     const to = request.getArray("to");
 
+    const content = request.getString("content");
+
     const params = request.getObject("params");
 
     this.providerManager
       .get(provider)
-      .send(account, to, ...Object.values(params));
+      .send(account, to, content, ...Object.values(params));
   }
 
   async addAccount(request: KuzzleRequest): Promise<void> {
     const provider = request.getString("provider");
+    const contentType = request.getString("contentType");
     const params = request.getObject("params");
 
     this.providerManager
       .get(provider)
-      .addAccount(provider, ...Object.values(params));
+      .addAccount(provider, contentType, ...Object.values(params));
   }
 
   async removeAccount(request: KuzzleRequest) {
