@@ -34,6 +34,10 @@ export class ProviderManager {
 
     return this.providers.get(providerName);
   }
+
+  listProviders(): BaseProvider<any>[] {
+    return Array.from(this.providers.values());
+  }
 }
 
 export class HermesMessengerPlugin extends Plugin {
@@ -130,7 +134,9 @@ export class HermesMessengerPlugin extends Plugin {
 
     await this.providerManager.init(this.config, this.context);
 
-    this.api = {};
+    this.api = {
+      hermes: this.controller.definition,
+    };
 
     await this.initDatabase();
     await this.initConfig();

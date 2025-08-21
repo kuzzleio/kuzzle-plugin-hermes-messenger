@@ -25,6 +25,8 @@ export abstract class BaseProvider<T> {
   protected EVENT_ACCOUNT_ADD: string;
   protected EVENT_ACCOUNT_REMOVE: string;
 
+  protected jsonSchema: JSONObject;
+
   get sdk() {
     return this.context.accessors.sdk;
   }
@@ -33,8 +35,9 @@ export abstract class BaseProvider<T> {
     return this.context.accessors.cluster;
   }
 
-  constructor(name: string) {
+  constructor(name: string, jsonSchema: JSONObject) {
     this.name = name;
+    this.jsonSchema = jsonSchema;
 
     this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
     this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
@@ -72,6 +75,10 @@ export abstract class BaseProvider<T> {
 
   getName(): string {
     return this.name;
+  }
+
+  getJsonSchema(): JSONObject {
+    return this.jsonSchema;
   }
 
   abstract send(

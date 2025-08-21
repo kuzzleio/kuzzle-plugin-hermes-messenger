@@ -56,6 +56,10 @@ export class ProviderController {
           handler: this.listAccounts.bind(this),
           http: [{ verb: "get", path: `hermes/providers/:provider/accounts` }],
         },
+        listProviders: {
+          handler: this.listProviders.bind(this),
+          http: [{ verb: "get", path: `hermes/providers` }],
+        },
       },
     };
   }
@@ -98,5 +102,9 @@ export class ProviderController {
     const accounts = this.providerManager.get(provider).listAccounts();
 
     return { accounts };
+  }
+
+  async listProviders() {
+    return this.providerManager.listProviders();
   }
 }
