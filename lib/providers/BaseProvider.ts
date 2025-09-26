@@ -6,6 +6,11 @@ import {
   PluginContext,
 } from "kuzzle";
 
+export enum ProviderType {
+  EMAIL = "email",
+  SMS = "sms",
+}
+
 export interface BaseAccount<T> {
   provider: T;
 
@@ -19,6 +24,7 @@ export abstract class BaseProvider<T> {
   protected context: PluginContext;
 
   protected name: string;
+  protected type: ProviderType;
 
   protected accounts = new Map<string, T>();
 
@@ -35,8 +41,9 @@ export abstract class BaseProvider<T> {
     return this.context.accessors.cluster;
   }
 
-  constructor(name: string, jsonSchema: JSONObject) {
+  constructor(name: string, type: ProviderType, jsonSchema: JSONObject) {
     this.name = name;
+    this.type = type;
     this.jsonSchema = jsonSchema;
 
     this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
