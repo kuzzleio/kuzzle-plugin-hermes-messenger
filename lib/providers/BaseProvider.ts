@@ -1,7 +1,13 @@
+import Ajv, { ValidateFunction } from "ajv";
+import addFormats from "ajv-formats";
+
+import { JSONSchema7 } from "json-schema";
 import {
   BadRequestError,
   Inflector,
   JSONObject,
+  KuzzleError,
+  MultipleErrorsError,
   NotFoundError,
   PluginContext,
 } from "kuzzle";
@@ -31,7 +37,8 @@ export abstract class BaseProvider<T> {
   protected EVENT_ACCOUNT_ADD: string;
   protected EVENT_ACCOUNT_REMOVE: string;
 
-  protected jsonSchema: JSONObject;
+  protected paramsJsonSchema: JSONSchema7;
+  protected paramsJsonSchemaValidator: ValidateFunction;
 
   get sdk() {
     return this.context.accessors.sdk;
@@ -41,10 +48,14 @@ export abstract class BaseProvider<T> {
     return this.context.accessors.cluster;
   }
 
-  constructor(name: string, type: ProviderType, jsonSchema: JSONObject) {
+  constructor(name: string, type: ProviderType, jsonSchema: JSONSchema7) {
     this.name = name;
     this.type = type;
-    this.jsonSchema = jsonSchema;
+    this.paramsJsonSchema = jsonSchema;
+
+    const ajv = new Ajv();
+    addFormats(ajv);
+    this.paramsJsonSchemaValidator = ajv.compile(this.paramsJsonSchema);
 
     this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
     this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
@@ -84,8 +95,8 @@ export abstract class BaseProvider<T> {
     return this.name;
   }
 
-  getJsonSchema(): JSONObject {
-    return this.jsonSchema;
+  getParamsJsonSchema(): JSONSchema7 {
+    return this.paramsJsonSchema;
   }
 
   abstract send(
@@ -128,6 +139,20 @@ export abstract class BaseProvider<T> {
             )}: Cannot send sync message to add account "${name}": ${error}`,
           );
         });
+    }
+  }
+
+  validateParams(params: JSONObject): void {
+    const valid = this.paramsJsonSchemaValidator(params);
+
+    if (valid === false) {
+      const errors = this.paramsJsonSchemaValidator.errors.map(
+        (e) => new KuzzleError(e.message, 400),
+      );
+      throw new MultipleErrorsError(
+        "Parameters does not match with the json schema defined in the provider",
+        errors,
+      );
     }
   }
 
