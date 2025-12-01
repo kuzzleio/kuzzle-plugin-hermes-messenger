@@ -40,6 +40,12 @@ export abstract class BaseProvider<T> {
   protected paramsJsonSchema: JSONSchema7;
   protected paramsJsonSchemaValidator: ValidateFunction;
 
+  protected recipientsJsonSchema: JSONSchema7;
+  protected recipientsJsonSchemaValidator: ValidateFunction;
+
+  protected contentJsonSchema: JSONSchema7;
+  protected contentJsonSchemaValidator: ValidateFunction;
+
   get sdk() {
     return this.context.accessors.sdk;
   }
@@ -48,14 +54,24 @@ export abstract class BaseProvider<T> {
     return this.context.accessors.cluster;
   }
 
-  constructor(name: string, type: ProviderType, jsonSchema: JSONSchema7) {
+  constructor(
+    name: string,
+    type: ProviderType,
+    paramsJsonSchema: JSONSchema7,
+    recipientsJsonSchema: JSONSchema7,
+    contentJsonSchema: JSONSchema7,
+  ) {
     this.name = name;
     this.type = type;
-    this.paramsJsonSchema = jsonSchema;
+    this.paramsJsonSchema = paramsJsonSchema;
+    this.recipientsJsonSchema = recipientsJsonSchema;
+    this.contentJsonSchema = contentJsonSchema;
 
     const ajv = new Ajv();
     addFormats(ajv);
     this.paramsJsonSchemaValidator = ajv.compile(this.paramsJsonSchema);
+    this.recipientsJsonSchemaValidator = ajv.compile(this.recipientsJsonSchema);
+    this.contentJsonSchemaValidator = ajv.compile(this.contentJsonSchema);
 
     this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
     this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
@@ -150,7 +166,35 @@ export abstract class BaseProvider<T> {
         (e) => new KuzzleError(e.message, 400),
       );
       throw new MultipleErrorsError(
-        "Parameters does not match with the json schema defined in the provider",
+        "Parameters format does not match with the json schema defined in the provider",
+        errors,
+      );
+    }
+  }
+
+  validateRecipients(recipients: JSONObject): void {
+    const valid = this.recipientsJsonSchemaValidator(recipients);
+
+    if (valid === false) {
+      const errors = this.recipientsJsonSchemaValidator.errors.map(
+        (e) => new KuzzleError(e.message, 400),
+      );
+      throw new MultipleErrorsError(
+        "Recipients format does not match with the json schema defined in the provider",
+        errors,
+      );
+    }
+  }
+
+  validateContent(content: JSONObject): void {
+    const valid = this.contentJsonSchemaValidator(content);
+
+    if (valid === false) {
+      const errors = this.contentJsonSchemaValidator.errors.map(
+        (e) => new KuzzleError(e.message, 400),
+      );
+      throw new MultipleErrorsError(
+        "Content format does not match with the json schema defined in the provider",
         errors,
       );
     }
