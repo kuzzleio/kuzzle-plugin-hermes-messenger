@@ -81,18 +81,15 @@ export abstract class BaseProvider<T> {
     this.config = config;
     this.context = context;
 
-    this.cluster.on(
-      this.EVENT_ACCOUNT_ADD,
-      async ({ name, contentType, args }) => {
-        try {
-          await this.nodeAddAccount(name, contentType, ...args);
-        } catch (error) {
-          this.context.log.error(
-            `${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`,
-          );
-        }
-      },
-    );
+    this.cluster.on(this.EVENT_ACCOUNT_ADD, async ({ name, args }) => {
+      try {
+        await this.nodeAddAccount(name, ...args);
+      } catch (error) {
+        this.context.log.error(
+          `${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`,
+        );
+      }
+    });
 
     this.cluster.on(this.EVENT_ACCOUNT_REMOVE, async ({ name }) => {
       try {
@@ -117,16 +114,12 @@ export abstract class BaseProvider<T> {
 
   abstract send(
     account: string,
-    to: string[],
-    content: string,
+    recipients: any[],
+    content: any,
     ...args
   ): Promise<void>;
 
-  protected abstract _createAccount(
-    name: string,
-    contentType: string,
-    ...args
-  ): T;
+  protected abstract _createAccount(...args): T;
 
   /**
    * Adds an account to send message with.
@@ -134,14 +127,14 @@ export abstract class BaseProvider<T> {
    * @param name Account name
    * @param args Any credentials needed to initialize the associated provider
    */
-  addAccount(name: string, contentType: string, ...args) {
+  addAccount(name: string, ...args) {
     if (this.accounts.has(name)) {
       throw new BadRequestError(
         `${Inflector.upFirst(this.name)} account "${name}" already exists.`,
       );
     }
 
-    this.nodeAddAccount(name, contentType, ...args);
+    this.nodeAddAccount(name, ...args);
 
     // Account can be registered in backend code and thus executed by every node
     // at startup
@@ -200,10 +193,10 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  private nodeAddAccount(name: string, contentType: string, ...args) {
+  private nodeAddAccount(name: string, ...args) {
     this.logInfo(`${Inflector.upFirst(this.name)}: register account "${name}"`);
 
-    this.accounts.set(name, this._createAccount(name, contentType, ...args));
+    this.accounts.set(name, this._createAccount(name, ...args));
   }
 
   removeAccount(name: string) {

@@ -35,20 +35,20 @@ export class ProviderController {
           http: [
             {
               verb: "post",
-              path: `hermes/provider/:provider/account/:account`,
+              path: `hermes/providers/:provider/accounts/:account`,
             },
           ],
         },
         addAccount: {
           handler: this.addAccount.bind(this),
-          http: [{ verb: "post", path: `hermes/provider/:provider/accounts` }],
+          http: [{ verb: "post", path: `hermes/providers/:provider/accounts` }],
         },
         removeAccount: {
           handler: this.removeAccount.bind(this),
           http: [
             {
               verb: "delete",
-              path: `hermes/provider/:provider/account/:account`,
+              path: `hermes/providers/:provider/accounts/:account`,
             },
           ],
         },
@@ -65,28 +65,25 @@ export class ProviderController {
   }
 
   async send(request: KuzzleRequest): Promise<void> {
+    const account = request.getString("account");
     const provider = request.getString("provider");
 
-    const account = request.getString("account");
-    const to = request.getArray("to");
-
-    const content = request.getString("content");
-
-    const params = request.getObject("params");
+    const recipients = request.getBodyArray("recipients");
+    const content = request.getBodyObject("content");
+    const params = request.getBodyObject("params");
 
     this.providerManager
       .get(provider)
-      .send(account, to, content, ...Object.values(params));
+      .send(account, recipients, content, ...Object.values(params));
   }
 
   async addAccount(request: KuzzleRequest): Promise<void> {
     const provider = request.getString("provider");
-    const contentType = request.getString("contentType");
     const params = request.getObject("params");
 
     this.providerManager
       .get(provider)
-      .addAccount(provider, contentType, ...Object.values(params));
+      .addAccount(provider, ...Object.values(params));
   }
 
   async removeAccount(request: KuzzleRequest) {
