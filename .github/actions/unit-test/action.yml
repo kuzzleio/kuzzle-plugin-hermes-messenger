@@ -1,0 +1,10 @@
+name: Unit Tests
+description: Run unit Tests
+runs:
+  using: "composite"
+  steps:
+    - name: Run unit test
+      shell: bash
+      run: |
+        npm ci
+        npm run test
