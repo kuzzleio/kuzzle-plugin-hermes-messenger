@@ -193,7 +193,7 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  private nodeAddAccount(name: string, ...args) {
+  nodeAddAccount(name: string, ...args) {
     this.logInfo(`${Inflector.upFirst(this.name)}: register account "${name}"`);
 
     this.accounts.set(name, this._createAccount(name, ...args));
@@ -221,7 +221,7 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  private nodeRemoveAccount(name: string) {
+  nodeRemoveAccount(name: string) {
     this.logInfo(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
 
     this.accounts.delete(name);
@@ -237,26 +237,12 @@ export abstract class BaseProvider<T> {
     return accounts;
   }
 
-  protected getAccount(accountName: string): T {
+  getAccount(accountName: string): T {
     if (!this.accounts.has(accountName)) {
       throw new NotFoundError(`Account "${accountName}" does not exists.`);
     }
 
     return this.accounts.get(accountName);
-  }
-
-  protected async mockedAccount(accountName: string): Promise<boolean> {
-    const configDocument = await this.sdk.document.get(
-      this.config.adminIndex,
-      "config",
-      this.config.configDocumentId,
-    );
-
-    const mockedAccounts =
-      configDocument._source["hermes-messenger"].mockedAccounts[this.name] ||
-      [];
-
-    return mockedAccounts.includes(accountName);
   }
 
   private logInfo(message: string) {
