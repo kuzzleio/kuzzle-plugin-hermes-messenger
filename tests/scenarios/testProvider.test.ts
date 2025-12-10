@@ -1,5 +1,5 @@
 import { defineReflectProperties } from "tests/helpers";
-import { TestProvider } from "tests/mocks";
+import { context, TestProvider } from "tests/mocks";
 import { describe, it, expect, vi } from "vitest";
 
 beforeAll(() => {
@@ -7,8 +7,9 @@ beforeAll(() => {
 });
 
 describe("TestProvider", () => {
-  const testProvider = new TestProvider();
   it("Register an account", async () => {
+    const testProvider = new TestProvider();
+
     const addAccountSpy = vi.spyOn(testProvider, "addAccount");
     const nodeAddAccountSpy = vi.spyOn(testProvider, "nodeAddAccount");
     const createAccountSpy = vi.spyOn(testProvider, "_createAccount");
@@ -30,6 +31,10 @@ describe("TestProvider", () => {
   });
 
   it("Remove an account", async () => {
+    const testProvider = new TestProvider();
+
+    testProvider.addAccount("myaccount", { option: "myoptions" });
+
     const removeAccountSpy = vi.spyOn(testProvider, "removeAccount");
     const nodeRemoveAccountSpy = vi.spyOn(testProvider, "nodeRemoveAccount");
 
@@ -43,6 +48,8 @@ describe("TestProvider", () => {
   });
 
   it("Remove an account that does not exist", () => {
+    const testProvider = new TestProvider();
+
     const removeAccountSpy = vi.spyOn(testProvider, "removeAccount");
 
     expect(() => testProvider.removeAccount("notFound")).toThrowError(
@@ -55,6 +62,8 @@ describe("TestProvider", () => {
   });
 
   it("Get an account", async () => {
+    const testProvider = new TestProvider();
+
     const getAccountSpy = vi.spyOn(testProvider, "getAccount");
 
     testProvider.addAccount("myaccount", { option: "myoptions" });
@@ -67,6 +76,8 @@ describe("TestProvider", () => {
   });
 
   it("Get an account that does not exist", () => {
+    const testProvider = new TestProvider();
+
     const getAccountSpy = vi.spyOn(testProvider, "getAccount");
 
     expect(() => testProvider.getAccount("notFound")).toThrowError(
@@ -79,6 +90,8 @@ describe("TestProvider", () => {
   });
 
   it("List accounts", async () => {
+    const testProvider = new TestProvider();
+
     const listAccountsSpy = vi.spyOn(testProvider, "listAccounts");
 
     testProvider.listAccounts();
@@ -89,6 +102,8 @@ describe("TestProvider", () => {
   });
 
   it("Validate params", async () => {
+    const testProvider = new TestProvider();
+
     const validateParamsSpy = vi.spyOn(testProvider, "validateParams");
 
     testProvider.validateParams({ type: "object" });
@@ -99,6 +114,8 @@ describe("TestProvider", () => {
   });
 
   it("Validate recipients", async () => {
+    const testProvider = new TestProvider();
+
     const validateRecipientsSpy = vi.spyOn(testProvider, "validateRecipients");
 
     testProvider.validateRecipients({ type: "object" });
@@ -109,6 +126,8 @@ describe("TestProvider", () => {
   });
 
   it("Validate content", async () => {
+    const testProvider = new TestProvider();
+
     const validateContentSpy = vi.spyOn(testProvider, "validateContent");
 
     testProvider.validateContent({ type: "object" });
@@ -119,6 +138,8 @@ describe("TestProvider", () => {
   });
 
   it("Get name", async () => {
+    const testProvider = new TestProvider();
+
     const getNameSpy = vi.spyOn(testProvider, "getName");
 
     testProvider.getName();
@@ -129,6 +150,8 @@ describe("TestProvider", () => {
   });
 
   it("Get params json", async () => {
+    const testProvider = new TestProvider();
+
     const getNameSpy = vi.spyOn(testProvider, "getParamsJsonSchema");
 
     testProvider.getParamsJsonSchema();
@@ -139,6 +162,8 @@ describe("TestProvider", () => {
   });
 
   it("Send a message", async () => {
+    const testProvider = new TestProvider();
+
     const sendSpy = vi.spyOn(testProvider, "send");
 
     const accountName = "myaccount";
@@ -150,5 +175,28 @@ describe("TestProvider", () => {
     expect(sendSpy).toHaveBeenCalledWith(accountName, recipients, content);
 
     sendSpy.mockRestore();
+  });
+
+  it("Init", async () => {
+    const testProvider = new TestProvider();
+
+    const initSpy = vi.spyOn(testProvider, "init");
+    const nodeAddAccountSpy = vi.spyOn(testProvider, "nodeAddAccount");
+    const nodeRemoveAccountSpy = vi.spyOn(testProvider, "nodeRemoveAccount");
+
+    await testProvider.init({}, context);
+
+    expect(initSpy).toHaveBeenCalledWith({}, context);
+
+    testProvider.addAccount("myaccount", { option: "myoptions" });
+
+    expect(nodeAddAccountSpy).toHaveBeenCalledWith("myaccount", {
+      option: "myoptions",
+    });
+
+    testProvider.removeAccount("myaccount");
+    expect(nodeRemoveAccountSpy).toHaveBeenCalledWith("myaccount");
+
+    initSpy.mockRestore();
   });
 });
