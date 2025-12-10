@@ -54,58 +54,14 @@ export class HermesMessengerPlugin extends Plugin {
       adminIndex: "hermes-messenger",
       configDocumentId: "plugin--hermes-messenger",
       collections: {
-        // config collection
         config: {
           dynamic: "strict",
           properties: {
             type: { type: "keyword" },
 
             "hermes-messenger": {
-              properties: {
-                // allows to mock messages for specific accounts
-                mockedAccounts: {
-                  dynamic: "false",
-                  properties: {
-                    // example to mock sendgrid accounts
-                    // sengrid: ['commons', 'provider-1']
-                  },
-                },
-              },
-            },
-          },
-        },
-        // collection for mocked messages
-        messages: {
-          dynamic: "strict",
-          properties: {
-            account: { type: "keyword" },
-            from: { type: "keyword" },
-            to: { type: "keyword" },
-            subject: { type: "keyword" },
-            html: { type: "keyword" },
-            attachments: {
-              dynamic: "strict",
-              properties: {
-                content: { type: "keyword" },
-                contentType: { type: "keyword" },
-                type: { type: "keyword" },
-                filename: { type: "keyword" },
-                contentDisposition: { type: "keyword" },
-                disposition: { type: "keyword" },
-                cid: { type: "keyword" },
-                content_id: { type: "keyword" },
-              },
-            },
-
-            // sendgrid specific
-            templateId: { type: "keyword" },
-            dynamic_template_data: {
-              dynamic: "false",
               properties: {},
             },
-
-            // twilio specific
-            body: { type: "keyword" },
           },
         },
       },
@@ -199,9 +155,7 @@ export class HermesMessengerPlugin extends Plugin {
         {
           type: "hermes-messenger",
 
-          "hermes-messenger": {
-            mockedAccounts: [],
-          },
+          "hermes-messenger": {},
         },
         this.config.configDocumentId,
       );
