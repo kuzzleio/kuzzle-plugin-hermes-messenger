@@ -78,6 +78,17 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@kuzzleio"
 
+      - name: Login to PaaS NPM registry
+        uses: kuzzleio/paas-action@v1.1.0
+        with:
+          username: ${{ secrets.CORE_TEAM_PAAS_USERNAME }}
+          password: ${{ secrets.CORE_TEAM_PAAS_PASSWORD }}
+          login_only: true
+          npmrc_output_dir: ./
+
+      - name: Copy NPMRC
+        run: cp .npmrc ~/.npmrc
+
       - name: Install dependencies
         run: npm ci
 
