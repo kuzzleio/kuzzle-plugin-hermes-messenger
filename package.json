@@ -39,7 +39,7 @@
     "cz-conventional-changelog": "3.3.0",
     "eslint-plugin-kuzzle": "0.0.14",
     "jest": "30.0.0",
-    "kuzzle": "2.43.2",
+    "kuzzle": "2.50.0",
     "kuzzle-sdk": "7.15.0",
     "semantic-release-config-kuzzle": "1.7.0",
     "ts-node": "10.9.2",
@@ -48,7 +48,7 @@
     "vitest": "3.2.3"
   },
   "peerDependencies": {
-    "kuzzle": ">=2.41.0"
+    "kuzzle": ">=2.50.0"
   },
   "files": [
     "dist/**/*"
