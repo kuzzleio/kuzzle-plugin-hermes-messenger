@@ -52,5 +52,6 @@
   },
   "files": [
     "dist/**/*"
-  ]
+  ],
+  "packageManager": "npm@11.4.1"
 }
