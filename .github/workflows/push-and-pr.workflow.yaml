@@ -56,7 +56,7 @@ jobs:
 
   release:
     name: Release process
-    needs: [unit-tests]
+    needs: unit-tests
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/2-dev') }}
     runs-on: ubuntu-24.04
     permissions:
