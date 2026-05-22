@@ -1,3 +1,9 @@
+## [1.4.0-2-dev.2](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.4.0-2-dev.1...v1.4.0-2-dev.2) (2026-05-22)
+
+### Bug Fixes
+
+* **release:** fix package version and tag ([e5c6d05](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/e5c6d05008c6ddd045c85dd78d687f7fa20f6ffe))
+
 ## [1.4.0-2-dev.1](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.3.0...v1.4.0-2-dev.1) (2026-05-22)
 
 ### Features
