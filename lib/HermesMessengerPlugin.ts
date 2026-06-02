@@ -8,7 +8,13 @@ import {
 import _ from "lodash";
 
 import { ProviderController } from "./controllers";
-import { BaseProvider, SmtpProvider, TwilioProvider } from "./providers";
+import {
+  BaseProvider,
+  SendgridProvider,
+  SMSEnvoiProvider,
+  SmtpProvider,
+  TwilioProvider,
+} from "./providers";
 
 export class ProviderManager {
   private providers = new Map<string, BaseProvider<any>>();
@@ -74,6 +80,8 @@ export class HermesMessengerPlugin extends Plugin {
     this.providerManager = new ProviderManager();
     this.providerManager.set("smtp", new SmtpProvider());
     this.providerManager.set("twilio", new TwilioProvider());
+    this.providerManager.set("sendgrid", new SendgridProvider());
+    this.providerManager.set("smsenvoi", new SMSEnvoiProvider());
 
     this.controller = new ProviderController(
       this.config,
