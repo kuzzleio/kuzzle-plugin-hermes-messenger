@@ -34,6 +34,8 @@ export abstract class BaseProvider<T> {
 
   protected accounts = new Map<string, T>();
 
+  public supportAttachment: boolean = false;
+
   protected EVENT_ACCOUNT_ADD: string;
   protected EVENT_ACCOUNT_REMOVE: string;
 
