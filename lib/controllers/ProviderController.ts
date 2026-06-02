@@ -74,7 +74,7 @@ export class ProviderController {
 
     this.providerManager
       .get(provider)
-      .send(account, recipients, content, ...Object.values(params));
+      .send(account, recipients, content, params);
   }
 
   async addAccount(request: KuzzleRequest): Promise<void> {
