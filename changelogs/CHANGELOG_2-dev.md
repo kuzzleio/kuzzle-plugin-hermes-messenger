@@ -1,3 +1,9 @@
+## [2.0.0-2-dev.3](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.2...v2.0.0-2-dev.3) (2026-06-02)
+
+### Features
+
+* **default providers:** add twilio and smtp default providers ([562823e](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/562823e8f64474a76721fabb8d92da8d5d80c17c))
+
 ## [2.0.0-2-dev.2](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.1...v2.0.0-2-dev.2) (2026-06-02)
 
 ### Features
