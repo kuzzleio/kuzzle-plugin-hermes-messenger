@@ -1,3 +1,9 @@
+## [2.0.0-2-dev.4](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.3...v2.0.0-2-dev.4) (2026-06-02)
+
+### Bug Fixes
+
+* **test:** add tests for default providers ([c621933](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/c62193312ef6c609ace43ca719347ca26efc3305))
+
 ## [2.0.0-2-dev.3](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.2...v2.0.0-2-dev.3) (2026-06-02)
 
 ### Features
