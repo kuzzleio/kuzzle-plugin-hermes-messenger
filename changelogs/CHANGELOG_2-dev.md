@@ -1,3 +1,9 @@
+## [2.0.0-2-dev.2](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.1...v2.0.0-2-dev.2) (2026-06-02)
+
+### Features
+
+* **base provider:** add support attachement property ([d32b92d](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/d32b92d1808bf58aaa3a47bf690da42102fa9937))
+
 ## [2.0.0-2-dev.1](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.4.0-2-dev.2...v2.0.0-2-dev.1) (2026-05-22)
 
 ### ⚠ BREAKING CHANGES
