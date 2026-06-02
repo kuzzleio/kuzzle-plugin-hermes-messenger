@@ -1,3 +1,13 @@
+## [2.0.0-2-dev.8](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.7...v2.0.0-2-dev.8) (2026-06-02)
+
+### Features
+
+* **providers:** add default providers ([6db44ad](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6db44ad4500cc77de6d872817623681f98464716))
+
+### Bug Fixes
+
+* **package:** align package lock to package ([b389f3b](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b389f3bb0d7aac1d118a98213b7b4cd16c619faf))
+
 ## [2.0.0-2-dev.7](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.6...v2.0.0-2-dev.7) (2026-06-02)
 
 ### Features
