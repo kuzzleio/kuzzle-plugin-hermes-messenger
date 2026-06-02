@@ -1,3 +1,9 @@
+## [2.0.0-2-dev.5](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.4...v2.0.0-2-dev.5) (2026-06-02)
+
+### Bug Fixes
+
+* **providers:** improve providers ([fcc0158](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/fcc0158bcec44fb01cf760360854e6c4175fdded))
+
 ## [2.0.0-2-dev.4](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.3...v2.0.0-2-dev.4) (2026-06-02)
 
 ### Bug Fixes
