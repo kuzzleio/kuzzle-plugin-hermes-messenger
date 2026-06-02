@@ -83,9 +83,9 @@ export abstract class BaseProvider<T> {
     this.config = config;
     this.context = context;
 
-    this.cluster.on(this.EVENT_ACCOUNT_ADD, async ({ name, args }) => {
+    this.cluster.on(this.EVENT_ACCOUNT_ADD, async ({ name, params }) => {
       try {
-        await this.nodeAddAccount(name, ...args);
+        await this.nodeAddAccount(name, params);
       } catch (error) {
         this.context.log.error(
           `${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`,
@@ -121,7 +121,10 @@ export abstract class BaseProvider<T> {
     ...args
   ): Promise<void>;
 
-  protected abstract _createAccount(...args): T;
+  protected abstract _createAccount(
+    name: string,
+    params: Record<string, unknown>,
+  ): T;
 
   /**
    * Adds an account to send message with.
@@ -129,20 +132,18 @@ export abstract class BaseProvider<T> {
    * @param name Account name
    * @param args Any credentials needed to initialize the associated provider
    */
-  addAccount(name: string, ...args) {
+  addAccount(name: string, params: Record<string, unknown>) {
     if (this.accounts.has(name)) {
       throw new BadRequestError(
         `${Inflector.upFirst(this.name)} account "${name}" already exists.`,
       );
     }
 
-    this.nodeAddAccount(name, ...args);
+    this.nodeAddAccount(name, params);
 
-    // Account can be registered in backend code and thus executed by every node
-    // at startup
     if (global.app.started) {
       this.cluster
-        .broadcast(this.EVENT_ACCOUNT_ADD, { name, args })
+        .broadcast(this.EVENT_ACCOUNT_ADD, { name, params })
         .catch((error) => {
           this.context.log.error(
             `${Inflector.upFirst(
@@ -195,10 +196,10 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  nodeAddAccount(name: string, ...args) {
+  nodeAddAccount(name: string, params: Record<string, unknown>) {
     this.logInfo(`${Inflector.upFirst(this.name)}: register account "${name}"`);
 
-    this.accounts.set(name, this._createAccount(name, ...args));
+    this.accounts.set(name, this._createAccount(name, params));
   }
 
   removeAccount(name: string) {

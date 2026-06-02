@@ -106,15 +106,22 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
 
   protected _createAccount(
     name: string,
-    accountSid: string,
-    authToken: string,
-    defaultSender: string,
+    {
+      account_sid,
+      auth_token,
+      default_sender,
+    }: {
+      account_sid: string;
+      auth_token: string;
+      default_sender: string;
+      [key: string]: unknown;
+    },
   ): TwilioAccount {
     return {
-      provider: new Twilio(accountSid, authToken),
+      provider: new Twilio(account_sid, auth_token),
       name,
       options: {
-        defaultSender,
+        defaultSender: default_sender,
       },
     };
   }

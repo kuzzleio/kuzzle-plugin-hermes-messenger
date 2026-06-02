@@ -144,18 +144,27 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    */
   protected _createAccount(
     name: string,
-    host: string,
-    port: number,
-    user: string,
-    pass: string,
-    defaultSender: string,
+    {
+      host_name,
+      port,
+      user,
+      password,
+      default_sender,
+    }: {
+      host_name: string;
+      port: number;
+      user: string;
+      password: string;
+      default_sender: string;
+      [key: string]: unknown;
+    },
   ): SMTPAccount {
     const transporter = createTransport({
       auth: {
-        pass,
+        pass: password,
         user,
       },
-      host,
+      host: host_name,
       port,
       secure: port === 465,
     });
@@ -164,7 +173,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       provider: transporter,
       name,
       options: {
-        defaultSender,
+        defaultSender: default_sender,
       },
     };
   }

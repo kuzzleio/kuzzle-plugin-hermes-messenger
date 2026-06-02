@@ -81,9 +81,7 @@ export class ProviderController {
     const provider = request.getString("provider");
     const params = request.getObject("params");
 
-    this.providerManager
-      .get(provider)
-      .addAccount(provider, ...Object.values(params));
+    this.providerManager.get(provider).addAccount(provider, params);
   }
 
   async removeAccount(request: KuzzleRequest) {

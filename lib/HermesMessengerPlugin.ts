@@ -25,6 +25,10 @@ export class ProviderManager {
     this.providers.set(providerName, providerInstance);
   }
 
+  has(providerName: string): boolean {
+    return this.providers.has(providerName);
+  }
+
   get(providerName: string): BaseProvider<any> {
     if (!this.providers.has(providerName)) {
       throw new InternalError(
@@ -102,6 +106,10 @@ export class HermesMessengerPlugin extends Plugin {
 
   registerProvider(name: string, provider: BaseProvider<any>) {
     this.providerManager.set(name, provider);
+  }
+
+  hasProvider(name: string): boolean {
+    return this.providerManager.has(name);
   }
 
   getProvider(name: string) {
