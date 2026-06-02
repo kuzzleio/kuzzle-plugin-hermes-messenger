@@ -16,7 +16,7 @@ export interface SMTPAccount extends BaseAccount<
 }
 
 export class SmtpProvider extends BaseProvider<SMTPAccount> {
-  readonly canExport = true;
+  override supportAttachment = true;
 
   constructor() {
     const paramsJsonSchema: JSONSchema7 = {
