@@ -88,12 +88,34 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       required: ["subject", "message"],
     };
 
+    const sendParamsJsonSchema: JSONSchema7 = {
+      type: "object",
+      properties: {
+        from: { type: "string" },
+        attachments: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              content: { type: "string" },
+              contentType: { type: "string" },
+              filename: { type: "string" },
+              contentDisposition: { type: "string", enum: ["attachment", "inline"] },
+              cid: { type: "string" },
+            },
+            required: ["content", "contentType", "filename", "contentDisposition"],
+          },
+        },
+      },
+    };
+
     super(
       "smtp",
       ProviderType.EMAIL,
       paramsJsonSchema,
       recipientsJsonSchema,
       contentJsonSchema,
+      sendParamsJsonSchema,
     );
   }
 

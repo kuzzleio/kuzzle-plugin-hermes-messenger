@@ -59,12 +59,20 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
       required: ["body"],
     };
 
+    const sendParamsJsonSchema: JSONSchema7 = {
+      type: "object",
+      properties: {
+        from: { type: "string" },
+      },
+    };
+
     super(
       "twilio",
       ProviderType.SMS,
       paramsJsonSchema,
       recipientsJsonSchema,
       contentJsonSchema,
+      sendParamsJsonSchema,
     );
   }
 

@@ -48,6 +48,9 @@ export abstract class BaseProvider<T> {
   protected contentJsonSchema: JSONSchema7;
   protected contentJsonSchemaValidator: ValidateFunction;
 
+  protected sendParamsJsonSchema: JSONSchema7;
+  protected sendParamsJsonSchemaValidator: ValidateFunction;
+
   get sdk() {
     return this.context.accessors.sdk;
   }
@@ -62,18 +65,21 @@ export abstract class BaseProvider<T> {
     paramsJsonSchema: JSONSchema7,
     recipientsJsonSchema: JSONSchema7,
     contentJsonSchema: JSONSchema7,
+    sendParamsJsonSchema: JSONSchema7 = {},
   ) {
     this.name = name;
     this.type = type;
     this.paramsJsonSchema = paramsJsonSchema;
     this.recipientsJsonSchema = recipientsJsonSchema;
     this.contentJsonSchema = contentJsonSchema;
+    this.sendParamsJsonSchema = sendParamsJsonSchema;
 
     const ajv = new Ajv();
     addFormats(ajv);
     this.paramsJsonSchemaValidator = ajv.compile(this.paramsJsonSchema);
     this.recipientsJsonSchemaValidator = ajv.compile(this.recipientsJsonSchema);
     this.contentJsonSchemaValidator = ajv.compile(this.contentJsonSchema);
+    this.sendParamsJsonSchemaValidator = ajv.compile(this.sendParamsJsonSchema);
 
     this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
     this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
@@ -191,6 +197,20 @@ export abstract class BaseProvider<T> {
       );
       throw new MultipleErrorsError(
         "Content format does not match with the json schema defined in the provider",
+        errors,
+      );
+    }
+  }
+
+  validateSendParams(params: JSONObject): void {
+    const valid = this.sendParamsJsonSchemaValidator(params);
+
+    if (valid === false) {
+      const errors = this.sendParamsJsonSchemaValidator.errors.map(
+        (e) => new KuzzleError(e.message, 400),
+      );
+      throw new MultipleErrorsError(
+        "Send params format does not match with the json schema defined in the provider",
         errors,
       );
     }
