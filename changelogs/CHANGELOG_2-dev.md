@@ -1,3 +1,9 @@
+## [2.0.0-2-dev.6](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.5...v2.0.0-2-dev.6) (2026-06-02)
+
+### Bug Fixes
+
+* **smtp/types:** add supportAttachement to smtp and export types ([0f21009](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/0f21009662f14cab9dcda4c6bce7c76c52da0522))
+
 ## [2.0.0-2-dev.5](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.4...v2.0.0-2-dev.5) (2026-06-02)
 
 ### Bug Fixes
