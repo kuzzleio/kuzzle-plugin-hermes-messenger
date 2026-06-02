@@ -1,3 +1,13 @@
+## [2.0.0-2-dev.7](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.6...v2.0.0-2-dev.7) (2026-06-02)
+
+### Features
+
+* **providers:** add sendParamsJsonSchema validation and multi-channel support ([a3c4e62](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/a3c4e6220437715354cfc588a29d443d34813c3a))
+
+### Bug Fixes
+
+* **lint:** lint SMTPProvider ([5393f13](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/5393f130ed162eb0094d31a19b73e03ecd1e6f15))
+
 ## [2.0.0-2-dev.6](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.5...v2.0.0-2-dev.6) (2026-06-02)
 
 ### Bug Fixes
