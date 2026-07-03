@@ -17,6 +17,7 @@ export interface SMTPAccount extends BaseAccount<
 
 export class SmtpProvider extends BaseProvider<SMTPAccount> {
   override supportAttachment = true;
+  override messageType: "short" | "long" = "long";
 
   constructor() {
     const paramsJsonSchema: JSONSchema7 = {

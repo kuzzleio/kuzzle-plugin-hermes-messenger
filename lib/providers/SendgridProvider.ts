@@ -13,6 +13,7 @@ export interface SendgridAccount extends BaseAccount<MailService> {
 
 export class SendgridProvider extends BaseProvider<SendgridAccount> {
   override supportAttachment = true;
+  override messageType: "short" | "long" = "long";
 
   constructor() {
     const paramsJsonSchema: JSONSchema7 = {

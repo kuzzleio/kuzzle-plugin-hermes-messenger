@@ -36,17 +36,33 @@ export class ProviderManager {
   }
 
   get(providerName: string): BaseProvider<any> {
-    if (!this.providers.has(providerName)) {
+    const provider = this.providers.get(providerName);
+    if (!provider) {
       throw new InternalError(
         `${providerName} provider is not available yet. Are you trying to access it before the application has started ?`,
       );
     }
 
-    return this.providers.get(providerName);
+    return provider;
   }
 
-  listProviders(): BaseProvider<any>[] {
-    return Array.from(this.providers.values());
+  listProviders(filter?: {
+    supportAttachment?: boolean;
+    messageType?: "short" | "long";
+  }): BaseProvider<any>[] {
+    let providers = Array.from(this.providers.values());
+
+    if (filter?.supportAttachment !== undefined) {
+      providers = providers.filter(
+        (p) => p.supportAttachment === filter.supportAttachment,
+      );
+    }
+
+    if (filter?.messageType !== undefined) {
+      providers = providers.filter((p) => p.messageType === filter.messageType);
+    }
+
+    return providers;
   }
 }
 

@@ -95,7 +95,8 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
         fromNumber,
       );
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error.message;
+      const errorMessage =
+        error?.response?.data?.message || error.message || error;
       throw new ExternalServiceError(`SMSEnvoi Error: ${errorMessage}`);
     }
   }
@@ -162,7 +163,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       { headers },
     );
 
-    return response.data;
+    return response;
   }
 
   private async mockedAccount(accountName: string): Promise<boolean> {

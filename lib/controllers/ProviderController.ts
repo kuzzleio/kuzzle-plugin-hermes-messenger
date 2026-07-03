@@ -99,7 +99,8 @@ export class ProviderController {
     return { accounts };
   }
 
-  async listProviders() {
-    return this.providerManager.listProviders();
+  async listProviders(request: KuzzleRequest) {
+    const filters = request.getBodyObject("filters", {});
+    return this.providerManager.listProviders(filters);
   }
 }
