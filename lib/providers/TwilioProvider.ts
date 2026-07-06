@@ -42,6 +42,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
           type: "string",
           title: "Phone Number",
           minLength: 1,
+          pattern: String.raw`^\+[1-9]\d{1,14}$`,
         },
       },
       required: ["to"],
