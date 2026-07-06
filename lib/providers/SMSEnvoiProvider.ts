@@ -96,7 +96,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       );
     } catch (error: any) {
       const errorMessage =
-        error?.response?.data?.message || error.message || error;
+        error?.response?.data?.message || error?.message || error;
       throw new ExternalServiceError(`SMSEnvoi Error: ${errorMessage}`);
     }
   }

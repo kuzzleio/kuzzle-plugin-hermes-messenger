@@ -11,6 +11,7 @@ import {
   NotFoundError,
   PluginContext,
 } from "kuzzle";
+import { MessageType } from "../..";
 
 export enum ProviderType {
   EMAIL = "email",
