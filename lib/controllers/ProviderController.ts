@@ -5,13 +5,15 @@ import {
   PluginContext,
   ControllerDefinition,
 } from "kuzzle";
-import { ProviderManager } from "lib/HermesMessengerPlugin";
+import { ProviderManager } from "../..";
+import { RecipientTypeRegistry } from "../recipients";
 
 export class ProviderController {
   protected context: PluginContext;
-  private config: JSONObject;
+  readonly config: JSONObject;
 
-  private providerManager: ProviderManager;
+  readonly providerManager: ProviderManager;
+  readonly recipientTypeRegistry: RecipientTypeRegistry;
 
   definition: ControllerDefinition;
 
@@ -23,10 +25,12 @@ export class ProviderController {
     config: JSONObject,
     context: PluginContext,
     providerManager: ProviderManager,
+    recipientTypeRegistry: RecipientTypeRegistry,
   ) {
     this.config = config;
     this.context = context;
     this.providerManager = providerManager;
+    this.recipientTypeRegistry = recipientTypeRegistry;
 
     this.definition = {
       actions: {
@@ -59,6 +63,10 @@ export class ProviderController {
         listProviders: {
           handler: this.listProviders.bind(this),
           http: [{ verb: "get", path: `hermes/providers` }],
+        },
+        listRecipientTypes: {
+          handler: this.listRecipientTypes.bind(this),
+          http: [{ verb: "get", path: `hermes/recipient-types` }],
         },
       },
     };
@@ -102,5 +110,9 @@ export class ProviderController {
   async listProviders(request: KuzzleRequest) {
     const filters = request.getBodyObject("filters", {});
     return this.providerManager.listProviders(filters);
+  }
+
+  async listRecipientTypes() {
+    return this.recipientTypeRegistry.list();
   }
 }

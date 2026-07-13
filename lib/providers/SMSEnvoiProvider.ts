@@ -3,6 +3,7 @@ import axios from "axios";
 import { JSONSchema7 } from "json-schema";
 
 import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { RecipientTypeRegistry } from "../recipients";
 
 export interface SMSEnvoiAccount extends BaseAccount<null> {
   options: {
@@ -13,7 +14,7 @@ export interface SMSEnvoiAccount extends BaseAccount<null> {
 }
 
 export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
-  constructor() {
+  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -31,18 +32,6 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
         },
       },
       required: ["user_key", "access_token", "default_sender"],
-    };
-
-    const recipientsJsonSchema: JSONSchema7 = {
-      type: "object",
-      properties: {
-        phone: {
-          type: "string",
-          title: "Phone number",
-          pattern: String.raw`^\+[0-9]+$`,
-        },
-      },
-      required: ["phone"],
     };
 
     const contentJsonSchema: JSONSchema7 = {
@@ -66,10 +55,11 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     super(
       "smsenvoi",
       ProviderType.SMS,
+      ["phoneNumber"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 
@@ -85,7 +75,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
 
     const account = this.getAccount(accountName);
     const fromNumber = from || account.options.defaultSender;
-    const phoneNumbers = recipients.map((recipient) => recipient.phone);
+    const phoneNumbers = recipients.map((recipient) => recipient.to);
 
     try {
       await this.sendMessage(
@@ -157,13 +147,9 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       sender: fromNumber,
     };
 
-    const response = await axios.post(
-      "https://api.smsenvoi.com/API/v1.0/REST/sms",
-      payload,
-      { headers },
-    );
-
-    return response;
+    await axios.post("https://api.smsenvoi.com/API/v1.0/REST/sms", payload, {
+      headers,
+    });
   }
 
   private async mockedAccount(accountName: string): Promise<boolean> {

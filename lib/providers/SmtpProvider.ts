@@ -6,6 +6,7 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 import { Attachment } from "../types";
 import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { RecipientTypeRegistry } from "../recipients";
 
 export interface SMTPAccount extends BaseAccount<
   Transporter<SMTPTransport.SentMessageInfo>
@@ -19,7 +20,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
   override supportAttachment = true;
   override messageType: "short" | "long" = "long";
 
-  constructor() {
+  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -54,26 +55,6 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       required: ["host_name", "port", "user", "password", "default_sender"],
     };
 
-    const recipientsJsonSchema: JSONSchema7 = {
-      type: "object",
-      properties: {
-        to: {
-          type: "string",
-          title: "Email",
-          pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
-        },
-        cc: {
-          type: "string",
-          title: "Cc",
-        },
-        bcc: {
-          type: "string",
-          title: "Bcc",
-        },
-      },
-      required: ["to"],
-    };
-
     const contentJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -84,6 +65,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
         message: {
           type: "string",
           title: "Message",
+          format: "long-text",
         },
       },
       required: ["subject", "message"],
@@ -121,10 +103,11 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     super(
       "smtp",
       ProviderType.EMAIL,
+      ["email"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 

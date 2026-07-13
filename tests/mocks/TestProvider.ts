@@ -1,6 +1,7 @@
 import { JSONSchema7 } from "json-schema";
 import { PluginContext } from "kuzzle";
 import { BaseAccount, BaseProvider, ProviderType } from "lib/providers";
+import { RecipientTypeRegistry } from "lib/recipients";
 import { vi } from "vitest";
 
 export interface TestAccount extends BaseAccount<null> {
@@ -10,15 +11,24 @@ export interface TestAccount extends BaseAccount<null> {
 export class TestProvider extends BaseProvider<TestAccount> {
   constructor() {
     const paramsJsonSchema: JSONSchema7 = { type: "object" };
-    const recipientsJsonSchema: JSONSchema7 = { type: "object" };
     const contentJsonSchema: JSONSchema7 = { type: "object" };
+    const sendParamsJsonSchema: JSONSchema7 = { type: "object" };
+    const recipientTypeRegistry = new RecipientTypeRegistry();
+    recipientTypeRegistry.register({
+      name: "testRecipient",
+      type: "test",
+      description: "Test recipient type",
+      jsonSchema: { type: "object" },
+    });
 
     super(
       "testProvider",
       ProviderType.SMS,
+      ["testRecipient"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
+      sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 

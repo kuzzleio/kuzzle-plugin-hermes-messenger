@@ -12,6 +12,7 @@ import {
   PluginContext,
 } from "kuzzle";
 import { MessageType } from "../..";
+import { RecipientTypeRegistry } from "../recipients";
 
 export enum ProviderType {
   EMAIL = "email",
@@ -41,11 +42,10 @@ export abstract class BaseProvider<T> {
   protected EVENT_ACCOUNT_ADD: string;
   protected EVENT_ACCOUNT_REMOVE: string;
 
+  protected acceptedRecipientTypes: string[];
+
   protected paramsJsonSchema: JSONSchema7;
   protected paramsJsonSchemaValidator: ValidateFunction;
-
-  protected recipientsJsonSchema: JSONSchema7;
-  protected recipientsJsonSchemaValidator: ValidateFunction;
 
   protected contentJsonSchema: JSONSchema7;
   protected contentJsonSchemaValidator: ValidateFunction;
@@ -53,6 +53,10 @@ export abstract class BaseProvider<T> {
   protected sendParamsJsonSchema: JSONSchema7;
   protected sendParamsJsonSchemaValidator: ValidateFunction;
 
+  private ajv: Ajv;
+  private recipientJsonSchemaValidators = new Map<string, ValidateFunction>();
+
+  private recipientTypeRegistry: RecipientTypeRegistry;
   get sdk() {
     return this.context.accessors.sdk;
   }
@@ -64,25 +68,31 @@ export abstract class BaseProvider<T> {
   constructor(
     name: string,
     type: ProviderType,
+    acceptedRecipientTypes: string[],
     paramsJsonSchema: JSONSchema7,
-    recipientsJsonSchema: JSONSchema7,
     contentJsonSchema: JSONSchema7,
     sendParamsJsonSchema: JSONSchema7 = {},
+    recipientTypeRegistry: RecipientTypeRegistry,
   ) {
     this.name = name;
     this.type = type;
+    this.acceptedRecipientTypes = acceptedRecipientTypes;
     this.paramsJsonSchema = paramsJsonSchema;
-    this.recipientsJsonSchema = recipientsJsonSchema;
     this.contentJsonSchema = contentJsonSchema;
     this.sendParamsJsonSchema = sendParamsJsonSchema;
-
-    const ajv = new Ajv();
-    addFormats(ajv);
-    this.paramsJsonSchemaValidator = ajv.compile(this.paramsJsonSchema);
-    this.recipientsJsonSchemaValidator = ajv.compile(this.recipientsJsonSchema);
-    this.contentJsonSchemaValidator = ajv.compile(this.contentJsonSchema);
-    this.sendParamsJsonSchemaValidator = ajv.compile(this.sendParamsJsonSchema);
-
+    this.recipientTypeRegistry = recipientTypeRegistry;
+    this.ajv = new Ajv();
+    addFormats(this.ajv);
+    this.paramsJsonSchemaValidator = this.ajv.compile(this.paramsJsonSchema);
+    this.contentJsonSchemaValidator = this.ajv.compile(this.contentJsonSchema);
+    this.sendParamsJsonSchemaValidator = this.ajv.compile(
+      this.sendParamsJsonSchema,
+    );
+    for (const recipientTypeName of this.acceptedRecipientTypes) {
+      const definition = this.recipientTypeRegistry.get(recipientTypeName);
+      const validator = this.ajv.compile(definition.jsonSchema);
+      this.recipientJsonSchemaValidators.set(recipientTypeName, validator);
+    }
     this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
     this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
   }
@@ -120,6 +130,10 @@ export abstract class BaseProvider<T> {
 
   getParamsJsonSchema(): JSONSchema7 {
     return this.paramsJsonSchema;
+  }
+
+  getAcceptedRecipientTypes(): string[] {
+    return this.acceptedRecipientTypes;
   }
 
   abstract send(
@@ -166,8 +180,12 @@ export abstract class BaseProvider<T> {
     const valid = this.paramsJsonSchemaValidator(params);
 
     if (valid === false) {
-      const errors = this.paramsJsonSchemaValidator.errors.map(
-        (e) => new KuzzleError(e.message, 400),
+      const errors = (this.paramsJsonSchemaValidator?.errors ?? []).map(
+        (e) =>
+          new KuzzleError(
+            e?.message ?? "An error occured with the param validation schema",
+            400,
+          ),
       );
       throw new MultipleErrorsError(
         "Parameters format does not match with the json schema defined in the provider",
@@ -176,26 +194,72 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  validateRecipients(recipients: JSONObject): void {
-    const valid = this.recipientsJsonSchemaValidator(recipients);
+  validateRecipients(recipient: unknown, recipientTypeName?: string): void {
+    const resolvedTypeName = this.resolveRecipientTypeName(recipientTypeName);
+    const validator = this.getRecipientJsonSchemaValidator(resolvedTypeName);
+
+    const valid = validator(recipient);
 
     if (valid === false) {
-      const errors = this.recipientsJsonSchemaValidator.errors.map(
-        (e) => new KuzzleError(e.message, 400),
+      const errors = (validator?.errors ?? []).map(
+        (e) =>
+          new KuzzleError(
+            e?.message ??
+              "An error occured with the recipient validation schema",
+            400,
+          ),
       );
       throw new MultipleErrorsError(
-        "Recipients format does not match with the json schema defined in the provider",
+        `Recipient format does not match with the json schema defined for recipient type "${resolvedTypeName}"`,
         errors,
       );
     }
+  }
+
+  private resolveRecipientTypeName(recipientTypeName?: string): string {
+    if (recipientTypeName) {
+      if (!this.acceptedRecipientTypes.includes(recipientTypeName)) {
+        throw new BadRequestError(
+          `${Inflector.upFirst(this.name)} does not accept recipient type "${recipientTypeName}" (accepted: ${this.acceptedRecipientTypes.join(", ")}).`,
+        );
+      }
+
+      return recipientTypeName;
+    }
+
+    if (this.acceptedRecipientTypes.length === 1) {
+      return this.acceptedRecipientTypes[0];
+    }
+
+    throw new BadRequestError(
+      `${Inflector.upFirst(this.name)} accepts multiple recipient types (${this.acceptedRecipientTypes.join(", ")}); recipientTypeName must be specified explicitly.`,
+    );
+  }
+
+  private getRecipientJsonSchemaValidator(
+    recipientTypeName: string,
+  ): ValidateFunction {
+    const validator = this.recipientJsonSchemaValidators.get(recipientTypeName);
+
+    if (!validator) {
+      throw new NotFoundError(
+        `Could not retrieve recipient validator for recipient type "${recipientTypeName}"`,
+      );
+    }
+
+    return validator;
   }
 
   validateContent(content: JSONObject): void {
     const valid = this.contentJsonSchemaValidator(content);
 
     if (valid === false) {
-      const errors = this.contentJsonSchemaValidator.errors.map(
-        (e) => new KuzzleError(e.message, 400),
+      const errors = (this.contentJsonSchemaValidator?.errors ?? []).map(
+        (e) =>
+          new KuzzleError(
+            e.message ?? "An error occured with the content validation schema",
+            400,
+          ),
       );
       throw new MultipleErrorsError(
         "Content format does not match with the json schema defined in the provider",
@@ -208,8 +272,12 @@ export abstract class BaseProvider<T> {
     const valid = this.sendParamsJsonSchemaValidator(params);
 
     if (valid === false) {
-      const errors = this.sendParamsJsonSchemaValidator.errors.map(
-        (e) => new KuzzleError(e.message, 400),
+      const errors = (this.sendParamsJsonSchemaValidator?.errors ?? []).map(
+        (e) =>
+          new KuzzleError(
+            e.message ?? "An error occured with send params validation schema",
+            400,
+          ),
       );
       throw new MultipleErrorsError(
         "Send params format does not match with the json schema defined in the provider",
@@ -267,7 +335,7 @@ export abstract class BaseProvider<T> {
       throw new NotFoundError(`Account "${accountName}" does not exists.`);
     }
 
-    return this.accounts.get(accountName);
+    return this.accounts.get(accountName) as T;
   }
 
   private logInfo(message: string) {

@@ -4,6 +4,7 @@ import { JSONSchema7 } from "json-schema";
 
 import { Attachment, SendgridAttachment } from "../types";
 import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { RecipientTypeRegistry } from "../recipients";
 
 export interface SendgridAccount extends BaseAccount<MailService> {
   options: {
@@ -15,7 +16,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
   override supportAttachment = true;
   override messageType: "short" | "long" = "long";
 
-  constructor() {
+  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -36,18 +37,6 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       required: ["api_key", "default_sender"],
     };
 
-    const recipientsJsonSchema: JSONSchema7 = {
-      type: "object",
-      properties: {
-        to: {
-          type: "string",
-          title: "Email",
-          pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
-        },
-      },
-      required: ["to"],
-    };
-
     const contentJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -58,6 +47,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
         message: {
           type: "string",
           title: "Message",
+          format: "long-text",
         },
       },
       required: ["subject", "message"],
@@ -95,10 +85,11 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     super(
       "sendgrid",
       ProviderType.EMAIL,
+      ["email"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 

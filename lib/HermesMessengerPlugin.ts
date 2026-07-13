@@ -1,76 +1,34 @@
 import {
-  InternalError,
+  BadRequestError,
   JSONObject,
+  KuzzleError,
   Mutex,
   Plugin,
   PluginContext,
 } from "kuzzle";
-import _ from "lodash";
+import merge from "lodash/merge";
 
 import { ProviderController } from "./controllers";
 import {
   BaseProvider,
+  ProviderManager,
   SendgridProvider,
   SMSEnvoiProvider,
   SmtpProvider,
   TwilioProvider,
 } from "./providers";
-
-export class ProviderManager {
-  private providers = new Map<string, BaseProvider<any>>();
-
-  constructor() {}
-
-  async init(config: JSONObject, context: PluginContext): Promise<void> {
-    for (const [, value] of this.providers) {
-      await value.init(config, context);
-    }
-  }
-
-  set(providerName: string, providerInstance: BaseProvider<any>) {
-    this.providers.set(providerName, providerInstance);
-  }
-
-  has(providerName: string): boolean {
-    return this.providers.has(providerName);
-  }
-
-  get(providerName: string): BaseProvider<any> {
-    const provider = this.providers.get(providerName);
-    if (!provider) {
-      throw new InternalError(
-        `${providerName} provider is not available yet. Are you trying to access it before the application has started ?`,
-      );
-    }
-
-    return provider;
-  }
-
-  listProviders(filter?: {
-    supportAttachment?: boolean;
-    messageType?: "short" | "long";
-  }): BaseProvider<any>[] {
-    let providers = Array.from(this.providers.values());
-
-    if (filter?.supportAttachment !== undefined) {
-      providers = providers.filter(
-        (p) => p.supportAttachment === filter.supportAttachment,
-      );
-    }
-
-    if (filter?.messageType !== undefined) {
-      providers = providers.filter((p) => p.messageType === filter.messageType);
-    }
-
-    return providers;
-  }
-}
-
+import {
+  emailRecipient,
+  phoneRecipient,
+  RecipientTypeDefinition,
+  RecipientTypeRegistry,
+} from "./recipients";
 export class HermesMessengerPlugin extends Plugin {
-  private defaultConfig: JSONObject;
-  private controller: ProviderController;
-  private providerManager: ProviderManager;
-
+  readonly defaultConfig: JSONObject;
+  readonly controller: ProviderController;
+  readonly providerManager: ProviderManager;
+  readonly recipientTypeRegistry: RecipientTypeRegistry =
+    new RecipientTypeRegistry();
   constructor() {
     super({
       kuzzleVersion: ">=2.12.0 <3",
@@ -94,15 +52,30 @@ export class HermesMessengerPlugin extends Plugin {
     };
 
     this.providerManager = new ProviderManager();
-    this.providerManager.set("smtp", new SmtpProvider());
-    this.providerManager.set("twilio", new TwilioProvider());
-    this.providerManager.set("sendgrid", new SendgridProvider());
-    this.providerManager.set("smsenvoi", new SMSEnvoiProvider());
+
+    this.registerRecipientType(emailRecipient);
+
+    this.registerRecipientType(phoneRecipient);
+
+    this.registerProvider("smtp", new SmtpProvider(this.recipientTypeRegistry));
+    this.registerProvider(
+      "twilio",
+      new TwilioProvider(this.recipientTypeRegistry),
+    );
+    this.registerProvider(
+      "sendgrid",
+      new SendgridProvider(this.recipientTypeRegistry),
+    );
+    this.registerProvider(
+      "smsenvoi",
+      new SMSEnvoiProvider(this.recipientTypeRegistry),
+    );
 
     this.controller = new ProviderController(
       this.config,
       this.context,
       this.providerManager,
+      this.recipientTypeRegistry,
     );
   }
 
@@ -114,7 +87,7 @@ export class HermesMessengerPlugin extends Plugin {
    * Init the plugin
    */
   async init(config: JSONObject, context: PluginContext) {
-    this.config = _.merge(this.defaultConfig, config);
+    this.config = merge(this.defaultConfig, config);
 
     this.context = context;
 
@@ -129,6 +102,14 @@ export class HermesMessengerPlugin extends Plugin {
   }
 
   registerProvider(name: string, provider: BaseProvider<any>) {
+    for (const recipientTypeName of provider.getAcceptedRecipientTypes()) {
+      if (!this.recipientTypeRegistry.has(recipientTypeName)) {
+        throw new BadRequestError(
+          `Provider "${name}" references unknown recipient type "${recipientTypeName}" — register it via registerRecipientType() before registering this provider.`,
+        );
+      }
+    }
+
     this.providerManager.set(name, provider);
   }
 
@@ -138,6 +119,22 @@ export class HermesMessengerPlugin extends Plugin {
 
   getProvider(name: string) {
     return this.providerManager.get(name);
+  }
+
+  registerRecipientType(definition: RecipientTypeDefinition): void {
+    this.recipientTypeRegistry.register(definition);
+  }
+
+  hasRecipientType(name: string): boolean {
+    return this.recipientTypeRegistry.has(name);
+  }
+
+  getRecipientType(name: string): RecipientTypeDefinition {
+    return this.recipientTypeRegistry.get(name);
+  }
+
+  listRecipientTypes(): RecipientTypeDefinition[] {
+    return this.recipientTypeRegistry.list();
   }
 
   private async initDatabase() {
@@ -153,7 +150,10 @@ export class HermesMessengerPlugin extends Plugin {
         try {
           await this.sdk.index.create(this.config.adminIndex);
         } catch (error) {
-          if (error.id !== "services.storage.index_already_exists") {
+          if (
+            (error as KuzzleError).id !==
+            "services.storage.index_already_exists"
+          ) {
             throw error;
           }
         }
