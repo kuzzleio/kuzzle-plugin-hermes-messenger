@@ -202,7 +202,6 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       port,
       secure: port === 465,
     });
-
     return {
       provider: transporter,
       name,
@@ -223,11 +222,10 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     } else {
       try {
         await account.provider.verify();
+        return account.provider.sendMail(email);
       } catch (error) {
         throw new ExternalServiceError(error);
       }
-
-      return account.provider.sendMail(email);
     }
   }
 

@@ -1,5 +1,6 @@
 import { defineReflectProperties } from "tests/helpers";
 import { context, TestProvider } from "tests/mocks";
+import { RecipientTypeDefinition, RecipientTypeRegistry } from "lib/recipients";
 import { describe, it, expect, vi } from "vitest";
 
 beforeAll(() => {
@@ -198,5 +199,69 @@ describe("TestProvider", () => {
     expect(nodeRemoveAccountSpy).toHaveBeenCalledWith("myaccount");
 
     initSpy.mockRestore();
+  });
+
+  describe("Custom recipient type registration", () => {
+    const webhookRecipient: RecipientTypeDefinition = {
+      name: "webhookUrl",
+      type: "webhook",
+      description: "An HTTP endpoint to POST the message to",
+      jsonSchema: {
+        type: "object",
+        properties: { to: { type: "string" } },
+        required: ["to"],
+      },
+    };
+
+    it("accepts a provider referencing a custom registered recipient type", () => {
+      const registry = new RecipientTypeRegistry();
+      registry.register(webhookRecipient);
+
+      const testProvider = new TestProvider(registry, ["webhookUrl"]);
+
+      expect(testProvider.getAcceptedRecipientTypes()).toEqual(["webhookUrl"]);
+      expect(() =>
+        testProvider.validateRecipients({ to: "https://example.com/hook" }),
+      ).not.toThrow();
+    });
+
+    it("rejects a recipient that does not match the custom type's schema", () => {
+      const registry = new RecipientTypeRegistry();
+      registry.register(webhookRecipient);
+
+      const testProvider = new TestProvider(registry, ["webhookUrl"]);
+
+      expect(() => testProvider.validateRecipients({})).toThrowError();
+    });
+
+    it("throws when a provider references an unregistered recipient type", () => {
+      const registry = new RecipientTypeRegistry();
+
+      expect(() => new TestProvider(registry, ["unknownType"])).toThrowError(
+        'Recipient type "unknownType" is not registered.',
+      );
+    });
+
+    it("registering the same recipient type twice with an identical definition is a no-op", () => {
+      const registry = new RecipientTypeRegistry();
+      registry.register(webhookRecipient);
+
+      expect(() => registry.register({ ...webhookRecipient })).not.toThrow();
+      expect(registry.list()).toHaveLength(1);
+    });
+
+    it("registering the same recipient type twice with a conflicting definition throws", () => {
+      const registry = new RecipientTypeRegistry();
+      registry.register(webhookRecipient);
+
+      expect(() =>
+        registry.register({
+          ...webhookRecipient,
+          jsonSchema: { type: "object" },
+        }),
+      ).toThrowError(
+        'Recipient type "webhookUrl" is already registered with a different type/jsonSchema.',
+      );
+    });
   });
 });

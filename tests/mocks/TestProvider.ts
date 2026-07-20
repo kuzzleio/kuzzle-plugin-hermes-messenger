@@ -9,22 +9,27 @@ export interface TestAccount extends BaseAccount<null> {
 }
 
 export class TestProvider extends BaseProvider<TestAccount> {
-  constructor() {
+  constructor(
+    recipientTypeRegistry: RecipientTypeRegistry = new RecipientTypeRegistry(),
+    acceptedRecipientTypes: string[] = ["testRecipient"],
+  ) {
     const paramsJsonSchema: JSONSchema7 = { type: "object" };
     const contentJsonSchema: JSONSchema7 = { type: "object" };
     const sendParamsJsonSchema: JSONSchema7 = { type: "object" };
-    const recipientTypeRegistry = new RecipientTypeRegistry();
-    recipientTypeRegistry.register({
-      name: "testRecipient",
-      type: "test",
-      description: "Test recipient type",
-      jsonSchema: { type: "object" },
-    });
+
+    if (!recipientTypeRegistry.has("testRecipient")) {
+      recipientTypeRegistry.register({
+        name: "testRecipient",
+        type: "test",
+        description: "Test recipient type",
+        jsonSchema: { type: "object" },
+      });
+    }
 
     super(
       "testProvider",
       ProviderType.SMS,
-      ["testRecipient"],
+      acceptedRecipientTypes,
       paramsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
