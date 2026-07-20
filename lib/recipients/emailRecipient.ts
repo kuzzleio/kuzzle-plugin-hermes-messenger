@@ -12,14 +12,6 @@ export const emailRecipient: RecipientTypeDefinition = {
         title: "Email",
         pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
       },
-      cc: {
-        type: "string",
-        title: "Cc",
-      },
-      bcc: {
-        type: "string",
-        title: "Bcc",
-      },
     },
     required: ["to"],
   },

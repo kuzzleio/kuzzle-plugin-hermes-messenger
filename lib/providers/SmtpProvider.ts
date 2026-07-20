@@ -65,7 +65,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
         message: {
           type: "string",
           title: "Message",
-          format: "long-text",
+          $comment: "long-text",
         },
       },
       required: ["subject", "message"],
@@ -75,6 +75,14 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       type: "object",
       properties: {
         from: { type: "string" },
+        cc: {
+          type: "string",
+          title: "Cc",
+        },
+        bcc: {
+          type: "string",
+          title: "Bcc",
+        },
         attachments: {
           type: "array",
           items: {
@@ -115,8 +123,8 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    * Sends an email using one of the registered SMTP accounts.
    *
    * @param accountName - Name of the registered account to use
-   * @param recipients - Array of recipient objects with `to` (required), `cc` and `bcc` (optional)
-   * @param content - Email content: `subject` and `message` (HTML)
+   * @param recipients - Array of recipient objects with `to` (required)
+   * @param content - Email content: `subject` and `message` (HTML), plus optional `cc` and `bcc`
    * @param params.from - Sender override; falls back to the account's `default_sender`
    * @param params.attachments - Optional file attachments
    */
@@ -124,7 +132,17 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     accountName: string,
     recipients: any[],
     content: any,
-    { attachments, from }: { attachments?: Attachment[]; from?: string } = {},
+    {
+      attachments,
+      from,
+      cc,
+      bcc,
+    }: {
+      attachments?: Attachment[];
+      from?: string;
+      cc?: string;
+      bcc?: string;
+    } = {},
   ) {
     const account = this.getAccount(accountName);
     const fromEmail = from || account.options.defaultSender;
@@ -135,6 +153,8 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       subject: content.subject,
       html: content.message,
       to: recipients.map((r) => r.to).join(", "),
+      cc: cc,
+      bcc: bcc,
     };
 
     try {

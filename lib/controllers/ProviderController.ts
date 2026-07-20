@@ -5,8 +5,8 @@ import {
   PluginContext,
   ControllerDefinition,
 } from "kuzzle";
-import { ProviderManager } from "../..";
 import { RecipientTypeRegistry } from "../recipients";
+import { ProviderManager } from "../providers";
 
 export class ProviderController {
   protected context: PluginContext;
@@ -109,7 +109,9 @@ export class ProviderController {
 
   async listProviders(request: KuzzleRequest) {
     const filters = request.getBodyObject("filters", {});
-    return this.providerManager.listProviders(filters);
+    const providers = this.providerManager.listProviders(filters);
+
+    return providers.map((provider) => provider.serialize());
   }
 
   async listRecipientTypes() {

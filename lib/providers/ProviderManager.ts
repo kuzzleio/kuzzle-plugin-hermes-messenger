@@ -1,5 +1,5 @@
 import { InternalError, JSONObject, PluginContext } from "kuzzle";
-import { BaseProvider } from "../..";
+import { BaseProvider } from "./BaseProvider";
 
 export class ProviderManager {
   readonly providers = new Map<string, BaseProvider<any>>();

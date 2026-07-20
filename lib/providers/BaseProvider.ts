@@ -13,6 +13,7 @@ import {
 } from "kuzzle";
 import { MessageType } from "../..";
 import { RecipientTypeRegistry } from "../recipients";
+import { SerializedProvider } from "../types";
 
 export enum ProviderType {
   EMAIL = "email",
@@ -134,6 +135,19 @@ export abstract class BaseProvider<T> {
 
   getAcceptedRecipientTypes(): string[] {
     return this.acceptedRecipientTypes;
+  }
+
+  serialize(): SerializedProvider {
+    return {
+      name: this.name,
+      type: this.type,
+      supportAttachment: this.supportAttachment,
+      messageType: this.messageType,
+      acceptedRecipientTypes: this.acceptedRecipientTypes,
+      paramsJsonSchema: this.paramsJsonSchema,
+      contentJsonSchema: this.contentJsonSchema,
+      sendParamsJsonSchema: this.sendParamsJsonSchema,
+    };
   }
 
   abstract send(

@@ -47,7 +47,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
         message: {
           type: "string",
           title: "Message",
-          format: "long-text",
+          $comment: "long-text",
         },
       },
       required: ["subject", "message"],
@@ -57,6 +57,14 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       type: "object",
       properties: {
         from: { type: "string" },
+        cc: {
+          type: "string",
+          title: "Cc",
+        },
+        bcc: {
+          type: "string",
+          title: "Bcc",
+        },
         attachments: {
           type: "array",
           items: {
@@ -97,7 +105,17 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     accountName: string,
     recipients: any[],
     content: any,
-    { from, attachments }: { from?: string; attachments?: Attachment[] } = {},
+    {
+      from,
+      attachments,
+      cc,
+      bcc,
+    }: {
+      from?: string;
+      attachments?: Attachment[];
+      cc?: string;
+      bcc?: string;
+    } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
     const fromEmail = from || account.options.defaultSender;
@@ -106,6 +124,8 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     const email = {
       from: fromEmail,
       to,
+      cc,
+      bcc,
       subject: content.subject,
       html: content.message,
       attachments: attachments?.map(
