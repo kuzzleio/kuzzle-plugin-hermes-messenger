@@ -148,7 +148,10 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     const fromEmail = from || account.options.defaultSender;
 
     const email: Mail.Options = {
-      attachments,
+      attachments: attachments?.map((attachment) => ({
+        ...attachment,
+        encoding: "base64",
+      })),
       from: fromEmail,
       subject: content.subject,
       html: content.message,
