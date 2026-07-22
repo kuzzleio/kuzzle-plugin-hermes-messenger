@@ -2,7 +2,6 @@ import { RecipientTypeDefinition } from "./RecipientType";
 
 export const emailRecipient: RecipientTypeDefinition = {
   name: "email",
-  type: "email",
   description: "An email address",
   jsonSchema: {
     type: "object",

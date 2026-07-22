@@ -2,7 +2,6 @@ import { RecipientTypeDefinition } from "./RecipientType";
 
 export const phoneRecipient: RecipientTypeDefinition = {
   name: "phoneNumber",
-  type: "phone",
   description: "A phone number, in E.164 format",
 
   jsonSchema: {

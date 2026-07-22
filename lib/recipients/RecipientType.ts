@@ -9,8 +9,6 @@ export interface RecipientTypeLocale {
 export interface RecipientTypeDefinition {
   /** Unique registry key, e.g. 'email', 'phoneNumber', 'pushToken', 'webhookUrl'. */
   name: string;
-  /** Coarse category — multiple `name`s may share the same `type` (e.g. future 'workEmail' and 'personalEmail' could both be type 'email'). */
-  type: string;
   /** Fallback/default human description. */
   description: string;
   /** JSON Schema describing the shape of ONE recipient entry for this type. */
@@ -31,7 +29,7 @@ export class RecipientTypeRegistry {
       }
 
       throw new BadRequestError(
-        `Recipient type "${definition.name}" is already registered with a different type/jsonSchema.`,
+        `Recipient type "${definition.name}" is already registered with a different jsonSchema.`,
       );
     }
 

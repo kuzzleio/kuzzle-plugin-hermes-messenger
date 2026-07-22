@@ -201,7 +201,6 @@ import {
 
 const webhookUrlRecipient: RecipientTypeDefinition = {
   name: "webhookUrl", // unique registry key, referenced by acceptedRecipientTypes
-  type: "webhook", // coarse category; several `name`s may share the same `type`
   description: "An HTTP endpoint to POST the message to",
   jsonSchema: {
     type: "object",
@@ -221,7 +220,7 @@ plugin.registerRecipientType(webhookUrlRecipient);
 
 Notes:
 
-- Registering the same `name` twice with an identical definition is a no-op; registering it twice with a **different** `type`/`jsonSchema` throws a `BadRequestError`.
+- Registering the same `name` twice with an identical definition is a no-op;
 - `recipientTypeRegistry.get(name)` / `.has(name)` / `.list()` are available wherever the registry is passed (providers, controllers) to look up or enumerate definitions at runtime.
 - `hermes:listRecipientTypes` (`GET /_/hermes/recipient-types`) exposes every registered `RecipientTypeDefinition` over the API.
 
