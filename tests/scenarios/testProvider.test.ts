@@ -105,7 +105,7 @@ describe("TestProvider", () => {
   it("Validate params", async () => {
     const testProvider = new TestProvider();
 
-    const validateParamsSpy = vi.spyOn(testProvider, "validateParams");
+    const validateParamsSpy = vi.spyOn(testProvider, "validateAccountParams");
 
     testProvider.validateAccountParams({ type: "object" });
 
@@ -153,9 +153,9 @@ describe("TestProvider", () => {
   it("Get params json", async () => {
     const testProvider = new TestProvider();
 
-    const getNameSpy = vi.spyOn(testProvider, "getParamsJsonSchema");
+    const getNameSpy = vi.spyOn(testProvider, "getAccountParamsJsonSchema");
 
-    testProvider.getParamsJsonSchema();
+    testProvider.getAccountParamsJsonSchema();
 
     expect(getNameSpy).toHaveBeenCalledWith();
 
@@ -204,7 +204,6 @@ describe("TestProvider", () => {
   describe("Custom recipient type registration", () => {
     const webhookRecipient: RecipientTypeDefinition = {
       name: "webhookUrl",
-      type: "webhook",
       description: "An HTTP endpoint to POST the message to",
       jsonSchema: {
         type: "object",
@@ -260,7 +259,7 @@ describe("TestProvider", () => {
           jsonSchema: { type: "object" },
         }),
       ).toThrowError(
-        'Recipient type "webhookUrl" is already registered with a different type/jsonSchema.',
+        'Recipient type "webhookUrl" is already registered with a different jsonSchema.',
       );
     });
   });

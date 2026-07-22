@@ -1,7 +1,8 @@
 import { JSONSchema7 } from "json-schema";
 import { PluginContext } from "kuzzle";
-import { BaseAccount, BaseProvider, ProviderType } from "lib/providers";
+import { BaseAccount, BaseProvider } from "lib/providers";
 import { RecipientTypeRegistry } from "lib/recipients";
+import { ProviderCapabilities } from "lib/types";
 import { vi } from "vitest";
 
 export interface TestAccount extends BaseAccount<null> {
@@ -9,6 +10,12 @@ export interface TestAccount extends BaseAccount<null> {
 }
 
 export class TestProvider extends BaseProvider<TestAccount> {
+  override capabilities: ProviderCapabilities = {
+    fileAttachment: false,
+    longMessage: false,
+    shortMessage: true,
+    json: false,
+  };
   constructor(
     recipientTypeRegistry: RecipientTypeRegistry = new RecipientTypeRegistry(),
     acceptedRecipientTypes: string[] = ["testRecipient"],
@@ -20,7 +27,6 @@ export class TestProvider extends BaseProvider<TestAccount> {
     if (!recipientTypeRegistry.has("testRecipient")) {
       recipientTypeRegistry.register({
         name: "testRecipient",
-        type: "test",
         description: "Test recipient type",
         jsonSchema: { type: "object" },
       });
@@ -28,7 +34,6 @@ export class TestProvider extends BaseProvider<TestAccount> {
 
     super(
       "testProvider",
-      ProviderType.SMS,
       acceptedRecipientTypes,
       paramsJsonSchema,
       contentJsonSchema,

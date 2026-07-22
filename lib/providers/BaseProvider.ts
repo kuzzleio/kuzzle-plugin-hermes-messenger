@@ -126,7 +126,7 @@ export abstract class BaseProvider<T> {
     return this.name;
   }
 
-  getParamsJsonSchema(): JSONSchema7 {
+  getAccountParamsJsonSchema(): JSONSchema7 {
     return this.accountParamsJsonSchema;
   }
 
