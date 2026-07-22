@@ -1,5 +1,7 @@
 import { InternalError, JSONObject, PluginContext } from "kuzzle";
 import { BaseProvider } from "./BaseProvider";
+import { matches } from "lodash";
+import { ProviderCapabilities } from "../types";
 
 export class ProviderManager {
   readonly providers = new Map<string, BaseProvider<any>>();
@@ -29,20 +31,12 @@ export class ProviderManager {
     return provider;
   }
 
-  listProviders(filter?: {
-    supportAttachment?: boolean;
-    messageType?: "short" | "long";
-  }): BaseProvider<any>[] {
+  listProviders(filter?: Partial<ProviderCapabilities>): BaseProvider<any>[] {
     let providers = Array.from(this.providers.values());
 
-    if (filter?.supportAttachment !== undefined) {
-      providers = providers.filter(
-        (p) => p.supportAttachment === filter.supportAttachment,
-      );
-    }
-
-    if (filter?.messageType !== undefined) {
-      providers = providers.filter((p) => p.messageType === filter.messageType);
+    if (filter && Object.keys(filter).length > 0) {
+      const filterMatcher = matches(filter);
+      providers = providers.filter((p) => filterMatcher(p.capabilities));
     }
 
     return providers;

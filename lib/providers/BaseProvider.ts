@@ -11,14 +11,8 @@ import {
   NotFoundError,
   PluginContext,
 } from "kuzzle";
-import { MessageType } from "../..";
 import { RecipientTypeRegistry } from "../recipients";
-import { SerializedProvider } from "../types";
-
-export enum ProviderType {
-  EMAIL = "email",
-  SMS = "sms",
-}
+import { ProviderCapabilities, SerializedProvider } from "../types";
 
 export interface BaseAccount<T> {
   provider: T;
@@ -33,20 +27,23 @@ export abstract class BaseProvider<T> {
   protected context: PluginContext;
 
   protected name: string;
-  protected type: ProviderType;
 
   protected accounts = new Map<string, T>();
 
-  public supportAttachment: boolean = false;
-  public messageType: MessageType = "short";
+  public capabilities: ProviderCapabilities = {
+    fileAttachment: false,
+    longMessage: false,
+    shortMessage: false,
+    json: false,
+  };
 
   protected EVENT_ACCOUNT_ADD: string;
   protected EVENT_ACCOUNT_REMOVE: string;
 
   protected acceptedRecipientTypes: string[];
 
-  protected paramsJsonSchema: JSONSchema7;
-  protected paramsJsonSchemaValidator: ValidateFunction;
+  protected accountParamsJsonSchema: JSONSchema7;
+  protected accountParamsJsonSchemaValidator: ValidateFunction;
 
   protected contentJsonSchema: JSONSchema7;
   protected contentJsonSchemaValidator: ValidateFunction;
@@ -68,7 +65,6 @@ export abstract class BaseProvider<T> {
 
   constructor(
     name: string,
-    type: ProviderType,
     acceptedRecipientTypes: string[],
     paramsJsonSchema: JSONSchema7,
     contentJsonSchema: JSONSchema7,
@@ -76,15 +72,16 @@ export abstract class BaseProvider<T> {
     recipientTypeRegistry: RecipientTypeRegistry,
   ) {
     this.name = name;
-    this.type = type;
     this.acceptedRecipientTypes = acceptedRecipientTypes;
-    this.paramsJsonSchema = paramsJsonSchema;
+    this.accountParamsJsonSchema = paramsJsonSchema;
     this.contentJsonSchema = contentJsonSchema;
     this.sendParamsJsonSchema = sendParamsJsonSchema;
     this.recipientTypeRegistry = recipientTypeRegistry;
     this.ajv = new Ajv();
     addFormats(this.ajv);
-    this.paramsJsonSchemaValidator = this.ajv.compile(this.paramsJsonSchema);
+    this.accountParamsJsonSchemaValidator = this.ajv.compile(
+      this.accountParamsJsonSchema,
+    );
     this.contentJsonSchemaValidator = this.ajv.compile(this.contentJsonSchema);
     this.sendParamsJsonSchemaValidator = this.ajv.compile(
       this.sendParamsJsonSchema,
@@ -130,7 +127,7 @@ export abstract class BaseProvider<T> {
   }
 
   getParamsJsonSchema(): JSONSchema7 {
-    return this.paramsJsonSchema;
+    return this.accountParamsJsonSchema;
   }
 
   getAcceptedRecipientTypes(): string[] {
@@ -140,11 +137,9 @@ export abstract class BaseProvider<T> {
   serialize(): SerializedProvider {
     return {
       name: this.name,
-      type: this.type,
-      supportAttachment: this.supportAttachment,
-      messageType: this.messageType,
+      capabilities: this.capabilities,
       acceptedRecipientTypes: this.acceptedRecipientTypes,
-      paramsJsonSchema: this.paramsJsonSchema,
+      paramsJsonSchema: this.accountParamsJsonSchema,
       contentJsonSchema: this.contentJsonSchema,
       sendParamsJsonSchema: this.sendParamsJsonSchema,
     };
@@ -190,11 +185,11 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  validateParams(params: JSONObject): void {
-    const valid = this.paramsJsonSchemaValidator(params);
+  validateAccountParams(params: JSONObject): void {
+    const valid = this.accountParamsJsonSchemaValidator(params);
 
     if (valid === false) {
-      const errors = (this.paramsJsonSchemaValidator?.errors ?? []).map(
+      const errors = (this.accountParamsJsonSchemaValidator?.errors ?? []).map(
         (e) =>
           new KuzzleError(
             e?.message ?? "An error occured with the param validation schema",

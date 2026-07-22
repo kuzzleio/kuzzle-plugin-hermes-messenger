@@ -107,7 +107,7 @@ describe("TestProvider", () => {
 
     const validateParamsSpy = vi.spyOn(testProvider, "validateParams");
 
-    testProvider.validateParams({ type: "object" });
+    testProvider.validateAccountParams({ type: "object" });
 
     expect(validateParamsSpy).toHaveBeenCalledWith({ type: "object" });
 

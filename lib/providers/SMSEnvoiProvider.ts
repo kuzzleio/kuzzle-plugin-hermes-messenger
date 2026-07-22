@@ -2,8 +2,9 @@ import { ExternalServiceError, NotFoundError } from "kuzzle";
 import axios from "axios";
 import { JSONSchema7 } from "json-schema";
 
-import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { BaseAccount, BaseProvider } from "./BaseProvider";
 import { RecipientTypeRegistry } from "../recipients";
+import { ProviderCapabilities } from "../types";
 
 export interface SMSEnvoiAccount extends BaseAccount<null> {
   options: {
@@ -14,6 +15,12 @@ export interface SMSEnvoiAccount extends BaseAccount<null> {
 }
 
 export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
+  override capabilities: ProviderCapabilities = {
+    longMessage: false,
+    shortMessage: true,
+    fileAttachment: false,
+    json: false,
+  };
   constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
@@ -54,7 +61,6 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
 
     super(
       "smsenvoi",
-      ProviderType.SMS,
       ["phoneNumber"],
       paramsJsonSchema,
       contentJsonSchema,

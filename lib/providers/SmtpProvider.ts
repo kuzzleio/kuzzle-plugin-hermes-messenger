@@ -4,8 +4,8 @@ import { Transporter, createTransport } from "nodemailer";
 import Mail from "nodemailer/lib/mailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
-import { Attachment } from "../types";
-import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { Attachment, ProviderCapabilities } from "../types";
+import { BaseAccount, BaseProvider } from "./BaseProvider";
 import { RecipientTypeRegistry } from "../recipients";
 
 export interface SMTPAccount extends BaseAccount<
@@ -17,8 +17,12 @@ export interface SMTPAccount extends BaseAccount<
 }
 
 export class SmtpProvider extends BaseProvider<SMTPAccount> {
-  override supportAttachment = true;
-  override messageType: "short" | "long" = "long";
+  override capabilities: ProviderCapabilities = {
+    longMessage: true,
+    shortMessage: true,
+    fileAttachment: true,
+    json: false,
+  };
 
   constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
@@ -110,7 +114,6 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
 
     super(
       "smtp",
-      ProviderType.EMAIL,
       ["email"],
       paramsJsonSchema,
       contentJsonSchema,

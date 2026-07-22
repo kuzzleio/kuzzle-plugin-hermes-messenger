@@ -36,15 +36,19 @@ interface MyAccount extends BaseAccount<MyClient> {
 ```typescript
 import {
   BaseProvider,
-  ProviderType,
+  ProviderCapabilities,
   RecipientTypeRegistry,
 } from "kuzzle-plugin-hermes-messenger";
 import { JSONSchema7 } from "json-schema";
 
 export class MyProvider extends BaseProvider<MyAccount> {
-  // Optional overrides — defaults are `false` / `"short"`.
-  override supportAttachment = false;
-  override messageType: "short" | "long" = "short";
+  // Declares what this provider supports — defaults are all `false`.
+  override capabilities: ProviderCapabilities = {
+    fileAttachment: false,
+    shortMessage: true,
+    longMessage: false,
+    json: false,
+  };
 
   constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     // paramsJsonSchema: shape of the credentials passed to addAccount
@@ -76,7 +80,6 @@ export class MyProvider extends BaseProvider<MyAccount> {
 
     super(
       "my-provider",
-      ProviderType.SMS,
       ["phoneNumber"], // acceptedRecipientTypes — must already be registered, see below
       paramsJsonSchema,
       contentJsonSchema,
@@ -228,26 +231,25 @@ Notes:
 
 ## BaseProvider API reference
 
-| Method                                              | Description                                                                                                                                                                                                                            |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `addAccount(name, params)`                          | Register an account; triggers cluster sync                                                                                                                                                                                             |
-| `removeAccount(name)`                               | Remove a registered account                                                                                                                                                                                                            |
-| `getAccount(name)`                                  | Retrieve a registered account (throws if not found)                                                                                                                                                                                    |
-| `listAccounts()`                                    | Returns `[{ name, options }]` for all accounts                                                                                                                                                                                         |
-| `getAcceptedRecipientTypes()`                       | Returns the `recipientType` names this provider accepts                                                                                                                                                                                |
-| `validateParams(params)`                            | Validate against `paramsJsonSchema`                                                                                                                                                                                                    |
-| `validateRecipients(recipient, recipientTypeName?)` | Validate one recipient against the named type's schema; if the provider accepts only one type, `recipientTypeName` can be omitted                                                                                                      |
-| `validateContent(content)`                          | Validate against `contentJsonSchema`                                                                                                                                                                                                   |
-| `validateSendParams(params)`                        | Validate against `sendParamsJsonSchema`                                                                                                                                                                                                |
-| `getName()`                                         | Returns the provider name                                                                                                                                                                                                              |
-| `serialize()`                                       | Returns a `SerializedProvider` (`name`, `type`, `supportAttachment`, `messageType`, `acceptedRecipientTypes`, `paramsJsonSchema`, `contentJsonSchema`, `sendParamsJsonSchema`) — what `hermes:listProviders` returns for each provider |
+| Method                                              | Description                                                                                                                                                                                                       |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `addAccount(name, params)`                          | Register an account; triggers cluster sync                                                                                                                                                                        |
+| `removeAccount(name)`                               | Remove a registered account                                                                                                                                                                                       |
+| `getAccount(name)`                                  | Retrieve a registered account (throws if not found)                                                                                                                                                               |
+| `listAccounts()`                                    | Returns `[{ name, options }]` for all accounts                                                                                                                                                                    |
+| `getAcceptedRecipientTypes()`                       | Returns the `recipientType` names this provider accepts                                                                                                                                                           |
+| `validateAccountParams(params)`                     | Validate against `accountParamsJsonSchema`                                                                                                                                                                        |
+| `validateRecipients(recipient, recipientTypeName?)` | Validate one recipient against the named type's schema; if the provider accepts only one type, `recipientTypeName` can be omitted                                                                                 |
+| `validateContent(content)`                          | Validate against `contentJsonSchema`                                                                                                                                                                              |
+| `validateSendParams(params)`                        | Validate against `sendParamsJsonSchema`                                                                                                                                                                           |
+| `getName()`                                         | Returns the provider name                                                                                                                                                                                         |
+| `serialize()`                                       | Returns a `SerializedProvider` (`name`, `capabilities`, `acceptedRecipientTypes`, `accountParamsJsonSchema`, `contentJsonSchema`, `sendParamsJsonSchema`) — what `hermes:listProviders` returns for each provider |
 
 ### Public properties
 
-| Property            | Description                                                                                                      |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `supportAttachment` | Whether this provider supports attachments (default `false`)                                                     |
-| `messageType`       | `"short"` or `"long"` (default `"short"`) — lets `hermes:listProviders` be filtered by message length capability |
+| Property       | Description                                                                                                                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capabilities` | A `ProviderCapabilities` object declaring what this provider supports — `fileAttachment`, `shortMessage`, `longMessage`, `json` (all default `false`). Exposed via `serialize()` so `hermes:listProviders` can be filtered by capability. |
 
 ### Protected properties available in `send()` and `sendMessage()`
 

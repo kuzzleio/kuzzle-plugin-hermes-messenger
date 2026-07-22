@@ -1,13 +1,9 @@
 import { JSONSchema7 } from "json-schema";
-
-import { ProviderType } from "../providers/BaseProvider";
-import { MessageType } from "./MessageTypes";
+import { ProviderCapabilities } from "./ProviderCapabilities";
 
 export interface SerializedProvider {
   name: string;
-  type: ProviderType;
-  supportAttachment: boolean;
-  messageType: MessageType;
+  capabilities: ProviderCapabilities;
   acceptedRecipientTypes: string[];
   paramsJsonSchema: JSONSchema7;
   contentJsonSchema: JSONSchema7;

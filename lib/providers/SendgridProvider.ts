@@ -2,8 +2,8 @@ import { ExternalServiceError } from "kuzzle";
 import { MailService } from "@sendgrid/mail";
 import { JSONSchema7 } from "json-schema";
 
-import { Attachment, SendgridAttachment } from "../types";
-import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { Attachment, ProviderCapabilities, SendgridAttachment } from "../types";
+import { BaseAccount, BaseProvider } from "./BaseProvider";
 import { RecipientTypeRegistry } from "../recipients";
 
 export interface SendgridAccount extends BaseAccount<MailService> {
@@ -13,8 +13,12 @@ export interface SendgridAccount extends BaseAccount<MailService> {
 }
 
 export class SendgridProvider extends BaseProvider<SendgridAccount> {
-  override supportAttachment = true;
-  override messageType: "short" | "long" = "long";
+  override capabilities: ProviderCapabilities = {
+    longMessage: true,
+    shortMessage: true,
+    fileAttachment: true,
+    json: false,
+  };
 
   constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
@@ -92,7 +96,6 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
 
     super(
       "sendgrid",
-      ProviderType.EMAIL,
       ["email"],
       paramsJsonSchema,
       contentJsonSchema,
