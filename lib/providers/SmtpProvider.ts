@@ -4,8 +4,9 @@ import { Transporter, createTransport } from "nodemailer";
 import Mail from "nodemailer/lib/mailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
-import { Attachment } from "../types";
-import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { Attachment, ProviderCapabilities } from "../types";
+import { BaseAccount, BaseProvider } from "./BaseProvider";
+import { RecipientTypeRegistry } from "../recipients";
 
 export interface SMTPAccount extends BaseAccount<
   Transporter<SMTPTransport.SentMessageInfo>
@@ -16,9 +17,14 @@ export interface SMTPAccount extends BaseAccount<
 }
 
 export class SmtpProvider extends BaseProvider<SMTPAccount> {
-  override supportAttachment = true;
+  override capabilities: ProviderCapabilities = {
+    longMessage: true,
+    shortMessage: true,
+    fileAttachment: true,
+    json: false,
+  };
 
-  constructor() {
+  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -53,26 +59,6 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       required: ["host_name", "port", "user", "password", "default_sender"],
     };
 
-    const recipientsJsonSchema: JSONSchema7 = {
-      type: "object",
-      properties: {
-        to: {
-          type: "string",
-          title: "Email",
-          pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
-        },
-        cc: {
-          type: "string",
-          title: "Cc",
-        },
-        bcc: {
-          type: "string",
-          title: "Bcc",
-        },
-      },
-      required: ["to"],
-    };
-
     const contentJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -83,6 +69,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
         message: {
           type: "string",
           title: "Message",
+          $comment: "long-text",
         },
       },
       required: ["subject", "message"],
@@ -92,6 +79,14 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       type: "object",
       properties: {
         from: { type: "string" },
+        cc: {
+          type: "string",
+          title: "Cc",
+        },
+        bcc: {
+          type: "string",
+          title: "Bcc",
+        },
         attachments: {
           type: "array",
           items: {
@@ -119,11 +114,11 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
 
     super(
       "smtp",
-      ProviderType.EMAIL,
+      ["email"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 
@@ -131,8 +126,8 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    * Sends an email using one of the registered SMTP accounts.
    *
    * @param accountName - Name of the registered account to use
-   * @param recipients - Array of recipient objects with `to` (required), `cc` and `bcc` (optional)
-   * @param content - Email content: `subject` and `message` (HTML)
+   * @param recipients - Array of recipient objects with `to` (required)
+   * @param content - Email content: `subject` and `message` (HTML), plus optional `cc` and `bcc`
    * @param params.from - Sender override; falls back to the account's `default_sender`
    * @param params.attachments - Optional file attachments
    */
@@ -140,17 +135,32 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     accountName: string,
     recipients: any[],
     content: any,
-    { attachments, from }: { attachments?: Attachment[]; from?: string } = {},
+    {
+      attachments,
+      from,
+      cc,
+      bcc,
+    }: {
+      attachments?: Attachment[];
+      from?: string;
+      cc?: string;
+      bcc?: string;
+    } = {},
   ) {
     const account = this.getAccount(accountName);
     const fromEmail = from || account.options.defaultSender;
 
     const email: Mail.Options = {
-      attachments,
+      attachments: attachments?.map((attachment) => ({
+        ...attachment,
+        encoding: "base64",
+      })),
       from: fromEmail,
       subject: content.subject,
       html: content.message,
       to: recipients.map((r) => r.to).join(", "),
+      cc: cc,
+      bcc: bcc,
     };
 
     try {
@@ -198,7 +208,6 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       port,
       secure: port === 465,
     });
-
     return {
       provider: transporter,
       name,
@@ -219,11 +228,10 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     } else {
       try {
         await account.provider.verify();
+        return account.provider.sendMail(email);
       } catch (error) {
         throw new ExternalServiceError(error);
       }
-
-      return account.provider.sendMail(email);
     }
   }
 

@@ -2,8 +2,9 @@ import { ExternalServiceError } from "kuzzle";
 import { MailService } from "@sendgrid/mail";
 import { JSONSchema7 } from "json-schema";
 
-import { Attachment, SendgridAttachment } from "../types";
-import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { Attachment, ProviderCapabilities, SendgridAttachment } from "../types";
+import { BaseAccount, BaseProvider } from "./BaseProvider";
+import { RecipientTypeRegistry } from "../recipients";
 
 export interface SendgridAccount extends BaseAccount<MailService> {
   options: {
@@ -12,9 +13,14 @@ export interface SendgridAccount extends BaseAccount<MailService> {
 }
 
 export class SendgridProvider extends BaseProvider<SendgridAccount> {
-  override supportAttachment = true;
+  override capabilities: ProviderCapabilities = {
+    longMessage: true,
+    shortMessage: true,
+    fileAttachment: true,
+    json: false,
+  };
 
-  constructor() {
+  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -35,18 +41,6 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       required: ["api_key", "default_sender"],
     };
 
-    const recipientsJsonSchema: JSONSchema7 = {
-      type: "object",
-      properties: {
-        to: {
-          type: "string",
-          title: "Email",
-          pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
-        },
-      },
-      required: ["to"],
-    };
-
     const contentJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -57,6 +51,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
         message: {
           type: "string",
           title: "Message",
+          $comment: "long-text",
         },
       },
       required: ["subject", "message"],
@@ -66,6 +61,14 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       type: "object",
       properties: {
         from: { type: "string" },
+        cc: {
+          type: "string",
+          title: "Cc",
+        },
+        bcc: {
+          type: "string",
+          title: "Bcc",
+        },
         attachments: {
           type: "array",
           items: {
@@ -93,11 +96,11 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
 
     super(
       "sendgrid",
-      ProviderType.EMAIL,
+      ["email"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 
@@ -105,7 +108,17 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     accountName: string,
     recipients: any[],
     content: any,
-    { from, attachments }: { from?: string; attachments?: Attachment[] } = {},
+    {
+      from,
+      attachments,
+      cc,
+      bcc,
+    }: {
+      from?: string;
+      attachments?: Attachment[];
+      cc?: string;
+      bcc?: string;
+    } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
     const fromEmail = from || account.options.defaultSender;
@@ -114,6 +127,8 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     const email = {
       from: fromEmail,
       to,
+      cc,
+      bcc,
       subject: content.subject,
       html: content.message,
       attachments: attachments?.map(

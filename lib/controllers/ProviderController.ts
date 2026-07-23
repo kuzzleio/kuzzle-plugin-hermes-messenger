@@ -5,13 +5,15 @@ import {
   PluginContext,
   ControllerDefinition,
 } from "kuzzle";
-import { ProviderManager } from "lib/HermesMessengerPlugin";
+import { RecipientTypeRegistry } from "../recipients";
+import { ProviderManager } from "../providers";
 
 export class ProviderController {
   protected context: PluginContext;
-  private config: JSONObject;
+  readonly config: JSONObject;
 
-  private providerManager: ProviderManager;
+  readonly providerManager: ProviderManager;
+  readonly recipientTypeRegistry: RecipientTypeRegistry;
 
   definition: ControllerDefinition;
 
@@ -23,10 +25,12 @@ export class ProviderController {
     config: JSONObject,
     context: PluginContext,
     providerManager: ProviderManager,
+    recipientTypeRegistry: RecipientTypeRegistry,
   ) {
     this.config = config;
     this.context = context;
     this.providerManager = providerManager;
+    this.recipientTypeRegistry = recipientTypeRegistry;
 
     this.definition = {
       actions: {
@@ -59,6 +63,10 @@ export class ProviderController {
         listProviders: {
           handler: this.listProviders.bind(this),
           http: [{ verb: "get", path: `hermes/providers` }],
+        },
+        listRecipientTypes: {
+          handler: this.listRecipientTypes.bind(this),
+          http: [{ verb: "get", path: `hermes/recipient-types` }],
         },
       },
     };
@@ -99,7 +107,14 @@ export class ProviderController {
     return { accounts };
   }
 
-  async listProviders() {
-    return this.providerManager.listProviders();
+  async listProviders(request: KuzzleRequest) {
+    const filters = request.getBodyObject("filters", {});
+    const providers = this.providerManager.listProviders(filters);
+
+    return providers.map((provider) => provider.serialize());
+  }
+
+  async listRecipientTypes() {
+    return this.recipientTypeRegistry.list();
   }
 }

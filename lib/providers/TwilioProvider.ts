@@ -2,7 +2,9 @@ import { ExternalServiceError } from "kuzzle";
 import { JSONSchema7 } from "json-schema";
 import { Twilio } from "twilio";
 
-import { BaseAccount, BaseProvider, ProviderType } from "./BaseProvider";
+import { BaseAccount, BaseProvider } from "./BaseProvider";
+import { RecipientTypeRegistry } from "../recipients";
+import { ProviderCapabilities } from "../types";
 
 export interface TwilioAccount extends BaseAccount<Twilio> {
   options: {
@@ -11,7 +13,13 @@ export interface TwilioAccount extends BaseAccount<Twilio> {
 }
 
 export class TwilioProvider extends BaseProvider<TwilioAccount> {
-  constructor() {
+  override capabilities: ProviderCapabilities = {
+    longMessage: false,
+    shortMessage: true,
+    fileAttachment: false,
+    json: false,
+  };
+  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
     const paramsJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -35,18 +43,6 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
       required: ["account_sid", "auth_token", "default_sender"],
     };
 
-    const recipientsJsonSchema: JSONSchema7 = {
-      type: "object",
-      properties: {
-        to: {
-          type: "string",
-          title: "Phone Number",
-          minLength: 1,
-        },
-      },
-      required: ["to"],
-    };
-
     const contentJsonSchema: JSONSchema7 = {
       type: "object",
       properties: {
@@ -68,11 +64,11 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
 
     super(
       "twilio",
-      ProviderType.SMS,
+      ["phoneNumber"],
       paramsJsonSchema,
-      recipientsJsonSchema,
       contentJsonSchema,
       sendParamsJsonSchema,
+      recipientTypeRegistry,
     );
   }
 
