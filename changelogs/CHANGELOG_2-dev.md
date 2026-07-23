@@ -1,3 +1,16 @@
+## [2.0.0-2-dev.9](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.8...v2.0.0-2-dev.9) (2026-07-23)
+
+### Features
+
+* **providers:** add messageType property to differentiate long / short messages ([6084e82](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6084e8249be8aad22d60b01cafd2545847a164d0))
+* **providers:** mutualize recipientType and validation ([d130240](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/d13024017374ac560ac7fbcb2e3a583620ab74a9))
+* **twilio:** add regex for numbers ([b8c6cf1](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b8c6cf140de5f63a3f7691b923a3106c05254715))
+
+### Bug Fixes
+
+* **smtpProvider:** encode attachement in base64 ([1ed6491](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/1ed64910842a2a9e781c7b2ccf46617a787c789c))
+* **test:** fix testProvider ([20f2e0a](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/20f2e0a8f81102221c6c34e9ffae47f2e40fcfb7))
+
 ## [2.0.0-2-dev.8](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.7...v2.0.0-2-dev.8) (2026-06-02)
 
 ### Features
