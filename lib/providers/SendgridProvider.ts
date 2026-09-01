@@ -95,7 +95,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     };
 
     super(
-      "sendgrid",
+      "SendGrid",
       ["email"],
       paramsJsonSchema,
       contentJsonSchema,
