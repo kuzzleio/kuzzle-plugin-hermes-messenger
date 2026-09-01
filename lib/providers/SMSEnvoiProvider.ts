@@ -60,7 +60,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     };
 
     super(
-      "smsenvoi",
+      "SMS Envoi",
       ["phoneNumber"],
       paramsJsonSchema,
       contentJsonSchema,
