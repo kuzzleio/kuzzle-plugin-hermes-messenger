@@ -1,3 +1,9 @@
+## [2.0.0-2-dev.10](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.9...v2.0.0-2-dev.10) (2026-09-01)
+
+### Bug Fixes
+
+* **providers:** fix name of SMS Envoi and SendGrid ([#45](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/45)) ([51a70cc](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/51a70cc8312c2ef2350d81432ffde25d6872a2e9))
+
 ## [2.0.0-2-dev.9](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.8...v2.0.0-2-dev.9) (2026-07-23)
 
 ### Features
