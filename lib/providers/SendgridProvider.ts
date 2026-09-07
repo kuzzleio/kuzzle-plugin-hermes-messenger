@@ -104,7 +104,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     );
   }
 
-  async send(
+  async sendMessage(
     accountName: string,
     recipients: any[],
     content: any,
@@ -147,7 +147,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     );
 
     try {
-      await this.sendMessage(account, email);
+      await this.deliver(account, email);
     } catch (error: any) {
       if (error.response) {
         throw new ExternalServiceError(
@@ -181,7 +181,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     };
   }
 
-  private async sendMessage(
+  private async deliver(
     account: SendgridAccount,
     email: object,
   ): Promise<void> {

@@ -69,7 +69,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     );
   }
 
-  async send(
+  async sendMessage(
     accountName: string,
     recipients: any[],
     content: any,
@@ -84,12 +84,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     const phoneNumbers = recipients.map((recipient) => recipient.to);
 
     try {
-      await this.sendMessage(
-        account,
-        phoneNumbers,
-        content.message,
-        fromNumber,
-      );
+      await this.deliver(account, phoneNumbers, content.message, fromNumber);
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.message || error;
@@ -121,7 +116,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     };
   }
 
-  private async sendMessage(
+  private async deliver(
     account: SMSEnvoiAccount,
     phoneNumbers: string[],
     message: string,

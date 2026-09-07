@@ -165,13 +165,13 @@ describe("TestProvider", () => {
   it("Send a message", async () => {
     const testProvider = new TestProvider();
 
-    const sendSpy = vi.spyOn(testProvider, "send");
+    const sendSpy = vi.spyOn(testProvider, "sendMessage");
 
     const accountName = "myaccount";
     const recipients = ["recipient1"];
     const content = { text: "mycontent" };
 
-    await testProvider.send(accountName, recipients, content);
+    await testProvider.sendMessage(accountName, recipients, content);
 
     expect(sendSpy).toHaveBeenCalledWith(accountName, recipients, content);
 

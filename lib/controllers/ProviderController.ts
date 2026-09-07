@@ -34,8 +34,8 @@ export class ProviderController {
 
     this.definition = {
       actions: {
-        send: {
-          handler: this.send.bind(this),
+        sendMessage: {
+          handler: this.sendMessage.bind(this),
           http: [
             {
               verb: "post",
@@ -72,7 +72,7 @@ export class ProviderController {
     };
   }
 
-  async send(request: KuzzleRequest): Promise<void> {
+  async sendMessage(request: KuzzleRequest): Promise<void> {
     const account = request.getString("account");
     const providerName = request.getString("provider");
 
@@ -82,7 +82,7 @@ export class ProviderController {
 
     const provider = this.providerManager.get(providerName);
     provider.validateSendParams(params);
-    await provider.send(account, recipients, content, params);
+    await provider.sendMessage(account, recipients, content, params);
   }
 
   async addAccount(request: KuzzleRequest): Promise<void> {

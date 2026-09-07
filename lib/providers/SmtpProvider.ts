@@ -131,7 +131,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    * @param params.from - Sender override; falls back to the account's `default_sender`
    * @param params.attachments - Optional file attachments
    */
-  async send(
+  async sendMessage(
     accountName: string,
     recipients: any[],
     content: any,
@@ -164,7 +164,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     };
 
     try {
-      await this.sendMessage(account, email);
+      await this.deliver(account, email);
     } catch (error) {
       this.context.log.warn(
         `An error occured while trying to send a message: ${JSON.stringify(error, null, 2)}`,
@@ -217,7 +217,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     };
   }
 
-  private async sendMessage(account: SMTPAccount, email: Mail.Options) {
+  private async deliver(account: SMTPAccount, email: Mail.Options) {
     if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex,

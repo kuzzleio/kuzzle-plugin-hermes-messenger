@@ -145,7 +145,7 @@ export abstract class BaseProvider<T> {
     };
   }
 
-  abstract send(
+  abstract sendMessage(
     account: string,
     recipients: any[],
     content: any,

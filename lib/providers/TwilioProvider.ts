@@ -80,7 +80,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
    * @param content - SMS content: `body`
    * @param params.from - Sender override; falls back to the account's `default_sender`
    */
-  async send(
+  async sendMessage(
     accountName: string,
     recipients: any[],
     content: any,
@@ -94,7 +94,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
         this.context.log.debug(
           `SMS (${accountName}): FROM ${fromNumber} TO ${recipient.to}`,
         );
-        await this.sendMessage(account, {
+        await this.deliver(account, {
           from: fromNumber,
           to: recipient.to,
           body: content.body,
@@ -130,7 +130,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     };
   }
 
-  private async sendMessage(
+  private async deliver(
     account: TwilioAccount,
     sms: { from: string; to: string; body: string },
   ) {

@@ -42,7 +42,11 @@ export class TestProvider extends BaseProvider<TestAccount> {
     );
   }
 
-  async send(account: string, recipients: any[], content: any): Promise<any> {
+  async sendMessage(
+    account: string,
+    recipients: any[],
+    content: any,
+  ): Promise<any> {
     return { account, recipients, content };
   }
 
