@@ -38,3 +38,18 @@ kourou hermes:removeAccount -a provider=sendgrid -a account=<account name>
 ```
 
 ---
+
+## Response
+
+Returns an empty result on success.
+
+```js
+{
+  "requestId": "d16d5e8c-464a-4589-938f-fd84f46080b9",
+  "status": 200,
+  "error": null,
+  "controller": "hermes",
+  "action": "removeAccount",
+  "result": null
+}
+```

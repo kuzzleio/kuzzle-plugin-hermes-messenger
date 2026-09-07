@@ -1,0 +1,128 @@
+---
+code: false
+type: page
+title: Migration from v1
+description: How to migrate an application from Hermes Messenger 1.x to 2.x
+order: 300
+---
+
+# Migration from v1
+
+Version 2 is a breaking release. The per-provider controllers of version 1 (`hermes/twilio`, `hermes/sendgrid`, `hermes/smtp`, `hermes/smsenvoi`) are replaced by a single `hermes` controller, and every request body changes shape.
+
+## Prerequisites
+
+- `kuzzle >= 2.50.0` (peer dependency).
+
+## Routes and actions
+
+| v1 | v2 |
+|---|---|
+| `hermes/twilio:sendSms` — `POST /_/hermes/twilio/sms` | `hermes:sendMessage` with `provider=twilio` — `POST /_/hermes/providers/twilio/accounts/:account` |
+| `hermes/smsenvoi:sendSms` | `hermes:sendMessage` with `provider=smsenvoi` |
+| `hermes/sendgrid:sendEmail` — `POST /_/hermes/sendgrid/email` | `hermes:sendMessage` with `provider=sendgrid` |
+| `hermes/sendgrid:sendTemplatedEmail` | **Removed**, see below |
+| `hermes/smtp:sendEmail` | `hermes:sendMessage` with `provider=smtp` |
+| `hermes/<provider>:addAccount` — `POST /_/hermes/<provider>/accounts` | `hermes:addAccount` — `POST /_/hermes/providers/:provider/accounts` |
+| `hermes/<provider>:removeAccount` — `DELETE /_/hermes/<provider>/account/:account` | `hermes:removeAccount` — `DELETE /_/hermes/providers/:provider/accounts/:account` |
+| `hermes/<provider>:listAccounts` — `GET /_/hermes/<provider>/accounts` | `hermes:listAccounts` — `GET /_/hermes/providers/:provider/accounts` |
+| — | `hermes:listProviders` — `GET /_/hermes/providers` (new) |
+| — | `hermes:listRecipientTypes` — `GET /_/hermes/recipient-types` (new) |
+
+Rights: replace `hermes/twilio`, `hermes/sendgrid`, ... controller rights with rights on the `hermes` controller.
+
+## `addAccount` body
+
+In v1 the account name was passed as the `account` argument and credentials were top-level body properties in camelCase. In v2 the account name is still passed as the `account` argument, and credentials move under `body.params`, in snake_case, matching the provider's `paramsJsonSchema` (exposed by `hermes:listProviders`).
+
+| Provider | v1 body | v2 `body.params` |
+|---|---|---|
+| Twilio | `accountSid`, `authToken`, `defaultSender` | `account_sid`, `auth_token`, `default_sender` |
+| SMS Envoi | `userKey`, `accessToken`, `defaultSender` | `user_key`, `access_token`, `default_sender` |
+| Sendgrid | `apiKey`, `defaultSender` | `api_key`, `default_sender` |
+| SMTP | `host`, `port`, `user`, `pass`, `defaultSender` | `host_name`, `port`, `user`, `password`, `default_sender` |
+
+Before:
+
+```js
+{
+  "controller": "hermes/twilio",
+  "action": "addAccount",
+  "account": "common",
+  "body": { "accountSid": "AC...", "authToken": "...", "defaultSender": "+33600000000" }
+}
+```
+
+After:
+
+```js
+{
+  "controller": "hermes",
+  "action": "addAccount",
+  "provider": "twilio",
+  "account": "common",
+  "body": {
+    "params": { "account_sid": "AC...", "auth_token": "...", "default_sender": "+33600000000" }
+  }
+}
+```
+
+## `sendMessage` body
+
+The v2 body is always split in three parts: `recipients`, `content`, `params`.
+
+| v1 property | v2 location |
+|---|---|
+| `to` (string or array of strings) | `recipients`: array of `{ "to": "<address>" }` objects |
+| `text` (SMS, Twilio) | `content.body` |
+| `text` (SMS, SMS Envoi) | `content.message` |
+| `subject` (email) | `content.subject` |
+| `html` (email) | `content.message` |
+| `from` | `params.from` |
+| `cc`, `bcc` (email) | `params.cc`, `params.bcc` |
+| `attachments` (email) | `params.attachments` (content base64-encoded) |
+
+Before:
+
+```js
+{
+  "controller": "hermes/sendgrid",
+  "action": "sendEmail",
+  "account": "common",
+  "body": {
+    "to": ["a@example.com", "b@example.com"],
+    "subject": "Hello",
+    "html": "<p>Hi</p>",
+    "from": "no-reply@example.com"
+  }
+}
+```
+
+After:
+
+```js
+{
+  "controller": "hermes",
+  "action": "sendMessage",
+  "provider": "sendgrid",
+  "account": "common",
+  "body": {
+    "recipients": [{ "to": "a@example.com" }, { "to": "b@example.com" }],
+    "content": { "subject": "Hello", "message": "<p>Hi</p>" },
+    "params": { "from": "no-reply@example.com" }
+  }
+}
+```
+
+## Removed features
+
+- **Sendgrid templated emails** (`sendTemplatedEmail`, `templateId`, `templateData`): not available in v2. Render the template on your side and send the result as `content.message`.
+- **Mocked accounts** (`mockedAccounts` in the plugin configuration and the `messages` collection): removed from the plugin configuration mapping.
+- **`plugin.clients.<provider>`** (`clients.twilio`, `clients.sendgrid`, ...): replaced by `plugin.getProvider('<route key>')`, which returns the `BaseProvider` instance (`addAccount`, `removeAccount`, `listAccounts`, `sendMessage`).
+- Programmatic `addAccount(name, host, port, user, ...)` positional signatures: replaced by `addAccount(name, params)` where `params` matches the provider's `paramsJsonSchema`.
+
+## New features worth adopting
+
+- `hermes:listProviders` returns the JSON Schemas of every provider: use them to validate or generate forms client-side.
+- `hermes:listRecipientTypes` exposes the recipient formats.
+- Custom providers and recipient types can be registered, see the [Custom Provider guide](/official-plugins/hermes-messenger/2/guides/custom-provider).

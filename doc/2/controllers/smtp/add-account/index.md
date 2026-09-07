@@ -18,6 +18,7 @@ Adds a SMTP account. This account can then be used to send emails.
 ```http
 URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts
 Method: POST
+Query: account=<account name>
 ```
 
 ### Other protocols
@@ -27,6 +28,7 @@ Method: POST
   "controller": "hermes",
   "action": "addAccount",
   "provider": "smtp",
+  "account": "<account name>",
   "body": {
     "params": {
       "host_name": "<SMTP host>",
@@ -42,7 +44,7 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=smtp --body '{
+kourou hermes:addAccount -a provider=smtp -a account=<account name> --body '{
   "params": {
     "host_name": "<SMTP host>",
     "port": 587,
@@ -54,3 +56,32 @@ kourou hermes:addAccount -a provider=smtp --body '{
 ```
 
 ---
+
+## Arguments
+
+- `provider`: provider key, `smtp`
+- `account`: name to register the account under (query string over HTTP)
+
+## Body properties
+
+- `params.host_name`: SMTP server host
+- `params.port`: SMTP port (465 enables TLS)
+- `params.user`, `params.password`: SMTP credentials
+- `params.default_sender`: email address used as sender when `params.from` is not provided on `sendMessage`
+
+---
+
+## Response
+
+Returns an empty result on success.
+
+```js
+{
+  "requestId": "d16d5e8c-464a-4589-938f-fd84f46080b9",
+  "status": 200,
+  "error": null,
+  "controller": "hermes",
+  "action": "addAccount",
+  "result": null
+}
+```

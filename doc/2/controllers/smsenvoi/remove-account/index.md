@@ -2,12 +2,12 @@
 type: page
 code: true
 title: removeAccount
-description: Delete a Twilio account
+description: Delete a SMS Envoi account
 ---
 
 # removeAccount
 
-Delete a Twilio account.
+Delete a SMS Envoi account.
 
 ---
 
@@ -16,7 +16,7 @@ Delete a Twilio account.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:account
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:account
 Method: DELETE
 ```
 
@@ -26,7 +26,7 @@ Method: DELETE
 {
   "controller": "hermes",
   "action": "removeAccount",
-  "provider": "twilio",
+  "provider": "smsenvoi",
   "account": "<account name>"
 }
 ```
@@ -34,7 +34,7 @@ Method: DELETE
 ### Kourou
 
 ```bash
-kourou hermes:removeAccount -a provider=twilio -a account=<account name>
+kourou hermes:removeAccount -a provider=smsenvoi -a account=<account name>
 ```
 
 ---
