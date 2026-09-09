@@ -14,19 +14,19 @@ Recipients are always **plain strings**: an email address, a phone number, a top
 
 ---
 
-## 1. Define the account interface
+## 1. Define the account type
 
-The account interface describes what is stored in memory for each registered account. The `options` field is the only part exposed by `listAccounts` — never put credentials there.
+An account is what is stored in memory for each registered account: its `name`, the live client in `provider`, and the `params` it was created with (the `body.params` of `addAccount`, matching `accountParamsSchema`). `params` typically hold credentials and a default sender; they are read by the provider at send time and are **never** exposed by `listAccounts`, which only returns account names.
 
 ```typescript
 import { BaseAccount } from "kuzzle-plugin-hermes-messenger";
 
-interface MyAccount extends BaseAccount<MyClient> {
-  provider: MyClient; // the live SDK client
-  options: {
-    defaultSender: string; // safe to expose
-  };
+interface MyAccountParams {
+  apiKey: string;
+  defaultSender: string;
 }
+
+type MyAccount = BaseAccount<MyClient, MyAccountParams>;
 ```
 
 ---
@@ -87,17 +87,14 @@ export class MyProvider extends BaseProvider<MyAccount> {
   }
 
   /**
-   * Called by addAccount() — create and store a live SDK client.
-   * `params` is the raw object received by addAccount.
+   * Called by addAccount() — create the live SDK client and keep the params
+   * on the account. `params` is the raw object received by addAccount.
    */
-  protected _createAccount(
-    name: string,
-    { apiKey, defaultSender }: { apiKey: string; defaultSender: string },
-  ): MyAccount {
+  protected _createAccount(name: string, params: MyAccountParams): MyAccount {
     return {
       name,
-      provider: new MyClient(apiKey),
-      options: { defaultSender }, // credentials are NOT included here
+      provider: new MyClient(params.apiKey),
+      params,
     };
   }
 
@@ -114,7 +111,7 @@ export class MyProvider extends BaseProvider<MyAccount> {
     params: { from?: string } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
-    const sender = params.from ?? account.options.defaultSender;
+    const sender = params.from ?? account.params.defaultSender;
 
     await Promise.all(
       recipients.map((to) =>
@@ -142,7 +139,7 @@ async sendMessage(accountName, recipients, content, params = {}) {
 }
 ```
 
-`validateAccountParams()` is **not** called automatically: call it in `_createAccount()` if you want account credentials checked against `accountParamsSchema`.
+`body.params` of `addAccount` is validated by `BaseProvider.addAccount()` against `accountParamsSchema` before `_createAccount()` is called, so your provider can rely on the shape it declared. An invalid call is refused with a `MultipleErrorsError` listing every violation (`/port must be integer`, `params must have required property 'default_sender'`...) and logged as a warning, without the parameter values. If `_createAccount()` throws (e.g. the SDK refuses the credentials), the error is logged and rethrown, wrapped in a `BadRequestError` unless it already is a Kuzzle error. Nothing is registered nor synchronized to the cluster in either case.
 
 ---
 
@@ -285,7 +282,7 @@ Notes:
 | `addAccount(name, params)`                | Register an account; triggers cluster sync                                                                                                                                                                                             |
 | `removeAccount(name)`                     | Remove a registered account; triggers cluster sync                                                                                                                                                                                     |
 | `getAccount(name)`                        | Retrieve a registered account (throws `NotFoundError` if not found)                                                                                                                                                                    |
-| `listAccounts()`                          | Returns `[{ name, options }]` for all accounts                                                                                                                                                                                         |
+| `listAccounts()`                          | Returns the names of the registered accounts                                                                                                                                                                                           |
 | `getName()`                               | Returns the provider display name                                                                                                                                                                                                      |
 | `getAcceptedRecipientTypes()`             | Returns the `recipientType` names this provider accepts                                                                                                                                                                                |
 | `getAcceptedRecipientTypeDefinitions()`   | Returns the full `RecipientTypeDefinition` of each accepted type (throws before `registerProvider()`)                                                                                                                                  |
@@ -294,7 +291,7 @@ Notes:
 | `getAccountParamsSchema()`                | Returns `accountParamsSchema`, the JSON Schema of `addAccount` params                                                                                                                                                                  |
 | `getMessageContentSchema()`               | Returns `messageContentSchema`, the JSON Schema of `sendMessage` content                                                                                                                                                               |
 | `getMessageAdditionalParamsSchema()`      | Returns `messageAdditionalParamsSchema`, the JSON Schema of the optional `sendMessage` params                                                                                                                                          |
-| `validateAccountParams(params)`           | Validate against `accountParamsSchema` (not called automatically)                                                                                                                                                                      |
+| `validateAccountParams(params)`           | Validate against `accountParamsSchema`; called by `addAccount()`, also usable ahead of time                                                                                                                                                                      |
 | `validateRecipients(recipients)`          | Validate an array of recipient strings against the accepted recipient types; returns the matched type name of each entry (called by the controller before `sendMessage`)                                                               |
 | `validateMessageContent(content)`         | Validate against `messageContentSchema` (called by the controller before `sendMessage`)                                                                                                                                                |
 | `validateMessageAdditionalParams(params)` | Validate against `messageAdditionalParamsSchema` (called by the controller before `sendMessage()`)                                                                                                                                     |
@@ -305,7 +302,7 @@ Notes:
 | Member                                               | Description                                                               |
 | ---------------------------------------------------- | ------------------------------------------------------------------------- |
 | `sendMessage(account, recipients, content, params?)` | Deliver the message                                                       |
-| `_createAccount(name, params)`                       | Build the in-memory account (`{ name, provider, options }`) from `params` |
+| `_createAccount(name, params)`                       | Build the in-memory account (`{ name, provider, params }`) from `params` |
 
 ### Public properties
 

@@ -1,5 +1,3 @@
-import { JSONObject } from "kuzzle";
-
 /**
  * Public representation of a registered account, as returned by
  * `hermes:listAccounts`.
@@ -14,6 +12,4 @@ export interface SerializedAccount {
    * of the `audiences` of the provider's accepted recipient types.
    */
   audiences: string[];
-  /** Public options of the account (never credentials) */
-  options: JSONObject;
 }

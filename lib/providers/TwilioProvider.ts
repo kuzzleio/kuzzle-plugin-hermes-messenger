@@ -5,11 +5,14 @@ import { Twilio } from "twilio";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
 import { ProviderCapabilities } from "../types";
 
-export interface TwilioAccount extends BaseAccount<Twilio> {
-  options: {
-    defaultSender: string;
-  };
+export interface TwilioAccountParams {
+  account_sid: string;
+  auth_token: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
+
+export type TwilioAccount = BaseAccount<Twilio, TwilioAccountParams>;
 
 export class TwilioProvider extends BaseProvider<TwilioAccount> {
   override capabilities: ProviderCapabilities = {
@@ -85,7 +88,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     { from }: { from?: string } = {},
   ) {
     const account = this.getAccount(accountName);
-    const fromNumber = from || account.options.defaultSender;
+    const fromNumber = from || account.params.default_sender;
 
     try {
       for (const to of recipients) {
@@ -108,23 +111,12 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
 
   protected _createAccount(
     name: string,
-    {
-      account_sid,
-      auth_token,
-      default_sender,
-    }: {
-      account_sid: string;
-      auth_token: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    params: TwilioAccountParams,
   ): TwilioAccount {
     return {
-      provider: new Twilio(account_sid, auth_token),
       name,
-      options: {
-        defaultSender: default_sender,
-      },
+      provider: new Twilio(params.account_sid, params.auth_token),
+      params,
     };
   }
 

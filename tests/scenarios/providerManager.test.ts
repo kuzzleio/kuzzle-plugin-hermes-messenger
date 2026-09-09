@@ -43,19 +43,16 @@ describe("ProviderManager – listAccounts", () => {
         name: "alpha",
         provider: "first",
         audiences: ["human"],
-        options: { sender: "alpha@example.com" },
       },
       {
         name: "beta",
         provider: "first",
         audiences: ["human"],
-        options: { sender: "beta@example.com" },
       },
       {
         name: "alpha",
         provider: "second",
         audiences: ["technical"],
-        options: { token: "public" },
       },
     ]);
   });
@@ -66,7 +63,6 @@ describe("ProviderManager – listAccounts", () => {
         name: "alpha",
         provider: "second",
         audiences: ["technical"],
-        options: { token: "public" },
       },
     ]);
   });
@@ -85,13 +81,11 @@ describe("ProviderManager – listAccounts", () => {
         name: "alpha",
         provider: "first",
         audiences: ["human"],
-        options: { sender: "alpha@example.com" },
       },
       {
         name: "beta",
         provider: "first",
         audiences: ["human"],
-        options: { sender: "beta@example.com" },
       },
     ]);
     expect(manager.listAccounts({ audience: "technical" })).toEqual([
@@ -99,7 +93,6 @@ describe("ProviderManager – listAccounts", () => {
         name: "alpha",
         provider: "second",
         audiences: ["technical"],
-        options: { token: "public" },
       },
     ]);
     expect(manager.listAccounts({ audience: "nobody" })).toEqual([]);
@@ -126,12 +119,7 @@ describe("ProviderManager – listAccounts", () => {
     multi.nodeAddAccount("both", {});
 
     expect(manager.listAccounts()).toEqual([
-      {
-        name: "both",
-        provider: "multi",
-        audiences: ["human", "technical"],
-        options: {},
-      },
+      { name: "both", provider: "multi", audiences: ["human", "technical"] },
     ]);
   });
 

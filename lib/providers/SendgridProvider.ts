@@ -5,11 +5,13 @@ import { JSONSchema7 } from "json-schema";
 import { Attachment, ProviderCapabilities, SendgridAttachment } from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
 
-export interface SendgridAccount extends BaseAccount<MailService> {
-  options: {
-    defaultSender: string;
-  };
+export interface SendgridAccountParams {
+  api_key: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
+
+export type SendgridAccount = BaseAccount<MailService, SendgridAccountParams>;
 
 export class SendgridProvider extends BaseProvider<SendgridAccount> {
   override capabilities: ProviderCapabilities = {
@@ -121,7 +123,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
-    const fromEmail = from || account.options.defaultSender;
+    const fromEmail = from || account.params.default_sender;
     const to = recipients;
 
     const email = {
@@ -160,25 +162,12 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
 
   protected _createAccount(
     name: string,
-    {
-      api_key,
-      default_sender,
-    }: {
-      api_key: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    params: SendgridAccountParams,
   ): SendgridAccount {
     const mailService = new MailService();
-    mailService.setApiKey(api_key);
+    mailService.setApiKey(params.api_key);
 
-    return {
-      name,
-      provider: mailService,
-      options: {
-        defaultSender: default_sender,
-      },
-    };
+    return { name, provider: mailService, params };
   }
 
   private async deliver(

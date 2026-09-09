@@ -62,7 +62,8 @@ Returns the registered accounts. Each account has:
 - `name`: the account name, unique within its provider
 - `provider`: the route key of the provider owning the account (`smtp`, `twilio`, `sendgrid`, `smsenvoi` or a custom provider key)
 - `audiences`: the audiences the account can address, i.e. those of its provider (union of the `audiences` of its accepted recipient types). Handy to filter accounts client-side without a second request.
-- `options`: the account's public options, as exposed by the provider
+
+The parameters an account was created with (`body.params` of `addAccount`) are **never** returned: they hold credentials.
 
 ```js
 {
@@ -76,32 +77,19 @@ Returns the registered accounts. Each account has:
       {
         "name": "common",
         "provider": "smtp",
-        "audiences": ["human"],
-        "options": {
-          "defaultSender": "amaret@kuzzle.io"
-        }
+        "audiences": ["human"]
       },
       {
         "name": "ilayda",
         "provider": "smtp",
-        "audiences": ["human"],
-        "options": {
-          "defaultSender": "ilayda@gmail.com"
-        }
+        "audiences": ["human"]
       },
       {
         "name": "common",
         "provider": "twilio",
-        "audiences": ["human"],
-        "options": {
-          "defaultSender": "+33629951621"
-        }
+        "audiences": ["human"]
       }
     ]
   }
 }
 ```
-
-::: warning
-Unlike the other built-in providers, the SMS Envoi provider stores its credentials in the account `options`. The `userKey` and `accessToken` of SMS Envoi accounts are therefore returned by this action. Restrict the `hermes:listAccounts` right accordingly.
-:::

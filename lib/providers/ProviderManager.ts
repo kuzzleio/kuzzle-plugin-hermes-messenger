@@ -90,8 +90,8 @@ export class ProviderManager {
 
       const audiences = provider.getAudiences();
 
-      for (const account of provider.listAccounts()) {
-        accounts.push({ ...account, provider: name, audiences });
+      for (const accountName of provider.listAccounts()) {
+        accounts.push({ name: accountName, provider: name, audiences });
       }
     }
 

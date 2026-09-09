@@ -5,9 +5,7 @@ import { RecipientTypeRegistry } from "lib/recipients";
 import { ProviderCapabilities } from "lib/types";
 import { vi } from "vitest";
 
-export interface TestAccount extends BaseAccount<null> {
-  options: Record<string, any>;
-}
+export type TestAccount = BaseAccount<null, Record<string, any>>;
 
 export class TestProvider extends BaseProvider<TestAccount> {
   override capabilities: ProviderCapabilities = {
@@ -19,8 +17,8 @@ export class TestProvider extends BaseProvider<TestAccount> {
   constructor(
     recipientTypeRegistry: RecipientTypeRegistry = new RecipientTypeRegistry(),
     acceptedRecipientTypes: string[] = ["testRecipient"],
+    accountParamsSchema: JSONSchema7 = { type: "object" },
   ) {
-    const accountParamsSchema: JSONSchema7 = { type: "object" };
     const messageContentSchema: JSONSchema7 = { type: "object" };
     const messageAdditionalParamsSchema: JSONSchema7 = { type: "object" };
 
@@ -55,11 +53,7 @@ export class TestProvider extends BaseProvider<TestAccount> {
   }
 
   _createAccount(name: string, params: Record<string, any> = {}): TestAccount {
-    return {
-      name,
-      provider: null,
-      options: params,
-    };
+    return { name, provider: null, params };
   }
 }
 

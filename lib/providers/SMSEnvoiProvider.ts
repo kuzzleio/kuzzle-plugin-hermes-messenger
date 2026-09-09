@@ -5,13 +5,15 @@ import { JSONSchema7 } from "json-schema";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
 import { ProviderCapabilities } from "../types";
 
-export interface SMSEnvoiAccount extends BaseAccount<null> {
-  options: {
-    userKey: string;
-    accessToken: string;
-    defaultSender: string;
-  };
+export interface SMSEnvoiAccountParams {
+  user_key: string;
+  access_token: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
+
+/** SMS Envoi is a plain HTTP API: there is no client, credentials are read from `params`. */
+export type SMSEnvoiAccount = BaseAccount<null, SMSEnvoiAccountParams>;
 
 export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
   override capabilities: ProviderCapabilities = {
@@ -78,7 +80,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     }
 
     const account = this.getAccount(accountName);
-    const fromNumber = from || account.options.defaultSender;
+    const fromNumber = from || account.params.default_sender;
     try {
       await this.deliver(account, recipients, content.message, fromNumber);
     } catch (error: any) {
@@ -90,26 +92,9 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
 
   protected _createAccount(
     name: string,
-    {
-      user_key,
-      access_token,
-      default_sender,
-    }: {
-      user_key: string;
-      access_token: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    params: SMSEnvoiAccountParams,
   ): SMSEnvoiAccount {
-    return {
-      name,
-      provider: null,
-      options: {
-        userKey: user_key,
-        accessToken: access_token,
-        defaultSender: default_sender,
-      },
-    };
+    return { name, provider: null, params };
   }
 
   private async deliver(
@@ -118,7 +103,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     message: string,
     fromNumber: string,
   ): Promise<void> {
-    const { userKey: user_key, accessToken: Access_token } = account.options;
+    const { user_key, access_token: Access_token } = account.params;
 
     if (await this.mockedAccount(account.name)) {
       await this.sdk.document.createOrReplace(

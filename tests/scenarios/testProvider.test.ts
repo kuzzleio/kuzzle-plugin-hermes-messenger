@@ -1,5 +1,6 @@
 import { defineReflectProperties } from "tests/helpers";
-import { context, TestProvider } from "tests/mocks";
+import { context, TestAccount, TestProvider } from "tests/mocks";
+import { NotFoundError } from "kuzzle";
 import { RecipientTypeDefinition, RecipientTypeRegistry } from "lib/recipients";
 import { describe, it, expect, vi } from "vitest";
 
@@ -72,6 +73,7 @@ describe("TestProvider", () => {
 
     expect(getAccountSpy).toHaveBeenCalledWith("myaccount");
     expect(account.name).toBe("myaccount");
+    expect(account.params).toEqual({ option: "myoptions" });
 
     getAccountSpy.mockRestore();
   });
@@ -95,8 +97,10 @@ describe("TestProvider", () => {
 
     const listAccountsSpy = vi.spyOn(testProvider, "listAccounts");
 
-    testProvider.listAccounts();
+    testProvider.addAccount("first", {});
+    testProvider.addAccount("second", {});
 
+    expect(testProvider.listAccounts()).toEqual(["first", "second"]);
     expect(listAccountsSpy).toHaveBeenCalledWith();
 
     listAccountsSpy.mockRestore();
@@ -201,6 +205,98 @@ describe("TestProvider", () => {
     expect(nodeRemoveAccountSpy).toHaveBeenCalledWith("myaccount");
 
     initSpy.mockRestore();
+  });
+
+  describe("Account params validation on addAccount", () => {
+    const strictSchema = {
+      type: "object" as const,
+      properties: {
+        sender: { type: "string" as const, minLength: 1 },
+        port: { type: "integer" as const },
+      },
+      required: ["sender"],
+    };
+
+    function strictProvider(): TestProvider {
+      return new TestProvider(undefined, undefined, strictSchema);
+    }
+
+    it("registers an account whose params match the schema", () => {
+      const provider = strictProvider();
+
+      provider.addAccount("ok", { sender: "a@b.co", port: 25 });
+
+      expect(provider.listAccounts()).toEqual(["ok"]);
+      expect(provider.getAccount("ok").params).toEqual({
+        sender: "a@b.co",
+        port: 25,
+      });
+    });
+
+    it("rejects params violating the schema and lists every error", () => {
+      const provider = strictProvider();
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      let error: any;
+      try {
+        provider.addAccount("bad", { port: "25" });
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error.message).toBe(
+        "TestProvider: account parameters do not match the provider's accountParamsSchema (2 error(s))",
+      );
+      expect(error.errors.map((e: Error) => e.message)).toEqual([
+        "params must have required property 'sender'",
+        "/port must be integer",
+      ]);
+      expect(provider.listAccounts()).toEqual([]);
+
+      expect(warnSpy).toHaveBeenCalledOnce();
+      const logged = warnSpy.mock.calls[0][0] as string;
+      expect(logged).toContain('account "bad" rejected, invalid parameters');
+      expect(logged).toContain("/port must be integer");
+      // credentials must never reach the logs
+      expect(logged).not.toContain("25");
+
+      warnSpy.mockRestore();
+    });
+
+    it("wraps and logs an error thrown while creating the account", () => {
+      class FailingProvider extends TestProvider {
+        override _createAccount(): TestAccount {
+          throw new Error("SDK client refused the credentials");
+        }
+      }
+      const provider = new FailingProvider();
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(() => provider.addAccount("boom", { any: "thing" })).toThrowError(
+        'TestProvider: account "boom" could not be created: SDK client refused the credentials',
+      );
+      expect(provider.listAccounts()).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledOnce();
+      expect(errorSpy.mock.calls[0][0]).toContain(
+        'account "boom" could not be created',
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    it("re-throws Kuzzle errors thrown while creating the account as-is", () => {
+      class FailingProvider extends TestProvider {
+        override _createAccount(): TestAccount {
+          throw new NotFoundError("no such region");
+        }
+      }
+      const provider = new FailingProvider();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(() => provider.addAccount("boom", {})).toThrowError(NotFoundError);
+
+      vi.restoreAllMocks();
+    });
   });
 
   describe("Custom recipient type registration", () => {

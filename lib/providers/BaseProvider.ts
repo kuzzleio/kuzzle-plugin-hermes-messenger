@@ -21,12 +21,27 @@ import {
 } from "../recipients";
 import { ProviderCapabilities, SerializedProvider } from "../types";
 
-export interface BaseAccount<T> {
-  provider: T;
-
-  options: JSONObject;
-
+/**
+ * An account registered on a provider.
+ *
+ * @typeParam TClient live client used to send messages (an SDK instance, a
+ *   nodemailer transporter, `null` for plain HTTP APIs...)
+ * @typeParam TParams shape of the parameters the account was created with,
+ *   matching the provider's `accountParamsSchema`
+ */
+export interface BaseAccount<TClient, TParams = Record<string, unknown>> {
+  /** Account name, unique within the provider */
   name: string;
+
+  /** Live client used to deliver messages */
+  provider: TClient;
+
+  /**
+   * Parameters received by `addAccount` (`body.params`), kept as-is so that
+   * the provider can read them at send time (e.g. `default_sender`). They
+   * usually contain credentials: they are never exposed by `listAccounts`.
+   */
+  params: TParams;
 }
 
 export abstract class BaseProvider<T> {
@@ -86,7 +101,8 @@ export abstract class BaseProvider<T> {
     this.accountParamsSchema = accountParamsSchema;
     this.messageContentSchema = messageContentSchema;
     this.messageAdditionalParamsSchema = messageAdditionalParamsSchema;
-    this.ajv = new Ajv();
+    // allErrors: report every violation at once (see validateAccountParams)
+    this.ajv = new Ajv({ allErrors: true });
     addFormats(this.ajv);
     this.accountParamsValidator = this.ajv.compile(this.accountParamsSchema);
     this.messageContentValidator = this.ajv.compile(this.messageContentSchema);
@@ -233,6 +249,10 @@ export abstract class BaseProvider<T> {
     ...args
   ): Promise<void>;
 
+  /**
+   * Build the in-memory account from the `addAccount` parameters: create the
+   * live client and return `{ name, provider, params }`.
+   */
   protected abstract _createAccount(
     name: string,
     params: Record<string, unknown>,
@@ -241,17 +261,54 @@ export abstract class BaseProvider<T> {
   /**
    * Adds an account to send message with.
    *
+   * The parameters are validated against `accountParamsSchema` before the
+   * account is created on this node and synchronized to the other cluster
+   * nodes (which do not validate again).
+   *
    * @param name Account name
-   * @param args Any credentials needed to initialize the associated provider
+   * @param params Parameters matching `accountParamsSchema` (credentials,
+   *   default sender...), kept on the account
+   * @throws BadRequestError if an account with this name already exists, or if
+   *   the provider could not create the account from these parameters
+   * @throws MultipleErrorsError listing every parameter violating the schema
    */
   addAccount(name: string, params: Record<string, unknown>) {
+    const label = `${Inflector.upFirst(this.name)}: account "${name}"`;
+
     if (this.accounts.has(name)) {
       throw new BadRequestError(
         `${Inflector.upFirst(this.name)} account "${name}" already exists.`,
       );
     }
 
-    this.nodeAddAccount(name, params);
+    try {
+      this.validateAccountParams(params);
+    } catch (error) {
+      // Parameter values are never logged: they hold credentials.
+      const details =
+        error instanceof MultipleErrorsError
+          ? error.errors.map((e) => e.message).join("; ")
+          : (error as Error).message;
+
+      this.logWarn(`${label} rejected, invalid parameters: ${details}`);
+      throw error;
+    }
+
+    try {
+      this.nodeAddAccount(name, params);
+    } catch (error) {
+      this.logError(
+        `${label} could not be created: ${(error as Error).message}`,
+      );
+
+      if (error instanceof KuzzleError) {
+        throw error;
+      }
+
+      throw new BadRequestError(
+        `${label} could not be created: ${(error as Error).message}`,
+      );
+    }
 
     if (global.app.started) {
       this.cluster
@@ -266,6 +323,15 @@ export abstract class BaseProvider<T> {
     }
   }
 
+  /**
+   * Validate account parameters against `accountParamsSchema`.
+   *
+   * Called by `addAccount()`; also available to validate parameters ahead of
+   * time (e.g. in a configuration form handler).
+   *
+   * @throws MultipleErrorsError listing every violation, each message prefixed
+   *   by the offending path (e.g. `/port must be integer`)
+   */
   validateAccountParams(params: JSONObject): void {
     const valid = this.accountParamsValidator(params);
 
@@ -273,12 +339,12 @@ export abstract class BaseProvider<T> {
       const errors = (this.accountParamsValidator?.errors ?? []).map(
         (e) =>
           new KuzzleError(
-            e?.message ?? "An error occured with the param validation schema",
+            `${e.instancePath || "params"} ${e.message ?? "does not match the account params schema"}`,
             400,
           ),
       );
       throw new MultipleErrorsError(
-        "Parameters format does not match with the json schema defined in the provider",
+        `${Inflector.upFirst(this.name)}: account parameters do not match the provider's accountParamsSchema (${errors.length} error(s))`,
         errors,
       );
     }
@@ -433,14 +499,9 @@ export abstract class BaseProvider<T> {
     this.accounts.delete(name);
   }
 
-  listAccounts(): Array<{ name: string; options: JSONObject }> {
-    const accounts = [];
-
-    for (const [accountName, account] of this.accounts.entries() as any) {
-      accounts.push({ name: accountName, options: account.options });
-    }
-
-    return accounts;
+  /** Names of the registered accounts. */
+  listAccounts(): string[] {
+    return Array.from(this.accounts.keys());
   }
 
   getAccount(accountName: string): T {
@@ -452,10 +513,26 @@ export abstract class BaseProvider<T> {
   }
 
   private logInfo(message: string) {
+    this.log("info", message);
+  }
+
+  private logWarn(message: string) {
+    this.log("warn", message);
+  }
+
+  private logError(message: string) {
+    this.log("error", message);
+  }
+
+  /**
+   * Log through the plugin context once available (`init()`), on the console
+   * before that (accounts registered at application startup).
+   */
+  private log(level: "info" | "warn" | "error", message: string) {
     if (this.context) {
-      this.context.log.info(message);
+      this.context.log[level](message);
     } else {
-      console.log(`[hermes-messenger] ${message}`); //eslint-disable-line no-console
+      console[level](`[hermes-messenger] ${message}`); //eslint-disable-line no-console
     }
   }
 }

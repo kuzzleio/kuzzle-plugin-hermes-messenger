@@ -7,13 +7,19 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { Attachment, ProviderCapabilities } from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
 
-export interface SMTPAccount extends BaseAccount<
-  Transporter<SMTPTransport.SentMessageInfo>
-> {
-  options: {
-    defaultSender: string;
-  };
+export interface SMTPAccountParams {
+  host_name: string;
+  port: number;
+  user: string;
+  password: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
+
+export type SMTPAccount = BaseAccount<
+  Transporter<SMTPTransport.SentMessageInfo>,
+  SMTPAccountParams
+>;
 
 export class SmtpProvider extends BaseProvider<SMTPAccount> {
   override capabilities: ProviderCapabilities = {
@@ -150,7 +156,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     } = {},
   ) {
     const account = this.getAccount(accountName);
-    const fromEmail = from || account.options.defaultSender;
+    const fromEmail = from || account.params.default_sender;
 
     const email: Mail.Options = {
       attachments: attachments?.map((attachment) => ({
@@ -182,25 +188,14 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
 
   /**
    * Creates a nodemailer transporter for the given SMTP credentials.
-   * Only `defaultSender` is exposed in `options`; credentials are never stored there.
+   * The parameters are kept on the account (`default_sender` is read at send time).
    */
   protected _createAccount(
     name: string,
-    {
-      host_name,
-      port,
-      user,
-      password,
-      default_sender,
-    }: {
-      host_name: string;
-      port: number;
-      user: string;
-      password: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    params: SMTPAccountParams,
   ): SMTPAccount {
+    const { host_name, port, user, password } = params;
+
     const transporter = createTransport({
       auth: {
         pass: password,
@@ -210,13 +205,8 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       port,
       secure: port === 465,
     });
-    return {
-      provider: transporter,
-      name,
-      options: {
-        defaultSender: default_sender,
-      },
-    };
+
+    return { name, provider: transporter, params };
   }
 
   private async deliver(account: SMTPAccount, email: Mail.Options) {
