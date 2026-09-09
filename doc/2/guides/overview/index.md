@@ -49,7 +49,7 @@ The plugin exposes a single `hermes` controller. Account and message actions tak
 | `listRecipientTypes` | `GET /_/hermes/recipient-types[?audience=…]`             | Registered recipient types and their audiences                                     |
 | `addAccount`         | `POST /_/hermes/providers/:provider/accounts`            | Register an account (`body.params`)                                                |
 | `removeAccount`      | `DELETE /_/hermes/providers/:provider/accounts/:account` | Remove an account                                                                  |
-| `listAccounts`       | `GET /_/hermes/accounts[?provider=…][&audience=…]`       | Accounts of every provider (or of one), with their provider key and audiences |
+| `listAccounts`       | `GET /_/hermes/accounts[?provider=…][&audience=…]`       | Accounts of every provider (or of one), with their provider key, recipient types and audiences |
 | `sendMessage`        | `POST /_/hermes/providers/:provider/accounts/:account`   | Send a message (`body.recipients`, `body.content`, `body.params`)                  |
 
 The `sendMessage` body always has the same three parts:

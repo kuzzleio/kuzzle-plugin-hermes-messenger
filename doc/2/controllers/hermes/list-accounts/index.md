@@ -7,7 +7,7 @@ description: List the accounts registered on every provider
 
 # listAccounts
 
-Lists registered accounts. By default every account is returned, whatever its provider; the optional `provider` argument restricts the list to one provider, and the optional `audience` argument to the providers able to reach that kind of recipient (`human` or `technical`).
+Lists registered accounts with the recipient types and audiences of their provider. By default every account is returned, whatever its provider; the optional `provider` argument restricts the list to one provider, and the optional `audience` argument to the providers able to reach that kind of recipient (`human` or `technical`).
 
 Each entry carries the route key of the provider it belongs to, so the result can be used directly as the `provider` and `account` arguments of [`sendMessage`](/official-plugins/hermes-messenger/2/controllers/smtp/send-message) and [`removeAccount`](/official-plugins/hermes-messenger/2/controllers/smtp/remove-account).
 
@@ -61,6 +61,7 @@ Returns the registered accounts. Each account has:
 
 - `name`: the account name, unique within its provider
 - `provider`: the route key of the provider owning the account (`smtp`, `twilio`, `sendgrid`, `smsenvoi` or a custom provider key)
+- `acceptedRecipientTypes`: names of the recipient types accepted by the provider, i.e. the formats allowed in the `recipients` of `sendMessage` through this account; their definitions come from [`hermes:listRecipientTypes`](/official-plugins/hermes-messenger/2/controllers/hermes/list-recipient-types)
 - `audiences`: the audiences the account can address, i.e. those of its provider (union of the `audiences` of its accepted recipient types). Handy to filter accounts client-side without a second request.
 
 The parameters an account was created with (`body.params` of `addAccount`) are **never** returned: they hold credentials.
@@ -77,16 +78,19 @@ The parameters an account was created with (`body.params` of `addAccount`) are *
       {
         "name": "common",
         "provider": "smtp",
+        "acceptedRecipientTypes": ["email"],
         "audiences": ["human"]
       },
       {
         "name": "ilayda",
         "provider": "smtp",
+        "acceptedRecipientTypes": ["email"],
         "audiences": ["human"]
       },
       {
         "name": "common",
         "provider": "twilio",
+        "acceptedRecipientTypes": ["phoneNumber"],
         "audiences": ["human"]
       }
     ]

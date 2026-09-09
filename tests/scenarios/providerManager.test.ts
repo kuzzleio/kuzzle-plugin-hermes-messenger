@@ -29,6 +29,18 @@ function buildManager(): ProviderManager {
   return manager;
 }
 
+/** Fields every account of `first` / `second` carries, besides its name. */
+const humanAccount = {
+  provider: "first",
+  acceptedRecipientTypes: ["testRecipient"],
+  audiences: ["human"],
+};
+const technicalAccount = {
+  provider: "second",
+  acceptedRecipientTypes: ["uri"],
+  audiences: ["technical"],
+};
+
 describe("ProviderManager – listAccounts", () => {
   it("returns an empty list when no account is registered", () => {
     const manager = new ProviderManager();
@@ -39,31 +51,15 @@ describe("ProviderManager – listAccounts", () => {
 
   it("lists the accounts of every provider with their provider route key", () => {
     expect(buildManager().listAccounts()).toEqual([
-      {
-        name: "alpha",
-        provider: "first",
-        audiences: ["human"],
-      },
-      {
-        name: "beta",
-        provider: "first",
-        audiences: ["human"],
-      },
-      {
-        name: "alpha",
-        provider: "second",
-        audiences: ["technical"],
-      },
+      { name: "alpha", ...humanAccount },
+      { name: "beta", ...humanAccount },
+      { name: "alpha", ...technicalAccount },
     ]);
   });
 
   it("only lists the accounts of the given provider", () => {
     expect(buildManager().listAccounts({ provider: "second" })).toEqual([
-      {
-        name: "alpha",
-        provider: "second",
-        audiences: ["technical"],
-      },
+      { name: "alpha", ...technicalAccount },
     ]);
   });
 
@@ -77,23 +73,11 @@ describe("ProviderManager – listAccounts", () => {
     const manager = buildManager();
 
     expect(manager.listAccounts({ audience: "human" })).toEqual([
-      {
-        name: "alpha",
-        provider: "first",
-        audiences: ["human"],
-      },
-      {
-        name: "beta",
-        provider: "first",
-        audiences: ["human"],
-      },
+      { name: "alpha", ...humanAccount },
+      { name: "beta", ...humanAccount },
     ]);
     expect(manager.listAccounts({ audience: "technical" })).toEqual([
-      {
-        name: "alpha",
-        provider: "second",
-        audiences: ["technical"],
-      },
+      { name: "alpha", ...technicalAccount },
     ]);
     expect(manager.listAccounts({ audience: "nobody" })).toEqual([]);
   });
@@ -110,7 +94,7 @@ describe("ProviderManager – listAccounts", () => {
     expect(manager.listAccounts({ audience: [] })).toHaveLength(3);
   });
 
-  it("hydrates each account with the audiences of its provider", () => {
+  it("hydrates each account with the recipient type names and audiences of its provider", () => {
     const registry = new RecipientTypeRegistry();
     registry.register(uriRecipient);
     const manager = new ProviderManager();
@@ -119,7 +103,12 @@ describe("ProviderManager – listAccounts", () => {
     multi.nodeAddAccount("both", {});
 
     expect(manager.listAccounts()).toEqual([
-      { name: "both", provider: "multi", audiences: ["human", "technical"] },
+      {
+        name: "both",
+        provider: "multi",
+        acceptedRecipientTypes: ["testRecipient", "uri"],
+        audiences: ["human", "technical"],
+      },
     ]);
   });
 

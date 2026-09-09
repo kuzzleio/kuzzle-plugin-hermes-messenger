@@ -4,6 +4,7 @@ import { ProviderCapabilities } from "./ProviderCapabilities";
 export interface SerializedProvider {
   name: string;
   capabilities: ProviderCapabilities;
+  /** Names of the accepted recipient types, see `hermes:listRecipientTypes` */
   acceptedRecipientTypes: string[];
   /**
    * Every audience the provider can address: the deduplicated union of the

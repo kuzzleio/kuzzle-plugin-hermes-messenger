@@ -64,8 +64,8 @@ export class ProviderManager {
    *
    * Each entry carries the route key of its provider so that the result can
    * be used directly as the `provider` / `account` arguments of `sendMessage`,
-   * and the audiences of its provider so that clients can filter accounts
-   * without a second request.
+   * plus the recipient types and audiences of its provider so that clients
+   * can filter accounts without a second request.
    *
    * @param filters.provider When given, only the accounts of this provider are
    *   returned. Throws if the provider is not registered.
@@ -88,10 +88,16 @@ export class ProviderManager {
         continue;
       }
 
+      const acceptedRecipientTypes = provider.getAcceptedRecipientTypes();
       const audiences = provider.getAudiences();
 
       for (const accountName of provider.listAccounts()) {
-        accounts.push({ name: accountName, provider: name, audiences });
+        accounts.push({
+          name: accountName,
+          provider: name,
+          acceptedRecipientTypes,
+          audiences,
+        });
       }
     }
 
