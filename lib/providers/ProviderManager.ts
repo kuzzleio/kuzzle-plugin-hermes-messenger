@@ -1,8 +1,16 @@
 import { JSONObject, NotFoundError, PluginContext } from "kuzzle";
 import { BaseProvider } from "./BaseProvider";
-import { matches } from "lodash";
 import { AccountFilters, ProviderFilters, SerializedAccount } from "../types";
 import { getFilteredAudiences } from "../recipients";
+
+/** Normalize an optional string-or-array criterion to an array. */
+function toList(value: string | string[] | undefined): string[] {
+  if (value === undefined) {
+    return [];
+  }
+
+  return Array.isArray(value) ? value : [value];
+}
 
 export class ProviderManager {
   readonly providers = new Map<string, BaseProvider<any>>();
@@ -35,19 +43,19 @@ export class ProviderManager {
   /**
    * List registered providers.
    *
-   * @param filters.capabilities Only providers whose capabilities match every
-   *   given key are returned.
+   * @param filters.capability Only providers having every given capability
+   *   are returned.
    * @param filters.audience Only providers accepting at least one recipient
    *   type of this audience (or of one of these audiences) are returned.
    */
   listProviders(filters: ProviderFilters = {}): BaseProvider<any>[] {
     let providers = Array.from(this.providers.values());
 
-    const { capabilities, ...recipientTypeFilter } = filters;
+    const { capability, ...recipientTypeFilter } = filters;
+    const capabilities = toList(capability);
 
-    if (capabilities && Object.keys(capabilities).length > 0) {
-      const filterMatcher = matches(capabilities);
-      providers = providers.filter((p) => filterMatcher(p.capabilities));
+    if (capabilities.length > 0) {
+      providers = providers.filter((p) => p.hasCapabilities(capabilities));
     }
 
     if (getFilteredAudiences(recipientTypeFilter).length > 0) {
@@ -64,17 +72,24 @@ export class ProviderManager {
    *
    * Each entry carries the route key of its provider so that the result can
    * be used directly as the `provider` / `name` arguments of `sendMessage`,
-   * plus the recipient types and audiences of its provider so that clients
-   * can filter accounts without a second request.
+   * plus the recipient types, audiences and capabilities of its provider so
+   * that clients can filter accounts without a second request.
    *
    * @param filters.provider When given, only the accounts of this provider are
    *   returned. Throws if the provider is not registered.
+   * @param filters.capability When given, only the accounts of providers
+   *   having every given capability are returned.
    * @param filters.audience When given, only the accounts of providers
    *   accepting at least one recipient type of this audience (or of one of
    *   these audiences) are returned.
    */
   listAccounts(filters: AccountFilters = {}): SerializedAccount[] {
-    const { provider: providerName, ...recipientTypeFilter } = filters;
+    const {
+      provider: providerName,
+      capability,
+      ...recipientTypeFilter
+    } = filters;
+    const capabilities = toList(capability);
 
     const providers: Array<[string, BaseProvider<any>]> =
       providerName === undefined
@@ -84,18 +99,23 @@ export class ProviderManager {
     const accounts: SerializedAccount[] = [];
 
     for (const [name, provider] of providers) {
-      if (!provider.acceptsRecipientTypes(recipientTypeFilter)) {
+      if (
+        !provider.acceptsRecipientTypes(recipientTypeFilter) ||
+        !provider.hasCapabilities(capabilities)
+      ) {
         continue;
       }
 
       const acceptedRecipientTypes = provider.getAcceptedRecipientTypes();
       const audiences = provider.getAudiences();
+      const providerCapabilities = provider.capabilities;
 
       for (const accountName of provider.listAccounts()) {
         accounts.push({
           name: accountName,
           provider: name,
           acceptedRecipientTypes,
+          capabilities: providerCapabilities,
           audiences,
         });
       }

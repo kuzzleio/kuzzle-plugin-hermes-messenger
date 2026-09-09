@@ -8,12 +8,7 @@ import { vi } from "vitest";
 export type TestAccount = BaseAccount<null, Record<string, any>>;
 
 export class TestProvider extends BaseProvider<TestAccount> {
-  override capabilities: ProviderCapabilities = {
-    fileAttachment: false,
-    longMessage: false,
-    shortMessage: true,
-    json: false,
-  };
+  override capabilities: ProviderCapabilities = ["text"];
   constructor(
     recipientTypeRegistry: RecipientTypeRegistry = new RecipientTypeRegistry(),
     acceptedRecipientTypes: string[] = ["testRecipient"],

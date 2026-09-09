@@ -33,11 +33,13 @@ function buildManager(): ProviderManager {
 const humanAccount = {
   provider: "first",
   acceptedRecipientTypes: ["testRecipient"],
+  capabilities: ["text"],
   audiences: ["human"],
 };
 const technicalAccount = {
   provider: "second",
   acceptedRecipientTypes: ["uri"],
+  capabilities: ["text"],
   audiences: ["technical"],
 };
 
@@ -107,9 +109,33 @@ describe("ProviderManager – listAccounts", () => {
         name: "both",
         provider: "multi",
         acceptedRecipientTypes: ["testRecipient", "uri"],
+        capabilities: ["text"],
         audiences: ["human", "technical"],
       },
     ]);
+  });
+
+  it("filters accounts on the capabilities of their provider", () => {
+    const manager = buildManager();
+    const rich = new TestProvider(new RecipientTypeRegistry());
+    rich.capabilities = ["text", "html", "file"];
+    manager.set("rich", rich);
+    rich.nodeAddAccount("mail", {});
+
+    expect(manager.listAccounts({ capability: "text" })).toHaveLength(4);
+    expect(manager.listAccounts({ capability: ["html", "file"] })).toEqual([
+      {
+        name: "mail",
+        provider: "rich",
+        acceptedRecipientTypes: ["testRecipient"],
+        capabilities: ["text", "html", "file"],
+        audiences: ["human"],
+      },
+    ]);
+    expect(manager.listAccounts({ capability: "json" })).toEqual([]);
+    expect(
+      manager.listAccounts({ capability: "file", audience: "technical" }),
+    ).toEqual([]);
   });
 
   it("combines the provider and audience filters", () => {
@@ -155,20 +181,29 @@ describe("ProviderManager – listProviders", () => {
     expect(manager.listProviders({ audience: [] })).toHaveLength(2);
   });
 
-  it("combines the capabilities and audience filters", () => {
+  it("filters providers on their capabilities, all requested ones being required", () => {
+    const manager = buildManager();
+    const rich = new TestProvider(new RecipientTypeRegistry());
+    rich.capabilities = ["text", "html", "file"];
+    manager.set("rich", rich);
+
+    expect(manager.listProviders({ capability: "text" })).toHaveLength(3);
+    expect(manager.listProviders({ capability: "file" })).toEqual([rich]);
+    expect(manager.listProviders({ capability: ["html", "file"] })).toEqual([
+      rich,
+    ]);
+    expect(manager.listProviders({ capability: ["text", "json"] })).toEqual([]);
+    expect(manager.listProviders({ capability: [] })).toHaveLength(3);
+  });
+
+  it("combines the capability and audience filters", () => {
     const manager = buildManager();
 
     expect(
-      manager.listProviders({
-        capabilities: { shortMessage: true },
-        audience: "human",
-      }),
+      manager.listProviders({ capability: "text", audience: "human" }),
     ).toHaveLength(1);
     expect(
-      manager.listProviders({
-        capabilities: { fileAttachment: true },
-        audience: "human",
-      }),
+      manager.listProviders({ capability: "file", audience: "human" }),
     ).toEqual([]);
   });
 

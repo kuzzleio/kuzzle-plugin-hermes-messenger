@@ -3,7 +3,7 @@ import { JSONSchema7 } from "json-schema";
 import { Twilio } from "twilio";
 
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { ProviderCapabilities } from "../types";
+import { PROVIDER_CAPABILITY_TEXT, ProviderCapabilities } from "../types";
 
 export interface TwilioAccountParams {
   account_sid: string;
@@ -15,12 +15,7 @@ export interface TwilioAccountParams {
 export type TwilioAccount = BaseAccount<Twilio, TwilioAccountParams>;
 
 export class TwilioProvider extends BaseProvider<TwilioAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: false,
-    shortMessage: true,
-    fileAttachment: false,
-    json: false,
-  };
+  override capabilities: ProviderCapabilities = [PROVIDER_CAPABILITY_TEXT];
   constructor() {
     const accountParamsSchema: JSONSchema7 = {
       type: "object",
@@ -59,6 +54,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
 
     const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
       },

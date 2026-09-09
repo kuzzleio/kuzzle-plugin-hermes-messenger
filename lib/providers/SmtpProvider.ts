@@ -4,8 +4,27 @@ import { Transporter, createTransport } from "nodemailer";
 import Mail from "nodemailer/lib/mailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
-import { Attachment, ProviderCapabilities } from "../types";
+import {
+  Attachment,
+  PROVIDER_CAPABILITY_FILE,
+  PROVIDER_CAPABILITY_HTML,
+  PROVIDER_CAPABILITY_TEXT,
+  ProviderCapabilities,
+} from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
+
+/**
+ * Body part of an email: `message` goes to `text` when `content.format` is
+ * `"text"`, to `html` otherwise (the default).
+ */
+export function emailBody(content: {
+  message: string;
+  format?: "html" | "text";
+}): { text: string } | { html: string } {
+  return content.format === "text"
+    ? { text: content.message }
+    : { html: content.message };
+}
 
 export interface SMTPAccountParams {
   host_name: string;
@@ -22,12 +41,11 @@ export type SMTPAccount = BaseAccount<
 >;
 
 export class SmtpProvider extends BaseProvider<SMTPAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: true,
-    shortMessage: true,
-    fileAttachment: true,
-    json: false,
-  };
+  override capabilities: ProviderCapabilities = [
+    PROVIDER_CAPABILITY_TEXT,
+    PROVIDER_CAPABILITY_HTML,
+    PROVIDER_CAPABILITY_FILE,
+  ];
 
   constructor() {
     const accountParamsSchema: JSONSchema7 = {
@@ -76,12 +94,21 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
           title: "Message",
           $comment: "long-text",
         },
+        format: {
+          type: "string",
+          title: "Format",
+          description:
+            "How `message` is sent: as HTML (default) or as plain text.",
+          enum: ["html", "text"],
+          default: "html",
+        },
       },
       required: ["subject", "message"],
     };
 
     const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
         cc: {
@@ -133,7 +160,8 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    *
    * @param accountName - Name of the registered account to use
    * @param recipients - Recipient email addresses
-   * @param content - Email content: `subject` and `message` (HTML)
+   * @param content - Email content: `subject`, `message` and optional `format`
+   *   (`html`, the default, or `text`)
    * @param params.from - Sender override; falls back to the account's `default_sender`
    * @param params.cc - Optional carbon-copy email addresses
    * @param params.bcc - Optional blind carbon-copy email addresses
@@ -165,7 +193,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       })),
       from: fromEmail,
       subject: content.subject,
-      html: content.message,
+      ...emailBody(content),
       to: recipients,
       cc,
       bcc,

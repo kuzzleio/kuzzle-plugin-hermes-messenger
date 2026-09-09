@@ -36,18 +36,14 @@ type MyAccount = BaseAccount<MyClient, MyAccountParams>;
 ```typescript
 import {
   BaseProvider,
+  PROVIDER_CAPABILITY_TEXT,
   ProviderCapabilities,
 } from "kuzzle-plugin-hermes-messenger";
 import { JSONSchema7 } from "json-schema";
 
 export class MyProvider extends BaseProvider<MyAccount> {
-  // Declares what this provider supports — defaults are all `false`.
-  override capabilities: ProviderCapabilities = {
-    fileAttachment: false,
-    shortMessage: true,
-    longMessage: false,
-    json: false,
-  };
+  // What this provider can carry in a message — empty by default.
+  override capabilities: ProviderCapabilities = [PROVIDER_CAPABILITY_TEXT];
 
   constructor() {
     // accountParamsSchema: shape of body.params passed to addAccount
@@ -308,7 +304,7 @@ Notes:
 
 | Property       | Description                                                                                                                                                                                                                               |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `capabilities` | A `ProviderCapabilities` object declaring what this provider supports — `fileAttachment`, `shortMessage`, `longMessage`, `json` (all default `false`). Exposed via `serialize()` so `hermes:listProviders` can be filtered by capability. |
+| `capabilities` | Array of strings declaring what this provider can carry in a message. Well-known values, exported as constants: `text` (`PROVIDER_CAPABILITY_TEXT`), `html`, `json`, `file`; add your own if needed. Empty by default. Exposed via `serialize()` so `hermes:listProviders` can be filtered with `capability`. |
 
 ### Protected properties available once the plugin is initialized
 

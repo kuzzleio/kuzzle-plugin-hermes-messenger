@@ -109,6 +109,38 @@ describe("ProviderController – audience argument", () => {
     expect(await controller.listProviders(fakeRequest({}))).toHaveLength(2);
   });
 
+  it("filters providers on the capability argument, comma separated or array", async () => {
+    const controller = buildController();
+
+    expect(
+      await controller.listProviders(fakeRequest({ capability: "text" })),
+    ).toHaveLength(2);
+    expect(
+      await controller.listProviders(fakeRequest({ capability: "text,file" })),
+    ).toHaveLength(0);
+    expect(
+      await controller.listProviders(
+        fakeRequest({ capability: ["text"], audience: "technical" }),
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("filters accounts on the capability argument", async () => {
+    const controller = buildController();
+    const manager = (controller as any).providerManager as ProviderManager;
+    manager.get("human").nodeAddAccount("a", {});
+    manager.get("technical").nodeAddAccount("b", {});
+
+    expect(
+      (await controller.listAccounts(fakeRequest({ capability: "text" })))
+        .accounts,
+    ).toHaveLength(2);
+    expect(
+      (await controller.listAccounts(fakeRequest({ capability: "text,file" })))
+        .accounts,
+    ).toHaveLength(0);
+  });
+
   it("rejects an audience that is neither a string nor an array of strings", async () => {
     const controller = buildController();
 

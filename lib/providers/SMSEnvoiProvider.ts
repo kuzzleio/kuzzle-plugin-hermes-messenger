@@ -3,7 +3,7 @@ import axios from "axios";
 import { JSONSchema7 } from "json-schema";
 
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { ProviderCapabilities } from "../types";
+import { PROVIDER_CAPABILITY_TEXT, ProviderCapabilities } from "../types";
 
 export interface SMSEnvoiAccountParams {
   user_key: string;
@@ -16,12 +16,7 @@ export interface SMSEnvoiAccountParams {
 export type SMSEnvoiAccount = BaseAccount<null, SMSEnvoiAccountParams>;
 
 export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: false,
-    shortMessage: true,
-    fileAttachment: false,
-    json: false,
-  };
+  override capabilities: ProviderCapabilities = [PROVIDER_CAPABILITY_TEXT];
   constructor() {
     const accountParamsSchema: JSONSchema7 = {
       type: "object",
@@ -55,6 +50,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
 
     const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
       },

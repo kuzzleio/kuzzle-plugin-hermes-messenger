@@ -37,7 +37,8 @@ Method: POST
     ],
     "content": {
       "subject": "<email subject>",
-      "message": "<email body (HTML)>"
+      "message": "<email body>",
+      "format": "html"            // optional: "html" (default) or "text"
     },
     "params": {
       "from": "<sender email>",  // optional — overrides account default_sender
@@ -81,7 +82,8 @@ kourou hermes:sendMessage -a provider=sendgrid -a name=<account name> --body '{
 
 - `recipients`: array of email address strings (recipient type `email`)
 - `content.subject`: email subject
-- `content.message`: email body, sent as HTML
+- `content.message`: email body
+- `content.format` (optional): `html` (default) to send `message` as HTML, `text` to send it as plain text
 - `params.from`: sender override (optional)
 - `params.cc`, `params.bcc`: arrays of carbon copy email addresses (optional)
 - `params.attachments`: base64-encoded attachments (optional)

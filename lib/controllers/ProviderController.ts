@@ -122,7 +122,8 @@ export class ProviderController {
   async listAccounts(request: KuzzleRequest) {
     const accounts = this.providerManager.listAccounts({
       provider: this.getOptionalString(request, "provider"),
-      audience: this.getOptionalAudiences(request),
+      capability: this.getOptionalStringList(request, "capability"),
+      audience: this.getOptionalStringList(request, "audience"),
     });
 
     return { accounts };
@@ -130,8 +131,8 @@ export class ProviderController {
 
   async listProviders(request: KuzzleRequest) {
     const providers = this.providerManager.listProviders({
-      capabilities: request.getBodyObject("filters", {}),
-      audience: this.getOptionalAudiences(request),
+      capability: this.getOptionalStringList(request, "capability"),
+      audience: this.getOptionalStringList(request, "audience"),
     });
 
     return providers.map((provider) => provider.serialize());
@@ -139,7 +140,7 @@ export class ProviderController {
 
   async listRecipientTypes(request: KuzzleRequest) {
     return this.recipientTypeRegistry.list({
-      audience: this.getOptionalAudiences(request),
+      audience: this.getOptionalStringList(request, "audience"),
     });
   }
 
@@ -159,32 +160,32 @@ export class ProviderController {
   }
 
   /**
-   * Read the optional `audience` argument.
+   * Read an optional list argument (`audience`, `capability`).
    *
    * Accepts a string (`"human"`), a comma separated list (`"human,technical"`,
    * handy in HTTP query strings) or an array of strings.
    */
-  private getOptionalAudiences(request: KuzzleRequest): string[] | undefined {
-    const value = request.input.args.audience;
+  private getOptionalStringList(
+    request: KuzzleRequest,
+    name: string,
+  ): string[] | undefined {
+    const value = request.input.args[name];
 
     if (value === undefined || value === null) {
       return undefined;
     }
 
-    const audiences: unknown[] =
+    const values: unknown[] =
       typeof value === "string" ? value.split(",") : value;
 
-    if (
-      !Array.isArray(audiences) ||
-      audiences.some((a) => typeof a !== "string")
-    ) {
+    if (!Array.isArray(values) || values.some((v) => typeof v !== "string")) {
       throw new BadRequestError(
-        'Wrong type for argument "audience" (expected: string or array of strings)',
+        `Wrong type for argument "${name}" (expected: string or array of strings)`,
       );
     }
 
-    return (audiences as string[])
-      .map((a) => a.trim())
-      .filter((a) => a.length > 0);
+    return (values as string[])
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0);
   }
 }

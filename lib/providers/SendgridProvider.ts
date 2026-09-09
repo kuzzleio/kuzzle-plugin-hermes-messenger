@@ -2,8 +2,16 @@ import { ExternalServiceError } from "kuzzle";
 import { MailService } from "@sendgrid/mail";
 import { JSONSchema7 } from "json-schema";
 
-import { Attachment, ProviderCapabilities, SendgridAttachment } from "../types";
+import {
+  Attachment,
+  PROVIDER_CAPABILITY_FILE,
+  PROVIDER_CAPABILITY_HTML,
+  PROVIDER_CAPABILITY_TEXT,
+  ProviderCapabilities,
+  SendgridAttachment,
+} from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
+import { emailBody } from "./SmtpProvider";
 
 export interface SendgridAccountParams {
   api_key: string;
@@ -14,12 +22,11 @@ export interface SendgridAccountParams {
 export type SendgridAccount = BaseAccount<MailService, SendgridAccountParams>;
 
 export class SendgridProvider extends BaseProvider<SendgridAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: true,
-    shortMessage: true,
-    fileAttachment: true,
-    json: false,
-  };
+  override capabilities: ProviderCapabilities = [
+    PROVIDER_CAPABILITY_TEXT,
+    PROVIDER_CAPABILITY_HTML,
+    PROVIDER_CAPABILITY_FILE,
+  ];
 
   constructor() {
     const accountParamsSchema: JSONSchema7 = {
@@ -54,12 +61,21 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
           title: "Message",
           $comment: "long-text",
         },
+        format: {
+          type: "string",
+          title: "Format",
+          description:
+            "How `message` is sent: as HTML (default) or as plain text.",
+          enum: ["html", "text"],
+          default: "html",
+        },
       },
       required: ["subject", "message"],
     };
 
     const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
         cc: {
@@ -132,7 +148,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       cc,
       bcc,
       subject: content.subject,
-      html: content.message,
+      ...emailBody(content),
       attachments: attachments?.map(
         (att): SendgridAttachment => ({
           content: att.content,

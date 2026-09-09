@@ -52,12 +52,12 @@ export abstract class BaseProvider<T> {
 
   protected accounts = new Map<string, T>();
 
-  public capabilities: ProviderCapabilities = {
-    fileAttachment: false,
-    longMessage: false,
-    shortMessage: false,
-    json: false,
-  };
+  /**
+   * What this provider can carry in a message, e.g. `["text", "html", "file"]`
+   * for an email provider or `["text"]` for SMS. See the
+   * `PROVIDER_CAPABILITY_*` constants. Empty by default.
+   */
+  public capabilities: ProviderCapabilities = [];
 
   protected EVENT_ACCOUNT_ADD: string;
   protected EVENT_ACCOUNT_REMOVE: string;
@@ -196,6 +196,16 @@ export abstract class BaseProvider<T> {
     const registry = this.getRecipientTypeRegistry();
 
     return this.acceptedRecipientTypes.map((name) => registry.get(name));
+  }
+
+  /**
+   * Whether this provider has every given capability. An empty list always
+   * matches.
+   */
+  hasCapabilities(capabilities: string[]): boolean {
+    return capabilities.every((capability) =>
+      this.capabilities.includes(capability),
+    );
   }
 
   /**

@@ -36,7 +36,7 @@ Coming from version 1? Read the [Migration guide](/official-plugins/hermes-messe
   | `uri`         | string, `format: "uri"`   | `technical` |
 
 - **Audience**: each recipient type lists the audiences it is meant for. `human` recipients designate a person (email, phone number), `technical` ones a resource (webhook URI, broker topic, bucket). `listRecipientTypes`, `listProviders` and `listAccounts` accept an `audience` argument (one value or an array), so an application can offer only human oriented channels when editing a user's contacts.
-- **Capabilities**: `fileAttachment`, `longMessage`, `shortMessage`, `json`. Used to filter providers in `listProviders`.
+- **Capabilities**: what a provider can carry in a message, as an array of strings. Well-known values: `text` (short plain text), `html` (rich content), `json` (structured payload), `file` (attachments or file transfer). Used to filter providers in `listProviders` with the `capability` argument.
 - **JSON Schemas**: `accountParamsSchema` (account credentials for `addAccount`), `messageContentSchema` (the `content` object of `sendMessage`), `messageAdditionalParamsSchema` (the `params` object of `sendMessage`). They are returned by `listProviders` so clients can generate forms dynamically.
 
 ## API
@@ -45,11 +45,11 @@ The plugin exposes a single `hermes` controller. Account and message actions tak
 
 | Action               | HTTP                                                     | Description                                                                        |
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `listProviders`      | `GET /_/hermes/providers[?audience=…]`                   | Providers, capabilities, audiences and JSON Schemas                                |
+| `listProviders`      | `GET /_/hermes/providers[?capability=…][&audience=…]`                   | Providers, capabilities, audiences and JSON Schemas                                |
 | `listRecipientTypes` | `GET /_/hermes/recipient-types[?audience=…]`             | Registered recipient types and their audiences                                     |
 | `addAccount`         | `PUT /_/hermes/providers/:provider/accounts/:name`            | Register an account (`body.params`)                                                |
 | `removeAccount`      | `DELETE /_/hermes/providers/:provider/accounts/:name` | Remove an account                                                                  |
-| `listAccounts`       | `GET /_/hermes/accounts[?provider=…][&audience=…]`       | Accounts of every provider (or of one), with their provider key, recipient types and audiences |
+| `listAccounts`       | `GET /_/hermes/accounts[?provider=…][&audience=…][&capability=…]`       | Accounts of every provider (or of one), with their provider key, recipient types, audiences and capabilities |
 | `sendMessage`        | `POST /_/hermes/providers/:provider/accounts/:name`   | Send a message (`body.recipients`, `body.content`, `body.params`)                  |
 
 The `sendMessage` body always has the same three parts:
