@@ -3,7 +3,6 @@ import axios from "axios";
 import { JSONSchema7 } from "json-schema";
 
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
 import { ProviderCapabilities } from "../types";
 
 export interface SMSEnvoiAccount extends BaseAccount<null> {
@@ -21,8 +20,8 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     fileAttachment: false,
     json: false,
   };
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         user_key: {
@@ -41,7 +40,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       required: ["user_key", "access_token", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         message: {
@@ -52,7 +51,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       required: ["message"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         from: { type: "string" },
@@ -62,16 +61,15 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     super(
       "SMS Envoi",
       ["phoneNumber"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
   async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     { from }: { from?: string } = {},
   ): Promise<void> {
@@ -81,10 +79,8 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
 
     const account = this.getAccount(accountName);
     const fromNumber = from || account.options.defaultSender;
-    const phoneNumbers = recipients.map((recipient) => recipient.to);
-
     try {
-      await this.deliver(account, phoneNumbers, content.message, fromNumber);
+      await this.deliver(account, recipients, content.message, fromNumber);
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.message || error;

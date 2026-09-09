@@ -31,7 +31,7 @@ Method: POST
   "provider": "twilio",
   "account": "<account name>",
   "body": {
-    "recipients": [{ "to": "<recipient phone number>" }],
+    "recipients": ["<recipient phone number>"],
     "content": {
       "body": "<sms content>"
     },
@@ -46,7 +46,7 @@ Method: POST
 
 ```bash
 kourou hermes:sendMessage -a provider=twilio -a account=<account name> --body '{
-  "recipients": [{ "to": "<recipient phone number>" }],
+  "recipients": ["<recipient phone number>"],
   "content": {
     "body": "<sms content>"
   },
@@ -63,11 +63,11 @@ kourou hermes:sendMessage -a provider=twilio -a account=<account name> --body '{
 
 ## Body properties
 
-- `recipients`: array of `{ "to": "<E.164 phone number>" }` objects (recipient type `phoneNumber`)
+- `recipients`: array of E.164 phone number strings (recipient type `phoneNumber`)
 - `content.body`: SMS text
 - `params.from`: sender override (optional)
 
-`params` is validated against the provider's `sendParamsJsonSchema`.
+`params` is validated against the provider's `messageAdditionalParamsSchema`.
 
 ---
 

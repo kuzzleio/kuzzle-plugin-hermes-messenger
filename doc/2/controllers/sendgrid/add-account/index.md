@@ -9,7 +9,7 @@ description: Add a Sendgrid account
 
 Adds a Sendgrid account. This account can then be used to send emails.
 
-The `params` object must match the provider's account JSON Schema (`paramsJsonSchema`), exposed by [`hermes:listProviders`](/official-plugins/hermes-messenger/2/controllers/hermes/list-providers).
+The `params` object must match the provider's account JSON Schema (`accountParamsSchema`), exposed by [`hermes:listProviders`](/official-plugins/hermes-messenger/2/controllers/hermes/list-providers).
 
 ---
 

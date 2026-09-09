@@ -21,7 +21,9 @@ import {
   emailRecipient,
   phoneRecipient,
   RecipientTypeDefinition,
+  RecipientTypeFilter,
   RecipientTypeRegistry,
+  uriRecipient,
 } from "./recipients";
 export class HermesMessengerPlugin extends Plugin {
   readonly defaultConfig: JSONObject;
@@ -54,22 +56,13 @@ export class HermesMessengerPlugin extends Plugin {
     this.providerManager = new ProviderManager();
 
     this.registerRecipientType(emailRecipient);
-
     this.registerRecipientType(phoneRecipient);
+    this.registerRecipientType(uriRecipient);
 
-    this.registerProvider("smtp", new SmtpProvider(this.recipientTypeRegistry));
-    this.registerProvider(
-      "twilio",
-      new TwilioProvider(this.recipientTypeRegistry),
-    );
-    this.registerProvider(
-      "sendgrid",
-      new SendgridProvider(this.recipientTypeRegistry),
-    );
-    this.registerProvider(
-      "smsenvoi",
-      new SMSEnvoiProvider(this.recipientTypeRegistry),
-    );
+    this.registerProvider("smtp", new SmtpProvider());
+    this.registerProvider("twilio", new TwilioProvider());
+    this.registerProvider("sendgrid", new SendgridProvider());
+    this.registerProvider("smsenvoi", new SMSEnvoiProvider());
 
     this.controller = new ProviderController(
       this.config,
@@ -110,6 +103,7 @@ export class HermesMessengerPlugin extends Plugin {
       }
     }
 
+    provider.bindRecipientTypes(this.recipientTypeRegistry);
     this.providerManager.set(name, provider);
   }
 
@@ -133,8 +127,8 @@ export class HermesMessengerPlugin extends Plugin {
     return this.recipientTypeRegistry.get(name);
   }
 
-  listRecipientTypes(): RecipientTypeDefinition[] {
-    return this.recipientTypeRegistry.list();
+  listRecipientTypes(filter?: RecipientTypeFilter): RecipientTypeDefinition[] {
+    return this.recipientTypeRegistry.list(filter);
   }
 
   private async initDatabase() {

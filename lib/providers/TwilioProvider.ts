@@ -3,7 +3,6 @@ import { JSONSchema7 } from "json-schema";
 import { Twilio } from "twilio";
 
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
 import { ProviderCapabilities } from "../types";
 
 export interface TwilioAccount extends BaseAccount<Twilio> {
@@ -19,8 +18,8 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     fileAttachment: false,
     json: false,
   };
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         account_sid: {
@@ -43,7 +42,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
       required: ["account_sid", "auth_token", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         body: {
@@ -55,7 +54,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
       required: ["body"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         from: { type: "string" },
@@ -65,10 +64,9 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     super(
       "twilio",
       ["phoneNumber"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
@@ -76,13 +74,13 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
    * Sends an SMS to each recipient using one of the registered Twilio accounts.
    *
    * @param accountName - Name of the registered account to use
-   * @param recipients - Array of recipient objects with `to` (phone number)
+   * @param recipients - Recipient phone numbers (E.164)
    * @param content - SMS content: `body`
    * @param params.from - Sender override; falls back to the account's `default_sender`
    */
   async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     { from }: { from?: string } = {},
   ) {
@@ -90,13 +88,13 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     const fromNumber = from || account.options.defaultSender;
 
     try {
-      for (const recipient of recipients) {
+      for (const to of recipients) {
         this.context.log.debug(
-          `SMS (${accountName}): FROM ${fromNumber} TO ${recipient.to}`,
+          `SMS (${accountName}): FROM ${fromNumber} TO ${to}`,
         );
         await this.deliver(account, {
           from: fromNumber,
-          to: recipient.to,
+          to,
           body: content.body,
         });
       }

@@ -4,6 +4,7 @@ import {
   JSONObject,
   PluginContext,
   ControllerDefinition,
+  BadRequestError,
 } from "kuzzle";
 import { RecipientTypeRegistry } from "../recipients";
 import { ProviderManager } from "../providers";
@@ -58,7 +59,7 @@ export class ProviderController {
         },
         listAccounts: {
           handler: this.listAccounts.bind(this),
-          http: [{ verb: "get", path: `hermes/providers/:provider/accounts` }],
+          http: [{ verb: "get", path: `hermes/accounts` }],
         },
         listProviders: {
           handler: this.listProviders.bind(this),
@@ -78,10 +79,13 @@ export class ProviderController {
 
     const recipients = request.getBodyArray("recipients");
     const content = request.getBodyObject("content");
-    const params = request.getBodyObject("params");
+    const params = request.getBodyObject("params", {});
 
     const provider = this.providerManager.get(providerName);
-    provider.validateSendParams(params);
+    provider.validateRecipients(recipients);
+    provider.validateMessageContent(content);
+    provider.validateMessageAdditionalParams(params);
+
     await provider.sendMessage(account, recipients, content, params);
   }
 
@@ -100,21 +104,71 @@ export class ProviderController {
   }
 
   async listAccounts(request: KuzzleRequest) {
-    const provider = request.getString("provider");
-
-    const accounts = this.providerManager.get(provider).listAccounts();
+    const accounts = this.providerManager.listAccounts({
+      provider: this.getOptionalString(request, "provider"),
+      audience: this.getOptionalAudiences(request),
+    });
 
     return { accounts };
   }
 
   async listProviders(request: KuzzleRequest) {
-    const filters = request.getBodyObject("filters", {});
-    const providers = this.providerManager.listProviders(filters);
+    const providers = this.providerManager.listProviders({
+      capabilities: request.getBodyObject("filters", {}),
+      audience: this.getOptionalAudiences(request),
+    });
 
     return providers.map((provider) => provider.serialize());
   }
 
-  async listRecipientTypes() {
-    return this.recipientTypeRegistry.list();
+  async listRecipientTypes(request: KuzzleRequest) {
+    return this.recipientTypeRegistry.list({
+      audience: this.getOptionalAudiences(request),
+    });
+  }
+
+  /**
+   * Read an optional string argument.
+   *
+   * Kuzzle treats an `undefined` default as "no default" and throws, so the
+   * presence of the argument has to be checked by hand.
+   */
+  private getOptionalString(
+    request: KuzzleRequest,
+    name: string,
+  ): string | undefined {
+    return request.input.args[name] === undefined
+      ? undefined
+      : request.getString(name);
+  }
+
+  /**
+   * Read the optional `audience` argument.
+   *
+   * Accepts a string (`"human"`), a comma separated list (`"human,technical"`,
+   * handy in HTTP query strings) or an array of strings.
+   */
+  private getOptionalAudiences(request: KuzzleRequest): string[] | undefined {
+    const value = request.input.args.audience;
+
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+
+    const audiences: unknown[] =
+      typeof value === "string" ? value.split(",") : value;
+
+    if (
+      !Array.isArray(audiences) ||
+      audiences.some((a) => typeof a !== "string")
+    ) {
+      throw new BadRequestError(
+        'Wrong type for argument "audience" (expected: string or array of strings)',
+      );
+    }
+
+    return (audiences as string[])
+      .map((a) => a.trim())
+      .filter((a) => a.length > 0);
   }
 }

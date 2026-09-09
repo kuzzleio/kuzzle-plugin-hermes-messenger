@@ -4,7 +4,6 @@ import { JSONSchema7 } from "json-schema";
 
 import { Attachment, ProviderCapabilities, SendgridAttachment } from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
 
 export interface SendgridAccount extends BaseAccount<MailService> {
   options: {
@@ -20,8 +19,8 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     json: false,
   };
 
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         api_key: {
@@ -41,7 +40,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       required: ["api_key", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         subject: {
@@ -57,17 +56,19 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       required: ["subject", "message"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         from: { type: "string" },
         cc: {
-          type: "string",
+          type: "array",
           title: "Cc",
+          items: { type: "string", format: "email" },
         },
         bcc: {
-          type: "string",
+          type: "array",
           title: "Bcc",
+          items: { type: "string", format: "email" },
         },
         attachments: {
           type: "array",
@@ -97,16 +98,15 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     super(
       "SendGrid",
       ["email"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
   async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     {
       from,
@@ -116,13 +116,13 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     }: {
       from?: string;
       attachments?: Attachment[];
-      cc?: string;
-      bcc?: string;
+      cc?: string[];
+      bcc?: string[];
     } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
     const fromEmail = from || account.options.defaultSender;
-    const to = recipients.map((r) => r.to);
+    const to = recipients;
 
     const email = {
       from: fromEmail,

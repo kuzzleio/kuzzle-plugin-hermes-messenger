@@ -20,31 +20,35 @@ export class TestProvider extends BaseProvider<TestAccount> {
     recipientTypeRegistry: RecipientTypeRegistry = new RecipientTypeRegistry(),
     acceptedRecipientTypes: string[] = ["testRecipient"],
   ) {
-    const paramsJsonSchema: JSONSchema7 = { type: "object" };
-    const contentJsonSchema: JSONSchema7 = { type: "object" };
-    const sendParamsJsonSchema: JSONSchema7 = { type: "object" };
+    const accountParamsSchema: JSONSchema7 = { type: "object" };
+    const messageContentSchema: JSONSchema7 = { type: "object" };
+    const messageAdditionalParamsSchema: JSONSchema7 = { type: "object" };
 
     if (!recipientTypeRegistry.has("testRecipient")) {
       recipientTypeRegistry.register({
         name: "testRecipient",
         description: "Test recipient type",
-        jsonSchema: { type: "object" },
+        audiences: ["human"],
+        jsonSchema: { type: "string" },
       });
     }
 
     super(
       "testProvider",
       acceptedRecipientTypes,
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
+
+    // The plugin does this in registerProvider(); the mock binds itself so
+    // that unit tests can exercise recipient validation directly.
+    this.bindRecipientTypes(recipientTypeRegistry);
   }
 
   async sendMessage(
     account: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
   ): Promise<any> {
     return { account, recipients, content };

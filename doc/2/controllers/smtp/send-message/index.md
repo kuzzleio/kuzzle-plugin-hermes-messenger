@@ -9,7 +9,7 @@ description: Send a message (email) with a SMTP account
 
 Sends an email using one of the registered SMTP accounts.
 
-The SMTP provider accepts the `email` recipient type: each entry of `recipients` is an object with a `to` email address.
+The SMTP provider accepts the `email` recipient type: each entry of `recipients` is an email address string. Carbon copies go in `params.cc` and `params.bcc`.
 
 ---
 
@@ -32,7 +32,7 @@ Method: POST
   "account": "<account name>",
   "body": {
     "recipients": [
-      { "to": "<recipient email>" }
+      "<recipient email>"
     ],
     "content": {
       "subject": "<email subject>",
@@ -40,8 +40,8 @@ Method: POST
     },
     "params": {
       "from": "<sender email>",  // optional — overrides account default_sender
-      "cc": "<cc email>",        // optional
-      "bcc": "<bcc email>",      // optional
+      "cc": ["<cc email>"],      // optional
+      "bcc": ["<bcc email>"],    // optional
       "attachments": [           // optional
         {
           "content": "<base64 encoded attachment content>",
@@ -60,7 +60,7 @@ Method: POST
 
 ```bash
 kourou hermes:sendMessage -a provider=smtp -a account=<account name> --body '{
-  "recipients": [{ "to": "<recipient email>" }],
+  "recipients": ["<recipient email>"],
   "content": {
     "subject": "<email subject>",
     "message": "<email body>"
@@ -78,14 +78,14 @@ kourou hermes:sendMessage -a provider=smtp -a account=<account name> --body '{
 
 ## Body properties
 
-- `recipients`: array of `{ "to": "<email>" }` objects (recipient type `email`)
+- `recipients`: array of email address strings (recipient type `email`)
 - `content.subject`: email subject
 - `content.message`: email body, sent as HTML
 - `params.from`: sender override (optional)
-- `params.cc`, `params.bcc`: carbon copy addresses (optional)
+- `params.cc`, `params.bcc`: arrays of carbon copy email addresses (optional)
 - `params.attachments`: base64-encoded attachments (optional)
 
-`params` is validated against the provider's `sendParamsJsonSchema`.
+`params` is validated against the provider's `messageAdditionalParamsSchema`.
 
 ---
 

@@ -31,7 +31,7 @@ Method: POST
   "provider": "smsenvoi",
   "account": "<account name>",
   "body": {
-    "recipients": [{ "to": "+33600000000" }],
+    "recipients": ["+33600000000"],
     "content": {
       "message": "<sms content>"
     },
@@ -46,7 +46,7 @@ Method: POST
 
 ```bash
 kourou hermes:sendMessage -a provider=smsenvoi -a account=<account name> --body '{
-  "recipients": [{ "to": "+33600000000" }],
+  "recipients": ["+33600000000"],
   "content": {
     "message": "<sms content>"
   },
@@ -63,11 +63,11 @@ kourou hermes:sendMessage -a provider=smsenvoi -a account=<account name> --body 
 
 ## Body properties
 
-- `recipients`: array of `{ "to": "<E.164 phone number>" }` objects (recipient type `phoneNumber`)
+- `recipients`: array of E.164 phone number strings (recipient type `phoneNumber`)
 - `content.message`: SMS text
 - `params.from`: sender override (optional)
 
-`params` is validated against the provider's `sendParamsJsonSchema`.
+`params` is validated against the provider's `messageAdditionalParamsSchema`.
 
 ---
 

@@ -5,10 +5,11 @@ This Kuzzle plugin gives the application the ability to send messages using vari
 Messages are sent through a single `hermes` API controller whose actions work the same way for every provider (e.g. [hermes:sendMessage](https://docs.kuzzle.io/official-plugins/hermes-messenger/2/controllers/smtp/send-message)).
 
 Built-in providers:
-  - SMTP (email) — route key `smtp`
-  - Sendgrid (email) — route key `sendgrid`
-  - Twilio (SMS) — route key `twilio`
-  - SMS Envoi (SMS) — route key `smsenvoi`
+
+- SMTP (email) — route key `smtp`
+- Sendgrid (email) — route key `sendgrid`
+- Twilio (SMS) — route key `twilio`
+- SMS Envoi (SMS) — route key `smsenvoi`
 
 For each provider, named accounts can be registered and then used to send messages.
 
@@ -23,10 +24,10 @@ Requires `kuzzle >= 2.50.0`.
 Then in your application you have to instantiate the plugin and register it:
 
 ```js
-import { HermesMessengerPlugin } from 'kuzzle-plugin-hermes-messenger';
-import { Backend } from 'kuzzle';
+import { HermesMessengerPlugin } from "kuzzle-plugin-hermes-messenger";
+import { Backend } from "kuzzle";
 
-const app = new Backend('my-app');
+const app = new Backend("my-app");
 
 const hermesMessengerPlugin = new HermesMessengerPlugin();
 
@@ -41,40 +42,47 @@ First you need to register an account for the provider you want to use. The `par
 
 ```js
 await sdk.query({
-  controller: 'hermes',
-  action: 'addAccount',
-  provider: 'twilio',
+  controller: "hermes",
+  action: "addAccount",
+  provider: "twilio",
   body: {
     params: {
-      account_sid: '<twilio account sid>',
-      auth_token: '<twilio auth token>',
-      default_sender: '+33600000000',
+      account_sid: "<twilio account sid>",
+      auth_token: "<twilio auth token>",
+      default_sender: "+33600000000",
     },
   },
 });
 ```
 
-Then you can use this account to send messages. The body always has three parts: `recipients` (entries matching one of the provider's recipient types), `content` (matching the provider's content schema) and optional `params`:
+Then you can use this account to send messages. The body always has three parts: `recipients` (an array of strings, each matching one of the provider's recipient types), `content` (matching the provider's content schema) and optional `params`:
 
 ```js
 await sdk.query({
-  controller: 'hermes',
-  action: 'sendMessage',
-  provider: 'twilio',
-  account: 'ilayda',
+  controller: "hermes",
+  action: "sendMessage",
+  provider: "twilio",
+  account: "ilayda",
   body: {
-    recipients: [{ to: '+33629951621' }],
-    content: { body: 'Merhaba!' },
-    params: { from: '+905312683835' }, // optional
+    recipients: ["+33629951621"],
+    content: { body: "Merhaba!" },
+    params: { from: "+905312683835" }, // optional
   },
 });
 ```
 
-Discover providers, their capabilities and schemas, and the registered recipient types:
+Discover providers, their capabilities and schemas, and the registered recipient types. Each recipient type declares its `audiences` (`human` for email and phone number, `technical` for the built-in `uri` type), and the three listing actions accept an optional `audience` argument:
 
 ```js
-await sdk.query({ controller: 'hermes', action: 'listProviders' });
-await sdk.query({ controller: 'hermes', action: 'listRecipientTypes' });
+await sdk.query({ controller: "hermes", action: "listProviders" });
+await sdk.query({ controller: "hermes", action: "listRecipientTypes" });
+
+// only the channels able to reach a person
+await sdk.query({
+  controller: "hermes",
+  action: "listAccounts",
+  audience: "human",
+});
 ```
 
 ## Custom providers & recipient types
@@ -85,10 +93,7 @@ Extend `BaseProvider<T>` to integrate any messaging service, and register it bef
 const hermesMessengerPlugin = new HermesMessengerPlugin();
 
 hermesMessengerPlugin.registerRecipientType(myRecipientType); // only if not built-in
-hermesMessengerPlugin.registerProvider(
-  'my-provider',
-  new MyProvider(hermesMessengerPlugin.recipientTypeRegistry),
-);
+hermesMessengerPlugin.registerProvider("my-provider", new MyProvider());
 
 app.plugin.use(hermesMessengerPlugin);
 ```
