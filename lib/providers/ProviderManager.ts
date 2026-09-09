@@ -63,7 +63,7 @@ export class ProviderManager {
    * List registered accounts.
    *
    * Each entry carries the route key of its provider so that the result can
-   * be used directly as the `provider` / `account` arguments of `sendMessage`,
+   * be used directly as the `provider` / `name` arguments of `sendMessage`,
    * plus the recipient types and audiences of its provider so that clients
    * can filter accounts without a second request.
    *

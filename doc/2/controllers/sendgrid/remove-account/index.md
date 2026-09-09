@@ -16,7 +16,7 @@ Delete a Sendgrid account.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:account
+URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:name
 Method: DELETE
 ```
 
@@ -27,14 +27,14 @@ Method: DELETE
   "controller": "hermes",
   "action": "removeAccount",
   "provider": "sendgrid",
-  "account": "<account name>"
+  "name": "<account name>"
 }
 ```
 
 ### Kourou
 
 ```bash
-kourou hermes:removeAccount -a provider=sendgrid -a account=<account name>
+kourou hermes:removeAccount -a provider=sendgrid -a name=<account name>
 ```
 
 ---

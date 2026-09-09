@@ -9,7 +9,7 @@ description: List the accounts registered on every provider
 
 Lists registered accounts with the recipient types and audiences of their provider. By default every account is returned, whatever its provider; the optional `provider` argument restricts the list to one provider, and the optional `audience` argument to the providers able to reach that kind of recipient (`human` or `technical`).
 
-Each entry carries the route key of the provider it belongs to, so the result can be used directly as the `provider` and `account` arguments of [`sendMessage`](/official-plugins/hermes-messenger/2/controllers/smtp/send-message) and [`removeAccount`](/official-plugins/hermes-messenger/2/controllers/smtp/remove-account).
+Each entry carries the route key of the provider it belongs to, so the result can be used directly as the `provider` and `name` arguments of [`sendMessage`](/official-plugins/hermes-messenger/2/controllers/smtp/send-message) and [`removeAccount`](/official-plugins/hermes-messenger/2/controllers/smtp/remove-account).
 
 ---
 

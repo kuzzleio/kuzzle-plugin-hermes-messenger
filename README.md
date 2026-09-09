@@ -45,6 +45,7 @@ await sdk.query({
   controller: "hermes",
   action: "addAccount",
   provider: "twilio",
+  name: "ilayda",
   body: {
     params: {
       account_sid: "<twilio account sid>",
@@ -62,7 +63,7 @@ await sdk.query({
   controller: "hermes",
   action: "sendMessage",
   provider: "twilio",
-  account: "ilayda",
+  name: "ilayda",
   body: {
     recipients: ["+33629951621"],
     content: { body: "Merhaba!" },

@@ -3,25 +3,40 @@ import { context, TestProvider } from "tests/mocks";
 import { ProviderController } from "lib/controllers";
 import { ProviderManager } from "lib/providers";
 import { RecipientTypeRegistry, uriRecipient } from "lib/recipients";
-import { describe, it, expect, beforeAll } from "vitest";
+import { BadRequestError } from "kuzzle";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 
 beforeAll(() => {
   defineReflectProperties();
 });
 
-/** Minimal stand-in for a KuzzleRequest carrying only arguments. */
-function fakeRequest(args: Record<string, unknown>) {
+/** Minimal stand-in for a KuzzleRequest carrying arguments and a body. */
+function fakeRequest(
+  args: Record<string, unknown>,
+  body: Record<string, unknown> = {},
+) {
   return {
-    input: { args, body: {} },
+    input: { args, body },
     getString(name: string) {
       const value = args[name];
       if (typeof value !== "string") {
-        throw new Error(`Wrong type for argument "${name}"`);
+        throw new BadRequestError(`Wrong type for argument "${name}"`);
       }
       return value;
     },
-    getBodyObject(_name: string, def: unknown) {
-      return def;
+    getBodyObject(name: string, def?: unknown) {
+      const value = body[name] ?? def;
+      if (typeof value !== "object" || value === null) {
+        throw new BadRequestError(`Wrong type for body argument "${name}"`);
+      }
+      return value;
+    },
+    getBodyArray(name: string) {
+      const value = body[name];
+      if (!Array.isArray(value)) {
+        throw new BadRequestError(`Wrong type for body argument "${name}"`);
+      }
+      return value;
     },
   } as any;
 }
@@ -102,5 +117,119 @@ describe("ProviderController – audience argument", () => {
         controller.listRecipientTypes(fakeRequest({ audience })),
       ).rejects.toThrowError('Wrong type for argument "audience"');
     }
+  });
+});
+
+describe("ProviderController – accounts", () => {
+  const strictSchema = {
+    type: "object" as const,
+    properties: { sender: { type: "string" as const } },
+    required: ["sender"],
+  };
+
+  function build() {
+    const registry = new RecipientTypeRegistry();
+    const manager = new ProviderManager();
+    const provider = new TestProvider(registry, undefined, strictSchema);
+    manager.set("test", provider);
+
+    return {
+      provider,
+      controller: new ProviderController({}, context, manager, registry),
+    };
+  }
+
+  it("addAccount registers the account named by `name` with `body.params`", async () => {
+    const { controller, provider } = build();
+
+    await controller.addAccount(
+      fakeRequest(
+        { provider: "test", name: "common" },
+        { params: { sender: "a@b.co" } },
+      ),
+    );
+
+    expect(provider.listAccounts()).toEqual(["common"]);
+    expect(provider.getAccount("common").params).toEqual({ sender: "a@b.co" });
+  });
+
+  it("addAccount requires the `name` argument and `body.params`", async () => {
+    const { controller, provider } = build();
+
+    await expect(
+      controller.addAccount(
+        fakeRequest({ provider: "test" }, { params: { sender: "a@b.co" } }),
+      ),
+    ).rejects.toThrowError('Wrong type for argument "name"');
+    await expect(
+      controller.addAccount(fakeRequest({ provider: "test", name: "x" })),
+    ).rejects.toThrowError('Wrong type for body argument "params"');
+
+    expect(provider.listAccounts()).toEqual([]);
+  });
+
+  it("addAccount propagates the params validation error", async () => {
+    const { controller, provider } = build();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await expect(
+      controller.addAccount(
+        fakeRequest({ provider: "test", name: "bad" }, { params: {} }),
+      ),
+    ).rejects.toThrowError("account parameters do not match");
+    expect(provider.listAccounts()).toEqual([]);
+
+    vi.restoreAllMocks();
+  });
+
+  it("addAccount fails on an unknown provider", async () => {
+    const { controller } = build();
+
+    await expect(
+      controller.addAccount(
+        fakeRequest({ provider: "nope", name: "x" }, { params: {} }),
+      ),
+    ).rejects.toThrowError("nope provider is not available");
+  });
+
+  it("removeAccount removes the account named by `name`", async () => {
+    const { controller, provider } = build();
+    provider.addAccount("common", { sender: "a@b.co" });
+
+    await controller.removeAccount(
+      fakeRequest({ provider: "test", name: "common" }),
+    );
+
+    expect(provider.listAccounts()).toEqual([]);
+  });
+
+  it("sendMessage validates the body then sends through the account named by `name`", async () => {
+    const { controller, provider } = build();
+    provider.addAccount("common", { sender: "a@b.co" });
+    const sendSpy = vi.spyOn(provider, "sendMessage");
+
+    await controller.sendMessage(
+      fakeRequest(
+        { provider: "test", name: "common" },
+        { recipients: ["anyone"], content: { text: "hi" } },
+      ),
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith(
+      "common",
+      ["anyone"],
+      { text: "hi" },
+      {},
+    );
+
+    await expect(
+      controller.sendMessage(
+        fakeRequest(
+          { provider: "test", name: "common" },
+          { recipients: [], content: { text: "hi" } },
+        ),
+      ),
+    ).rejects.toThrowError("non-empty array");
+    expect(sendSpy).toHaveBeenCalledOnce();
   });
 });

@@ -178,7 +178,7 @@ plugin.getProvider("my-provider").addAccount("default", {
 Or via the HTTP API:
 
 ```http
-POST /_/hermes/providers/my-provider/accounts?account=default
+PUT /_/hermes/providers/my-provider/accounts/default
 Content-Type: application/json
 
 {

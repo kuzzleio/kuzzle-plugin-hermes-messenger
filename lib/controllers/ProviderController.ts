@@ -40,20 +40,25 @@ export class ProviderController {
           http: [
             {
               verb: "post",
-              path: `hermes/providers/:provider/accounts/:account`,
+              path: `hermes/providers/:provider/accounts/:name`,
             },
           ],
         },
         addAccount: {
           handler: this.addAccount.bind(this),
-          http: [{ verb: "post", path: `hermes/providers/:provider/accounts` }],
+          http: [
+            {
+              verb: "put",
+              path: `hermes/providers/:provider/accounts/:name`,
+            },
+          ],
         },
         removeAccount: {
           handler: this.removeAccount.bind(this),
           http: [
             {
               verb: "delete",
-              path: `hermes/providers/:provider/accounts/:account`,
+              path: `hermes/providers/:provider/accounts/:name`,
             },
           ],
         },
@@ -73,9 +78,13 @@ export class ProviderController {
     };
   }
 
+  /**
+   * Send a message through an account. Arguments: `provider` (route key) and
+   * `name` (account name). Body: `recipients`, `content`, optional `params`.
+   */
   async sendMessage(request: KuzzleRequest): Promise<void> {
-    const account = request.getString("account");
     const providerName = request.getString("provider");
+    const name = request.getString("name");
 
     const recipients = request.getBodyArray("recipients");
     const content = request.getBodyObject("content");
@@ -86,21 +95,28 @@ export class ProviderController {
     provider.validateMessageContent(content);
     provider.validateMessageAdditionalParams(params);
 
-    await provider.sendMessage(account, recipients, content, params);
+    await provider.sendMessage(name, recipients, content, params);
   }
 
+  /**
+   * Register an account. Arguments: `provider` (route key) and `name` (the
+   * name to register the account under). Body: `params`, validated against the
+   * provider's `accountParamsSchema` by `BaseProvider.addAccount()`.
+   */
   async addAccount(request: KuzzleRequest): Promise<void> {
     const provider = request.getString("provider");
-    const params = request.getObject("params");
+    const name = request.getString("name");
+    const params = request.getBodyObject("params");
 
-    this.providerManager.get(provider).addAccount(provider, params);
+    this.providerManager.get(provider).addAccount(name, params);
   }
 
-  async removeAccount(request: KuzzleRequest) {
+  /** Remove an account. Arguments: `provider` (route key) and `name`. */
+  async removeAccount(request: KuzzleRequest): Promise<void> {
     const provider = request.getString("provider");
-    const account = request.getString("account");
+    const name = request.getString("name");
 
-    this.providerManager.get(provider).removeAccount(account);
+    this.providerManager.get(provider).removeAccount(name);
   }
 
   async listAccounts(request: KuzzleRequest) {

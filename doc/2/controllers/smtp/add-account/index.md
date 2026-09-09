@@ -16,9 +16,8 @@ Adds a SMTP account. This account can then be used to send emails.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts
-Method: POST
-Query: account=<account name>
+URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:name
+Method: PUT
 ```
 
 ### Other protocols
@@ -28,7 +27,7 @@ Query: account=<account name>
   "controller": "hermes",
   "action": "addAccount",
   "provider": "smtp",
-  "account": "<account name>",
+  "name": "<account name>",
   "body": {
     "params": {
       "host_name": "<SMTP host>",
@@ -44,7 +43,7 @@ Query: account=<account name>
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=smtp -a account=<account name> --body '{
+kourou hermes:addAccount -a provider=smtp -a name=<account name> --body '{
   "params": {
     "host_name": "<SMTP host>",
     "port": 587,
@@ -60,7 +59,7 @@ kourou hermes:addAccount -a provider=smtp -a account=<account name> --body '{
 ## Arguments
 
 - `provider`: provider key, `smtp`
-- `account`: name to register the account under (query string over HTTP)
+- `name`: name to register the account under, unique within the provider
 
 ## Body properties
 

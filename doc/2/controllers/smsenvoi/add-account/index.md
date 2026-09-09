@@ -18,9 +18,8 @@ The `params` object must match the provider's account JSON Schema (`accountParam
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts
-Method: POST
-Query: account=<account name>
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:name
+Method: PUT
 ```
 
 ### Other protocols
@@ -30,7 +29,7 @@ Query: account=<account name>
   "controller": "hermes",
   "action": "addAccount",
   "provider": "smsenvoi",
-  "account": "<account name>",
+  "name": "<account name>",
   "body": {
     "params": {
       "user_key": "<SMS Envoi user key>",
@@ -44,7 +43,7 @@ Query: account=<account name>
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=smsenvoi -a account=<account name> --body '{
+kourou hermes:addAccount -a provider=smsenvoi -a name=<account name> --body '{
   "params": {
     "user_key": "<SMS Envoi user key>",
     "access_token": "<SMS Envoi access token>",
@@ -58,7 +57,7 @@ kourou hermes:addAccount -a provider=smsenvoi -a account=<account name> --body '
 ## Arguments
 
 - `provider`: provider key, `smsenvoi`
-- `account`: name to register the account under (query string over HTTP)
+- `name`: name to register the account under, unique within the provider
 
 ## Body properties
 

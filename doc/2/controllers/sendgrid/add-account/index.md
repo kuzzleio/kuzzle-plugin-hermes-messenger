@@ -18,9 +18,8 @@ The `params` object must match the provider's account JSON Schema (`accountParam
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts
-Method: POST
-Query: account=<account name>
+URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:name
+Method: PUT
 ```
 
 ### Other protocols
@@ -30,7 +29,7 @@ Query: account=<account name>
   "controller": "hermes",
   "action": "addAccount",
   "provider": "sendgrid",
-  "account": "<account name>",
+  "name": "<account name>",
   "body": {
     "params": {
       "api_key": "<sendgrid api key>",
@@ -43,7 +42,7 @@ Query: account=<account name>
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=sendgrid -a account=<account name> --body '{
+kourou hermes:addAccount -a provider=sendgrid -a name=<account name> --body '{
   "params": {
     "api_key": "<sendgrid api key>",
     "default_sender": "<default sender email>"
@@ -56,7 +55,7 @@ kourou hermes:addAccount -a provider=sendgrid -a account=<account name> --body '
 ## Arguments
 
 - `provider`: provider key, `sendgrid`
-- `account`: name to register the account under (query string over HTTP)
+- `name`: name to register the account under, unique within the provider
 
 ## Body properties
 
