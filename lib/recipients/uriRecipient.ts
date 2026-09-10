@@ -18,6 +18,7 @@ export const uriRecipient: RecipientTypeDefinition = {
   jsonSchema: {
     type: "string",
     title: "URI",
+    description: "e.g. https://example.com/hooks/alerts or mqtt://broker/topic",
     format: "uri",
   },
 };

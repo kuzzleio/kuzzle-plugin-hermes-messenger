@@ -27,6 +27,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
         },
         access_token: {
           type: "string",
+          format: "password",
           title: "Access Token",
         },
         default_sender: {

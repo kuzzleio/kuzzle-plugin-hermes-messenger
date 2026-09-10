@@ -10,6 +10,7 @@ export const emailRecipient: RecipientTypeDefinition = {
   jsonSchema: {
     type: "string",
     title: "Email",
+    description: "e.g. jane.doe@example.com",
     format: "email",
   },
 };

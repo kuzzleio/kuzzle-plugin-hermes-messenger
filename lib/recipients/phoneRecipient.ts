@@ -10,6 +10,7 @@ export const phoneRecipient: RecipientTypeDefinition = {
   jsonSchema: {
     type: "string",
     title: "Phone Number",
+    description: "International format, e.g. +33612345678",
     pattern: String.raw`^\+[1-9]\d{1,14}$`,
   },
 };
