@@ -21,19 +21,21 @@ export class ProviderManager {
     }
   }
 
-  set(providerName: string, providerInstance: BaseProvider<any>) {
-    this.providers.set(providerName, providerInstance);
+  /** Register a provider under its identifier (route key). */
+  set(providerId: string, providerInstance: BaseProvider<any>) {
+    providerInstance.setProviderId(providerId);
+    this.providers.set(providerId, providerInstance);
   }
 
   has(providerName: string): boolean {
     return this.providers.has(providerName);
   }
 
-  get(providerName: string): BaseProvider<any> {
-    const provider = this.providers.get(providerName);
+  get(providerId: string): BaseProvider<any> {
+    const provider = this.providers.get(providerId);
     if (!provider) {
       throw new NotFoundError(
-        `${providerName} provider is not available yet. Are you trying to access it before the application has started ?`,
+        `${providerId} provider is not available yet. Are you trying to access it before the application has started ?`,
       );
     }
 
@@ -70,13 +72,13 @@ export class ProviderManager {
   /**
    * List registered accounts.
    *
-   * Each entry carries the route key of its provider so that the result can
-   * be used directly as the `provider` / `name` arguments of `sendMessage`,
+   * Each entry carries the id of its provider so that the result can be used
+   * directly as the `providerId` / `accountId` arguments of `sendMessage`,
    * plus the recipient types, audiences and capabilities of its provider so
    * that clients can filter accounts without a second request.
    *
-   * @param filters.provider When given, only the accounts of this provider are
-   *   returned. Throws if the provider is not registered.
+   * @param filters.providerId When given, only the accounts of this provider
+   *   are returned. Throws if the provider is not registered.
    * @param filters.capability When given, only the accounts of providers
    *   having every given capability are returned.
    * @param filters.audience When given, only the accounts of providers
@@ -84,17 +86,13 @@ export class ProviderManager {
    *   these audiences) are returned.
    */
   listAccounts(filters: AccountFilters = {}): SerializedAccount[] {
-    const {
-      provider: providerName,
-      capability,
-      ...recipientTypeFilter
-    } = filters;
+    const { providerId, capability, ...recipientTypeFilter } = filters;
     const capabilities = toList(capability);
 
     const providers: Array<[string, BaseProvider<any>]> =
-      providerName === undefined
+      providerId === undefined
         ? Array.from(this.providers.entries())
-        : [[providerName, this.get(providerName)]];
+        : [[providerId, this.get(providerId)]];
 
     const accounts: SerializedAccount[] = [];
 
@@ -110,10 +108,11 @@ export class ProviderManager {
       const audiences = provider.getAudiences();
       const providerCapabilities = provider.capabilities;
 
-      for (const accountName of provider.listAccounts()) {
+      for (const accountId of provider.listAccounts()) {
         accounts.push({
-          name: accountName,
-          provider: name,
+          accountId,
+          displayName: provider.getAccount(accountId).displayName ?? accountId,
+          providerId: name,
           acceptedRecipientTypes,
           capabilities: providerCapabilities,
           audiences,

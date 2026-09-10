@@ -18,7 +18,7 @@ The `params` object must match the provider's account JSON Schema (`accountParam
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:accountId
 Method: PUT
 ```
 
@@ -28,9 +28,10 @@ Method: PUT
 {
   "controller": "hermes",
   "action": "addAccount",
-  "provider": "sendgrid",
-  "name": "<account name>",
+  "providerId": "sendgrid",
+  "accountId": "<account id>",
   "body": {
+    "displayName": "<label>",   // optional
     "params": {
       "api_key": "<sendgrid api key>",
       "default_sender": "<default sender email>"
@@ -42,7 +43,7 @@ Method: PUT
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=sendgrid -a name=<account name> --body '{
+kourou hermes:addAccount -a providerId=sendgrid -a accountId=<account id> --body '{
   "params": {
     "api_key": "<sendgrid api key>",
     "default_sender": "<default sender email>"
@@ -54,11 +55,12 @@ kourou hermes:addAccount -a provider=sendgrid -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `sendgrid`
-- `name`: name to register the account under, unique within the provider
+- `providerId`: provider identifier, `sendgrid`
+- `accountId`: identifier to register the account under, unique within the provider
 
 ## Body properties
 
+- `displayName` (optional): label for user interfaces; defaults to `accountId`
 - `params.api_key`: Sendgrid API key
 - `params.default_sender`: email address used as sender when `params.from` is not provided on `sendMessage`
 

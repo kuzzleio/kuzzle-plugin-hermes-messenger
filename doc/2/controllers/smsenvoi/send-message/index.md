@@ -18,7 +18,7 @@ The SMS Envoi provider accepts the `phoneNumber` recipient type: each entry of `
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:accountId
 Method: POST
 ```
 
@@ -28,8 +28,8 @@ Method: POST
 {
   "controller": "hermes",
   "action": "sendMessage",
-  "provider": "smsenvoi",
-  "name": "<account name>",
+  "providerId": "smsenvoi",
+  "accountId": "<account id>",
   "body": {
     "recipients": ["+33600000000"],
     "content": {
@@ -45,7 +45,7 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes:sendMessage -a provider=smsenvoi -a name=<account name> --body '{
+kourou hermes:sendMessage -a providerId=smsenvoi -a accountId=<account id> --body '{
   "recipients": ["+33600000000"],
   "content": {
     "message": "<sms content>"
@@ -58,8 +58,8 @@ kourou hermes:sendMessage -a provider=smsenvoi -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `smsenvoi`
-- `name`: name of a registered SMS Envoi account
+- `providerId`: provider identifier, `smsenvoi`
+- `accountId`: identifier of a registered SMS Envoi account
 
 ## Body properties
 

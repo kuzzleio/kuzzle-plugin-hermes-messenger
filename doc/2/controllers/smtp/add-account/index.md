@@ -16,7 +16,7 @@ Adds a SMTP account. This account can then be used to send emails.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:accountId
 Method: PUT
 ```
 
@@ -26,9 +26,10 @@ Method: PUT
 {
   "controller": "hermes",
   "action": "addAccount",
-  "provider": "smtp",
-  "name": "<account name>",
+  "providerId": "smtp",
+  "accountId": "<account id>",
   "body": {
+    "displayName": "<label>",   // optional
     "params": {
       "host_name": "<SMTP host>",
       "port": 587,
@@ -43,7 +44,7 @@ Method: PUT
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=smtp -a name=<account name> --body '{
+kourou hermes:addAccount -a providerId=smtp -a accountId=<account id> --body '{
   "params": {
     "host_name": "<SMTP host>",
     "port": 587,
@@ -58,11 +59,12 @@ kourou hermes:addAccount -a provider=smtp -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `smtp`
-- `name`: name to register the account under, unique within the provider
+- `providerId`: provider identifier, `smtp`
+- `accountId`: identifier to register the account under, unique within the provider
 
 ## Body properties
 
+- `displayName` (optional): label for user interfaces; defaults to `accountId`
 - `params.host_name`: SMTP server host
 - `params.port`: SMTP port (465 enables TLS)
 - `params.user`, `params.password`: SMTP credentials

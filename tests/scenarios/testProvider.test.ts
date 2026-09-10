@@ -21,9 +21,11 @@ describe("TestProvider", () => {
     expect(addAccountSpy).toHaveBeenCalledWith("myaccount", {
       option: "myoptions",
     });
-    expect(nodeAddAccountSpy).toHaveBeenCalledWith("myaccount", {
-      option: "myoptions",
-    });
+    expect(nodeAddAccountSpy).toHaveBeenCalledWith(
+      "myaccount",
+      { option: "myoptions" },
+      undefined,
+    );
     expect(createAccountSpy).toHaveBeenCalledWith("myaccount", {
       option: "myoptions",
     });
@@ -72,7 +74,8 @@ describe("TestProvider", () => {
     const account = testProvider.getAccount("myaccount");
 
     expect(getAccountSpy).toHaveBeenCalledWith("myaccount");
-    expect(account.name).toBe("myaccount");
+    expect(account.accountId).toBe("myaccount");
+    expect(account.displayName).toBe("myaccount");
     expect(account.params).toEqual({ option: "myoptions" });
 
     getAccountSpy.mockRestore();
@@ -144,16 +147,25 @@ describe("TestProvider", () => {
     validateContentSpy.mockRestore();
   });
 
-  it("Get name", async () => {
+  it("Get display name and provider id", () => {
     const testProvider = new TestProvider();
 
-    const getNameSpy = vi.spyOn(testProvider, "getName");
+    expect(testProvider.getDisplayName()).toBe("testProvider");
+    expect(() => testProvider.getProviderId()).toThrowError(
+      "not registered on the plugin yet",
+    );
 
-    testProvider.getName();
+    testProvider.setProviderId("test");
+    expect(testProvider.getProviderId()).toBe("test");
+    expect(testProvider.getDisplayName()).toBe("testProvider");
+  });
 
-    expect(getNameSpy).toHaveBeenCalledWith();
+  it("Register an account with a display name", () => {
+    const testProvider = new TestProvider();
 
-    getNameSpy.mockRestore();
+    testProvider.addAccount("acc", {}, "My account");
+
+    expect(testProvider.getAccount("acc").displayName).toBe("My account");
   });
 
   it("Get account params schema", async () => {
@@ -197,9 +209,11 @@ describe("TestProvider", () => {
 
     testProvider.addAccount("myaccount", { option: "myoptions" });
 
-    expect(nodeAddAccountSpy).toHaveBeenCalledWith("myaccount", {
-      option: "myoptions",
-    });
+    expect(nodeAddAccountSpy).toHaveBeenCalledWith(
+      "myaccount",
+      { option: "myoptions" },
+      undefined,
+    );
 
     testProvider.removeAccount("myaccount");
     expect(nodeRemoveAccountSpy).toHaveBeenCalledWith("myaccount");

@@ -47,8 +47,11 @@ export class TestProvider extends BaseProvider<TestAccount> {
     return { account, recipients, content };
   }
 
-  _createAccount(name: string, params: Record<string, any> = {}): TestAccount {
-    return { name, provider: null, params };
+  _createAccount(
+    accountId: string,
+    params: Record<string, any> = {},
+  ): TestAccount {
+    return { accountId, provider: null, params };
   }
 }
 

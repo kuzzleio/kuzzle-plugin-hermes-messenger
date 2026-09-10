@@ -18,7 +18,7 @@ The Twilio provider accepts the `phoneNumber` recipient type: each entry of `rec
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:accountId
 Method: POST
 ```
 
@@ -28,8 +28,8 @@ Method: POST
 {
   "controller": "hermes",
   "action": "sendMessage",
-  "provider": "twilio",
-  "name": "<account name>",
+  "providerId": "twilio",
+  "accountId": "<account id>",
   "body": {
     "recipients": ["<recipient phone number>"],
     "content": {
@@ -45,7 +45,7 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes:sendMessage -a provider=twilio -a name=<account name> --body '{
+kourou hermes:sendMessage -a providerId=twilio -a accountId=<account id> --body '{
   "recipients": ["<recipient phone number>"],
   "content": {
     "body": "<sms content>"
@@ -58,8 +58,8 @@ kourou hermes:sendMessage -a provider=twilio -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `twilio`
-- `name`: name of a registered Twilio account
+- `providerId`: provider identifier, `twilio`
+- `accountId`: identifier of a registered Twilio account
 
 ## Body properties
 

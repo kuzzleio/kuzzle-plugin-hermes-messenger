@@ -18,7 +18,7 @@ The `params` object must match the provider's account JSON Schema (`accountParam
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:accountId
 Method: PUT
 ```
 
@@ -28,9 +28,10 @@ Method: PUT
 {
   "controller": "hermes",
   "action": "addAccount",
-  "provider": "smsenvoi",
-  "name": "<account name>",
+  "providerId": "smsenvoi",
+  "accountId": "<account id>",
   "body": {
+    "displayName": "<label>",   // optional
     "params": {
       "user_key": "<SMS Envoi user key>",
       "access_token": "<SMS Envoi access token>",
@@ -43,7 +44,7 @@ Method: PUT
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=smsenvoi -a name=<account name> --body '{
+kourou hermes:addAccount -a providerId=smsenvoi -a accountId=<account id> --body '{
   "params": {
     "user_key": "<SMS Envoi user key>",
     "access_token": "<SMS Envoi access token>",
@@ -56,11 +57,12 @@ kourou hermes:addAccount -a provider=smsenvoi -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `smsenvoi`
-- `name`: name to register the account under, unique within the provider
+- `providerId`: provider identifier, `smsenvoi`
+- `accountId`: identifier to register the account under, unique within the provider
 
 ## Body properties
 
+- `displayName` (optional): label for user interfaces; defaults to `accountId`
 - `params.user_key`: SMS Envoi user key
 - `params.access_token`: SMS Envoi access token
 - `params.default_sender`: sender used when `params.from` is not provided on `sendMessage`

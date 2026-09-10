@@ -40,7 +40,7 @@ export class ProviderController {
           http: [
             {
               verb: "post",
-              path: `hermes/providers/:provider/accounts/:name`,
+              path: `hermes/providers/:providerId/accounts/:accountId`,
             },
           ],
         },
@@ -49,7 +49,7 @@ export class ProviderController {
           http: [
             {
               verb: "put",
-              path: `hermes/providers/:provider/accounts/:name`,
+              path: `hermes/providers/:providerId/accounts/:accountId`,
             },
           ],
         },
@@ -58,7 +58,7 @@ export class ProviderController {
           http: [
             {
               verb: "delete",
-              path: `hermes/providers/:provider/accounts/:name`,
+              path: `hermes/providers/:providerId/accounts/:accountId`,
             },
           ],
         },
@@ -79,49 +79,56 @@ export class ProviderController {
   }
 
   /**
-   * Send a message through an account. Arguments: `provider` (route key) and
-   * `name` (account name). Body: `recipients`, `content`, optional `params`.
+   * Send a message through an account. Arguments: `providerId` and
+   * `accountId`. Body: `recipients`, `content`, optional `params`.
    */
   async sendMessage(request: KuzzleRequest): Promise<void> {
-    const providerName = request.getString("provider");
-    const name = request.getString("name");
+    const providerId = request.getString("providerId");
+    const accountId = request.getString("accountId");
 
     const recipients = request.getBodyArray("recipients");
     const content = request.getBodyObject("content");
     const params = request.getBodyObject("params", {});
 
-    const provider = this.providerManager.get(providerName);
+    const provider = this.providerManager.get(providerId);
     provider.validateRecipients(recipients);
     provider.validateMessageContent(content);
     provider.validateMessageAdditionalParams(params);
 
-    await provider.sendMessage(name, recipients, content, params);
+    await provider.sendMessage(accountId, recipients, content, params);
   }
 
   /**
-   * Register an account. Arguments: `provider` (route key) and `name` (the
-   * name to register the account under). Body: `params`, validated against the
-   * provider's `accountParamsSchema` by `BaseProvider.addAccount()`.
+   * Register an account. Arguments: `providerId` and `accountId` (the
+   * identifier to register the account under). Body: `params`, validated
+   * against the provider's `accountParamsSchema` by `BaseProvider.addAccount()`,
+   * and an optional `displayName`.
    */
   async addAccount(request: KuzzleRequest): Promise<void> {
-    const provider = request.getString("provider");
-    const name = request.getString("name");
+    const providerId = request.getString("providerId");
+    const accountId = request.getString("accountId");
     const params = request.getBodyObject("params");
+    const displayName =
+      request.input.body?.displayName === undefined
+        ? undefined
+        : request.getBodyString("displayName");
 
-    this.providerManager.get(provider).addAccount(name, params);
+    this.providerManager
+      .get(providerId)
+      .addAccount(accountId, params, displayName);
   }
 
-  /** Remove an account. Arguments: `provider` (route key) and `name`. */
+  /** Remove an account. Arguments: `providerId` and `accountId`. */
   async removeAccount(request: KuzzleRequest): Promise<void> {
-    const provider = request.getString("provider");
-    const name = request.getString("name");
+    const providerId = request.getString("providerId");
+    const accountId = request.getString("accountId");
 
-    this.providerManager.get(provider).removeAccount(name);
+    this.providerManager.get(providerId).removeAccount(accountId);
   }
 
   async listAccounts(request: KuzzleRequest) {
     const accounts = this.providerManager.listAccounts({
-      provider: this.getOptionalString(request, "provider"),
+      providerId: this.getOptionalString(request, "providerId"),
       capability: this.getOptionalStringList(request, "capability"),
       audience: this.getOptionalStringList(request, "audience"),
     });

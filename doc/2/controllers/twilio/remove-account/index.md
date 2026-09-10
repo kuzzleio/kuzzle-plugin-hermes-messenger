@@ -16,7 +16,7 @@ Delete a Twilio account.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:accountId
 Method: DELETE
 ```
 
@@ -26,15 +26,15 @@ Method: DELETE
 {
   "controller": "hermes",
   "action": "removeAccount",
-  "provider": "twilio",
-  "name": "<account name>"
+  "providerId": "twilio",
+  "accountId": "<account id>"
 }
 ```
 
 ### Kourou
 
 ```bash
-kourou hermes:removeAccount -a provider=twilio -a name=<account name>
+kourou hermes:removeAccount -a providerId=twilio -a accountId=<account id>
 ```
 
 ---

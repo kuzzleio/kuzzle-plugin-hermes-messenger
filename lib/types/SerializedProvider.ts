@@ -2,7 +2,10 @@ import { JSONSchema7 } from "json-schema";
 import { ProviderCapabilities } from "./ProviderCapabilities";
 
 export interface SerializedProvider {
-  name: string;
+  /** Identifier used in routes and arguments (`providerId`), e.g. `smtp`, `sendgrid` */
+  providerId: string;
+  /** Label for user interfaces, e.g. `SendGrid` */
+  displayName: string;
   capabilities: ProviderCapabilities;
   /** Names of the accepted recipient types, see `hermes:listRecipientTypes` */
   acceptedRecipientTypes: string[];

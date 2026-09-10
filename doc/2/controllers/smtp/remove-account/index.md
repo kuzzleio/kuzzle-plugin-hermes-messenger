@@ -16,7 +16,7 @@ Delete a SMTP account.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:accountId
 Method: DELETE
 ```
 
@@ -26,15 +26,15 @@ Method: DELETE
 {
   "controller": "hermes",
   "action": "removeAccount",
-  "provider": "smtp",
-  "name": "<account name>"
+  "providerId": "smtp",
+  "accountId": "<account id>"
 }
 ```
 
 ### Kourou
 
 ```bash
-kourou hermes:removeAccount -a provider=smtp -a name=<account name>
+kourou hermes:removeAccount -a providerId=smtp -a accountId=<account id>
 ```
 
 ---

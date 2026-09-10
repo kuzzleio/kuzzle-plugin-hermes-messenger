@@ -87,10 +87,10 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
   }
 
   protected _createAccount(
-    name: string,
+    accountId: string,
     params: SMSEnvoiAccountParams,
   ): SMSEnvoiAccount {
-    return { name, provider: null, params };
+    return { accountId, provider: null, params };
   }
 
   private async deliver(
@@ -101,12 +101,12 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
   ): Promise<void> {
     const { user_key, access_token: Access_token } = account.params;
 
-    if (await this.mockedAccount(account.name)) {
+    if (await this.mockedAccount(account.accountId)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex,
         "messages",
         message,
-        { account: account.name },
+        { account: account.accountId },
       );
       return;
     }

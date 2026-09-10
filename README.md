@@ -6,10 +6,10 @@ Messages are sent through a single `hermes` API controller whose actions work th
 
 Built-in providers:
 
-- SMTP (email) — route key `smtp`
-- Sendgrid (email) — route key `sendgrid`
-- Twilio (SMS) — route key `twilio`
-- SMS Envoi (SMS) — route key `smsenvoi`
+- SMTP (email) — `providerId` `smtp`
+- SendGrid (email) — `providerId` `sendgrid`
+- Twilio (SMS) — `providerId` `twilio`
+- SMS Envoi (SMS) — `providerId` `smsenvoi`
 
 For each provider, named accounts can be registered and then used to send messages.
 
@@ -44,8 +44,8 @@ First you need to register an account for the provider you want to use. The `par
 await sdk.query({
   controller: "hermes",
   action: "addAccount",
-  provider: "twilio",
-  name: "ilayda",
+  providerId: "twilio",
+  accountId: "ilayda",
   body: {
     params: {
       account_sid: "<twilio account sid>",
@@ -62,8 +62,8 @@ Then you can use this account to send messages. The body always has three parts:
 await sdk.query({
   controller: "hermes",
   action: "sendMessage",
-  provider: "twilio",
-  name: "ilayda",
+  providerId: "twilio",
+  accountId: "ilayda",
   body: {
     recipients: ["+33629951621"],
     content: { body: "Merhaba!" },

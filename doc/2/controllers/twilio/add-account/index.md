@@ -16,7 +16,7 @@ Adds a Twilio account. This account can then be used to send SMS.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:accountId
 Method: PUT
 ```
 
@@ -26,9 +26,10 @@ Method: PUT
 {
   "controller": "hermes",
   "action": "addAccount",
-  "provider": "twilio",
-  "name": "<account name>",
+  "providerId": "twilio",
+  "accountId": "<account id>",
   "body": {
+    "displayName": "<label>",   // optional
     "params": {
       "account_sid": "<twilio account sid>",
       "auth_token": "<twilio auth token>",
@@ -41,7 +42,7 @@ Method: PUT
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=twilio -a name=<account name> --body '{
+kourou hermes:addAccount -a providerId=twilio -a accountId=<account id> --body '{
   "params": {
     "account_sid": "<twilio account sid>",
     "auth_token": "<twilio auth token>",
@@ -54,11 +55,12 @@ kourou hermes:addAccount -a provider=twilio -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `twilio`
-- `name`: name to register the account under, unique within the provider
+- `providerId`: provider identifier, `twilio`
+- `accountId`: identifier to register the account under, unique within the provider
 
 ## Body properties
 
+- `displayName` (optional): label for user interfaces; defaults to `accountId`
 - `params.account_sid`: Twilio account SID
 - `params.auth_token`: Twilio auth token
 - `params.default_sender`: phone number used as sender when `params.from` is not provided on `sendMessage`

@@ -94,25 +94,30 @@ export class HermesMessengerPlugin extends Plugin {
     await this.initConfig();
   }
 
-  registerProvider(name: string, provider: BaseProvider<any>) {
+  /**
+   * Register a provider under `providerId`, the identifier used in routes and
+   * arguments (`smtp`, `sendgrid`, `my-provider`...). The provider's display
+   * name, given to the `BaseProvider` constructor, is only a label.
+   */
+  registerProvider(providerId: string, provider: BaseProvider<any>) {
     for (const recipientTypeName of provider.getAcceptedRecipientTypes()) {
       if (!this.recipientTypeRegistry.has(recipientTypeName)) {
         throw new BadRequestError(
-          `Provider "${name}" references unknown recipient type "${recipientTypeName}" — register it via registerRecipientType() before registering this provider.`,
+          `Provider "${providerId}" references unknown recipient type "${recipientTypeName}" — register it via registerRecipientType() before registering this provider.`,
         );
       }
     }
 
     provider.bindRecipientTypes(this.recipientTypeRegistry);
-    this.providerManager.set(name, provider);
+    this.providerManager.set(providerId, provider);
   }
 
-  hasProvider(name: string): boolean {
-    return this.providerManager.has(name);
+  hasProvider(providerId: string): boolean {
+    return this.providerManager.has(providerId);
   }
 
-  getProvider(name: string) {
-    return this.providerManager.get(name);
+  getProvider(providerId: string) {
+    return this.providerManager.get(providerId);
   }
 
   registerRecipientType(definition: RecipientTypeDefinition): void {

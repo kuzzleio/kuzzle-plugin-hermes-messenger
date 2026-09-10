@@ -18,7 +18,7 @@ The SMTP provider accepts the `email` recipient type: each entry of `recipients`
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:accountId
 Method: POST
 ```
 
@@ -28,8 +28,8 @@ Method: POST
 {
   "controller": "hermes",
   "action": "sendMessage",
-  "provider": "smtp",
-  "name": "<account name>",
+  "providerId": "smtp",
+  "accountId": "<account id>",
   "body": {
     "recipients": [
       "<recipient email>"
@@ -60,7 +60,7 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes:sendMessage -a provider=smtp -a name=<account name> --body '{
+kourou hermes:sendMessage -a providerId=smtp -a accountId=<account id> --body '{
   "recipients": ["<recipient email>"],
   "content": {
     "subject": "<email subject>",
@@ -74,8 +74,8 @@ kourou hermes:sendMessage -a provider=smtp -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `smtp`
-- `name`: name of a registered SMTP account
+- `providerId`: provider identifier, `smtp`
+- `accountId`: identifier of a registered SMTP account
 
 ## Body properties
 

@@ -177,25 +177,25 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
   }
 
   protected _createAccount(
-    name: string,
+    accountId: string,
     params: SendgridAccountParams,
   ): SendgridAccount {
     const mailService = new MailService();
     mailService.setApiKey(params.api_key);
 
-    return { name, provider: mailService, params };
+    return { accountId, provider: mailService, params };
   }
 
   private async deliver(
     account: SendgridAccount,
     email: object,
   ): Promise<void> {
-    if (await this.mockedAccount(account.name)) {
+    if (await this.mockedAccount(account.accountId)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex,
         "messages",
         (email as any).subject,
-        { account: account.name, ...email },
+        { account: account.accountId, ...email },
       );
     } else {
       await account.provider.sendMultiple(email as any);

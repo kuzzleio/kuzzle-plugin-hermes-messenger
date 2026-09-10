@@ -18,14 +18,14 @@ Version 2 is a breaking release. The per-provider controllers of version 1 (`her
 
 | v1                                                                                 | v2                                                                                                                                                         |
 | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hermes/twilio:sendSms` — `POST /_/hermes/twilio/sms`                              | `hermes:sendMessage` with `provider=twilio` — `POST /_/hermes/providers/twilio/accounts/:name`                                                          |
-| `hermes/smsenvoi:sendSms`                                                          | `hermes:sendMessage` with `provider=smsenvoi`                                                                                                              |
-| `hermes/sendgrid:sendEmail` — `POST /_/hermes/sendgrid/email`                      | `hermes:sendMessage` with `provider=sendgrid`                                                                                                              |
+| `hermes/twilio:sendSms` — `POST /_/hermes/twilio/sms`                              | `hermes:sendMessage` with `providerId=twilio` — `POST /_/hermes/providers/twilio/accounts/:accountId`                                                          |
+| `hermes/smsenvoi:sendSms`                                                          | `hermes:sendMessage` with `providerId=smsenvoi`                                                                                                              |
+| `hermes/sendgrid:sendEmail` — `POST /_/hermes/sendgrid/email`                      | `hermes:sendMessage` with `providerId=sendgrid`                                                                                                              |
 | `hermes/sendgrid:sendTemplatedEmail`                                               | **Removed**, see below                                                                                                                                     |
-| `hermes/smtp:sendEmail`                                                            | `hermes:sendMessage` with `provider=smtp`                                                                                                                  |
-| `hermes/<provider>:addAccount` — `POST /_/hermes/<provider>/accounts`              | `hermes:addAccount` — `PUT /_/hermes/providers/:provider/accounts/:name`                                                                                        |
-| `hermes/<provider>:removeAccount` — `DELETE /_/hermes/<provider>/account/:account` | `hermes:removeAccount` — `DELETE /_/hermes/providers/:provider/accounts/:name`                                                                          |
-| `hermes/<provider>:listAccounts` — `GET /_/hermes/<provider>/accounts`             | `hermes:listAccounts` — `GET /_/hermes/accounts`; lists the accounts of **every** provider unless `provider` is given, each entry carries a `provider` key |
+| `hermes/smtp:sendEmail`                                                            | `hermes:sendMessage` with `providerId=smtp`                                                                                                                  |
+| `hermes/<provider>:addAccount` — `POST /_/hermes/<provider>/accounts`              | `hermes:addAccount` — `PUT /_/hermes/providers/:providerId/accounts/:accountId`                                                                                        |
+| `hermes/<provider>:removeAccount` — `DELETE /_/hermes/<provider>/account/:account` | `hermes:removeAccount` — `DELETE /_/hermes/providers/:providerId/accounts/:accountId`                                                                          |
+| `hermes/<provider>:listAccounts` — `GET /_/hermes/<provider>/accounts`             | `hermes:listAccounts` — `GET /_/hermes/accounts`; lists the accounts of **every** provider unless `providerId` is given, each entry carries a `providerId` |
 | —                                                                                  | `hermes:listProviders` — `GET /_/hermes/providers` (new)                                                                                                   |
 | —                                                                                  | `hermes:listRecipientTypes` — `GET /_/hermes/recipient-types` (new)                                                                                        |
 
@@ -33,7 +33,7 @@ Rights: replace `hermes/twilio`, `hermes/sendgrid`, ... controller rights with r
 
 ## `addAccount` body
 
-In v1 the account name was passed as the `account` argument and credentials were top-level body properties in camelCase. In v2 the account name is passed as the `name` argument (in the URL path over HTTP, for `addAccount`, `removeAccount` and `sendMessage` alike), and credentials move under `body.params`, in snake_case, matching the provider's `accountParamsSchema` (exposed by `hermes:listProviders`).
+In v1 the account name was passed as the `account` argument and credentials were top-level body properties in camelCase. In v2 the account identifier is passed as the `accountId` argument (in the URL path over HTTP, for `addAccount`, `removeAccount` and `sendMessage` alike), an optional `displayName` may be given in the body, and credentials move under `body.params`, in snake_case, matching the provider's `accountParamsSchema` (exposed by `hermes:listProviders`).
 
 | Provider  | v1 body                                         | v2 `body.params`                                          |
 | --------- | ----------------------------------------------- | --------------------------------------------------------- |
@@ -59,8 +59,8 @@ After:
 {
   "controller": "hermes",
   "action": "addAccount",
-  "provider": "twilio",
-  "name": "common",
+  "providerId": "twilio",
+  "accountId": "common",
   "body": {
     "params": { "account_sid": "AC...", "auth_token": "...", "default_sender": "+33600000000" }
   }
@@ -104,8 +104,8 @@ After:
 {
   "controller": "hermes",
   "action": "sendMessage",
-  "provider": "sendgrid",
-  "name": "common",
+  "providerId": "sendgrid",
+  "accountId": "common",
   "body": {
     "recipients": ["a@example.com", "b@example.com"],
     "content": { "subject": "Hello", "message": "<p>Hi</p>" },
@@ -120,11 +120,11 @@ After:
 - **Mocked accounts** (`mockedAccounts` in the plugin configuration and the `messages` collection): removed from the plugin configuration mapping.
 - **Custom provider constructors** no longer receive the `RecipientTypeRegistry`: `super(name, acceptedRecipientTypes, accountParamsSchema, messageContentSchema, messageAdditionalParamsSchema)`. The plugin injects its registry when `registerProvider()` is called, so custom recipient types must be registered before that call.
 - **Capabilities** are an array of strings (`text`, `html`, `json`, `file`, or custom values) instead of the `fileAttachment` / `longMessage` / `shortMessage` / `json` booleans, and `listProviders` filters them with the `capability` argument instead of `body.filters`.
-- **Account name argument**: `name` replaces `account` on `addAccount`, `removeAccount` and `sendMessage`; over HTTP it is part of the path (`/_/hermes/providers/:provider/accounts/:name`) and `addAccount` is a `PUT`.
+- **Identifiers and display names**: providers and accounts carry an identifier used in routes and arguments (`providerId`, `accountId`) and a `displayName` for user interfaces. `providerId` is the first argument of `registerProvider()`, `displayName` the string passed to the `BaseProvider` constructor. Actions take `providerId` and `accountId` (v1 `account`) and over HTTP the path is `/_/hermes/providers/:providerId/accounts/:accountId`; `addAccount` is a `PUT` and accepts an optional `body.displayName`. `listProviders` and `listAccounts` return both fields.
 - **`addAccount()` validates** `params` against `accountParamsSchema` and refuses invalid accounts with a `MultipleErrorsError`; in v1 nothing was validated and a misconfigured account failed at the first send.
 - **Accounts** keep the `params` they were created with instead of a public `options` object: `BaseAccount<TClient, TParams>` is `{ name, provider, params }`, providers read `account.params.default_sender` at send time, `BaseProvider.listAccounts()` returns account names and `hermes:listAccounts` never returns account parameters.
 - **Schema naming**: the serialized provider fields are `accountParamsSchema`, `messageContentSchema` and `messageAdditionalParamsSchema`, and the `BaseProvider` API follows the same names: `getAccountParamsSchema()`, `getMessageContentSchema()`, `getMessageAdditionalParamsSchema()`, `validateAccountParams()`, `validateMessageContent()`, `validateMessageAdditionalParams()`.
-- **`plugin.clients.<provider>`** (`clients.twilio`, `clients.sendgrid`, ...): replaced by `plugin.getProvider('<route key>')`, which returns the `BaseProvider` instance (`addAccount`, `removeAccount`, `listAccounts`, `sendMessage`).
+- **`plugin.clients.<provider>`** (`clients.twilio`, `clients.sendgrid`, ...): replaced by `plugin.getProvider('<providerId>')`, which returns the `BaseProvider` instance (`addAccount`, `removeAccount`, `listAccounts`, `sendMessage`).
 - Programmatic `addAccount(name, host, port, user, ...)` positional signatures: replaced by `addAccount(name, params)` where `params` matches the provider's `accountParamsSchema`.
 
 ## New features worth adopting

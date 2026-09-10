@@ -7,10 +7,12 @@
  * audiences it can address and the capabilities of its provider.
  */
 export interface SerializedAccount {
-  /** Account name, unique within its provider */
-  name: string;
-  /** Route key of the provider owning the account (e.g. `smtp`, `twilio`) */
-  provider: string;
+  /** Account identifier, unique within its provider; used in routes and arguments */
+  accountId: string;
+  /** Label for user interfaces; defaults to `accountId` */
+  displayName: string;
+  /** Identifier of the provider owning the account (e.g. `smtp`, `twilio`) */
+  providerId: string;
   /** Names of the recipient types accepted by the provider, see `hermes:listRecipientTypes` */
   acceptedRecipientTypes: string[];
   /** Capabilities of the provider (`text`, `html`, `json`, `file`, ...), see `hermes:listProviders` */

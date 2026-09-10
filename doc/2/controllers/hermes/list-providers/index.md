@@ -74,7 +74,8 @@ Returns an array of serialized providers.
   "action": "listProviders",
   "result": [
     {
-      "name": "smtp",
+      "providerId": "smtp",
+      "displayName": "SMTP",
       "capabilities": ["text", "html", "file"],
       "acceptedRecipientTypes": ["email"],
       "audiences": ["human"],
@@ -114,7 +115,8 @@ Returns an array of serialized providers.
 
 Each entry contains:
 
-- `name`: display name of the provider
+- `providerId`: identifier of the provider, the first argument of `registerProvider()`; the value to pass in the `providerId` argument of every account action
+- `displayName`: label for user interfaces (`SMTP`, `SendGrid`, `SMS Envoi`...), never used in routes
 - `capabilities`: what the provider can carry in a message. Well-known values, exported as `PROVIDER_CAPABILITY_*` constants:
   - `text`: short plain text (SMS-like)
   - `html`: long or rich HTML content (email-like)
@@ -127,7 +129,3 @@ Each entry contains:
 - `accountParamsSchema`: JSON Schema of `body.params` for `addAccount`
 - `messageContentSchema`: JSON Schema of `body.content` for `sendMessage`
 - `messageAdditionalParamsSchema`: JSON Schema of `body.params` for `sendMessage`. The built-in providers declare `additionalProperties: false`: an unknown param is rejected instead of being silently ignored
-
-::: warning
-`name` is the provider's display name and may differ from the key used in routes. The built-in Sendgrid and SMS Envoi providers are registered under the route keys `sendgrid` and `smsenvoi`, but their `name` is `"SendGrid"` and `"SMS Envoi"`. Always use the route key in the `provider` argument of `addAccount`, `sendMessage` and `removeAccount`; it is also the value of the `provider` field returned by `listAccounts`.
-:::

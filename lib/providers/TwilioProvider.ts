@@ -61,7 +61,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     };
 
     super(
-      "twilio",
+      "Twilio",
       ["phoneNumber"],
       accountParamsSchema,
       messageContentSchema,
@@ -106,11 +106,11 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
   }
 
   protected _createAccount(
-    name: string,
+    accountId: string,
     params: TwilioAccountParams,
   ): TwilioAccount {
     return {
-      name,
+      accountId,
       provider: new Twilio(params.account_sid, params.auth_token),
       params,
     };
@@ -120,12 +120,12 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     account: TwilioAccount,
     sms: { from: string; to: string; body: string },
   ) {
-    if (await this.mockedAccount(account.name)) {
+    if (await this.mockedAccount(account.accountId)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex,
         "messages",
         sms.body,
-        { account: account.name, ...sms },
+        { account: account.accountId, ...sms },
       );
     } else {
       await account.provider.messages.create(sms);

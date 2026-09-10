@@ -16,7 +16,7 @@ Delete a SMS Envoi account.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:accountId
 Method: DELETE
 ```
 
@@ -26,15 +26,15 @@ Method: DELETE
 {
   "controller": "hermes",
   "action": "removeAccount",
-  "provider": "smsenvoi",
-  "name": "<account name>"
+  "providerId": "smsenvoi",
+  "accountId": "<account id>"
 }
 ```
 
 ### Kourou
 
 ```bash
-kourou hermes:removeAccount -a provider=smsenvoi -a name=<account name>
+kourou hermes:removeAccount -a providerId=smsenvoi -a accountId=<account id>
 ```
 
 ---

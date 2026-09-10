@@ -21,8 +21,8 @@ export interface ProviderFilters extends RecipientTypeFilter {
  * An account matches `audience` and `capability` when its provider does.
  */
 export interface AccountFilters extends RecipientTypeFilter {
-  /** Route key of the provider owning the accounts. */
-  provider?: string;
+  /** Identifier of the provider owning the accounts. */
+  providerId?: string;
   /** Capability, or capabilities, the owning provider must have. */
   capability?: string | string[];
 }

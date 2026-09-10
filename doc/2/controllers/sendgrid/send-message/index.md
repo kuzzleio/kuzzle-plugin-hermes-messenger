@@ -18,7 +18,7 @@ The Sendgrid provider accepts the `email` recipient type: each entry of `recipie
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:name
+URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:accountId
 Method: POST
 ```
 
@@ -28,8 +28,8 @@ Method: POST
 {
   "controller": "hermes",
   "action": "sendMessage",
-  "provider": "sendgrid",
-  "name": "<account name>",
+  "providerId": "sendgrid",
+  "accountId": "<account id>",
   "body": {
     "recipients": [
       "<recipient1 email>",
@@ -61,7 +61,7 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes:sendMessage -a provider=sendgrid -a name=<account name> --body '{
+kourou hermes:sendMessage -a providerId=sendgrid -a accountId=<account id> --body '{
   "recipients": ["<recipient1 email>", "<recipient2 email>"],
   "content": {
     "subject": "<email subject>",
@@ -75,8 +75,8 @@ kourou hermes:sendMessage -a provider=sendgrid -a name=<account name> --body '{
 
 ## Arguments
 
-- `provider`: provider key, `sendgrid`
-- `name`: name of a registered Sendgrid account
+- `providerId`: provider identifier, `sendgrid`
+- `accountId`: identifier of a registered Sendgrid account
 
 ## Body properties
 

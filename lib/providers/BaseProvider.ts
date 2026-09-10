@@ -30,8 +30,11 @@ import { ProviderCapabilities, SerializedProvider } from "../types";
  *   matching the provider's `accountParamsSchema`
  */
 export interface BaseAccount<TClient, TParams = Record<string, unknown>> {
-  /** Account name, unique within the provider */
-  name: string;
+  /** Account identifier, unique within the provider; used in routes and arguments */
+  accountId: string;
+
+  /** Label for user interfaces; defaults to `accountId`. Set by `BaseProvider`. */
+  displayName?: string;
 
   /** Live client used to deliver messages */
   provider: TClient;
@@ -44,11 +47,18 @@ export interface BaseAccount<TClient, TParams = Record<string, unknown>> {
   params: TParams;
 }
 
-export abstract class BaseProvider<T> {
+export abstract class BaseProvider<T extends BaseAccount<unknown, any>> {
   protected config: JSONObject;
   protected context: PluginContext;
 
-  protected name: string;
+  /** Label for user interfaces, given by the provider implementation. */
+  protected displayName: string;
+
+  /**
+   * Identifier used in routes and arguments, given by `registerProvider()` /
+   * `ProviderManager.set()`. Undefined until then.
+   */
+  private providerId?: string;
 
   protected accounts = new Map<string, T>();
 
@@ -90,13 +100,13 @@ export abstract class BaseProvider<T> {
   }
 
   constructor(
-    name: string,
+    displayName: string,
     acceptedRecipientTypes: string[],
     accountParamsSchema: JSONSchema7,
     messageContentSchema: JSONSchema7,
     messageAdditionalParamsSchema: JSONSchema7 = {},
   ) {
-    this.name = name;
+    this.displayName = displayName;
     this.acceptedRecipientTypes = acceptedRecipientTypes;
     this.accountParamsSchema = accountParamsSchema;
     this.messageContentSchema = messageContentSchema;
@@ -109,8 +119,27 @@ export abstract class BaseProvider<T> {
     this.messageAdditionalParamsValidator = this.ajv.compile(
       this.messageAdditionalParamsSchema,
     );
-    this.EVENT_ACCOUNT_ADD = `${this.name}:account:add`;
-    this.EVENT_ACCOUNT_REMOVE = `${this.name}:account:remove`;
+    this.setEventNames(displayName);
+  }
+
+  /**
+   * Bind the provider to its identifier. Called by `ProviderManager.set()`
+   * (hence by `HermesMessengerPlugin.registerProvider()`); custom providers do
+   * not need to call it themselves.
+   */
+  setProviderId(providerId: string): void {
+    this.providerId = providerId;
+    this.setEventNames(providerId);
+  }
+
+  private setEventNames(prefix: string): void {
+    this.EVENT_ACCOUNT_ADD = `${prefix}:account:add`;
+    this.EVENT_ACCOUNT_REMOVE = `${prefix}:account:remove`;
+  }
+
+  /** Prefix of every log and error message: the provider id once registered. */
+  private get label(): string {
+    return Inflector.upFirst(this.providerId ?? this.displayName);
   }
 
   /**
@@ -141,31 +170,48 @@ export abstract class BaseProvider<T> {
     this.config = config;
     this.context = context;
 
-    this.cluster.on(this.EVENT_ACCOUNT_ADD, async ({ name, params }) => {
-      try {
-        this.nodeAddAccount(name, params);
-      } catch (error) {
-        this.context.log.error(
-          `${Inflector.upFirst(this.name)}: Cannot sync (add) account "${name}"`,
-        );
-      }
-    });
+    this.cluster.on(
+      this.EVENT_ACCOUNT_ADD,
+      async ({ accountId, params, displayName }) => {
+        try {
+          this.nodeAddAccount(accountId, params, displayName);
+        } catch (error) {
+          this.context.log.error(
+            `${this.label}: Cannot sync (add) account "${accountId}"`,
+          );
+        }
+      },
+    );
 
-    this.cluster.on(this.EVENT_ACCOUNT_REMOVE, async ({ name }) => {
+    this.cluster.on(this.EVENT_ACCOUNT_REMOVE, async ({ accountId }) => {
       try {
-        this.nodeRemoveAccount(name);
+        this.nodeRemoveAccount(accountId);
       } catch (error) {
         this.context.log.error(
-          `${Inflector.upFirst(
-            this.name,
-          )}: Cannot sync (remove) account "${name}"`,
+          `${this.label}: Cannot sync (remove) account "${accountId}"`,
         );
       }
     });
   }
 
-  getName(): string {
-    return this.name;
+  /**
+   * Identifier of the provider, as used in routes and arguments.
+   *
+   * @throws InternalError before the provider is registered on the plugin
+   */
+  getProviderId(): string {
+    if (this.providerId === undefined) {
+      throw new InternalError(
+        `${this.label} is not registered on the plugin yet: its provider id is only available once registerProvider() has been called.`,
+      );
+    }
+
+    return this.providerId;
+  }
+
+  /** Label of the provider for user interfaces. */
+  getDisplayName(): string {
+    return this.displayName;
   }
 
   /** JSON Schema of the `params` passed to `addAccount`. */
@@ -242,7 +288,8 @@ export abstract class BaseProvider<T> {
 
   serialize(): SerializedProvider {
     return {
-      name: this.name,
+      providerId: this.getProviderId(),
+      displayName: this.displayName,
       capabilities: this.capabilities,
       acceptedRecipientTypes: this.acceptedRecipientTypes,
       audiences: this.getAudiences(),
@@ -261,10 +308,11 @@ export abstract class BaseProvider<T> {
 
   /**
    * Build the in-memory account from the `addAccount` parameters: create the
-   * live client and return `{ name, provider, params }`.
+   * live client and return `{ accountId, provider, params }` (`displayName` is
+   * set by `BaseProvider`).
    */
   protected abstract _createAccount(
-    name: string,
+    accountId: string,
     params: Record<string, unknown>,
   ): T;
 
@@ -275,19 +323,24 @@ export abstract class BaseProvider<T> {
    * account is created on this node and synchronized to the other cluster
    * nodes (which do not validate again).
    *
-   * @param name Account name
+   * @param accountId Account identifier, unique within the provider
    * @param params Parameters matching `accountParamsSchema` (credentials,
    *   default sender...), kept on the account
-   * @throws BadRequestError if an account with this name already exists, or if
+   * @param displayName Optional label for user interfaces (defaults to the id)
+   * @throws BadRequestError if an account with this id already exists, or if
    *   the provider could not create the account from these parameters
    * @throws MultipleErrorsError listing every parameter violating the schema
    */
-  addAccount(name: string, params: Record<string, unknown>) {
-    const label = `${Inflector.upFirst(this.name)}: account "${name}"`;
+  addAccount(
+    accountId: string,
+    params: Record<string, unknown>,
+    displayName?: string,
+  ) {
+    const label = `${this.label}: account "${accountId}"`;
 
-    if (this.accounts.has(name)) {
+    if (this.accounts.has(accountId)) {
       throw new BadRequestError(
-        `${Inflector.upFirst(this.name)} account "${name}" already exists.`,
+        `${this.label} account "${accountId}" already exists.`,
       );
     }
 
@@ -305,7 +358,7 @@ export abstract class BaseProvider<T> {
     }
 
     try {
-      this.nodeAddAccount(name, params);
+      this.nodeAddAccount(accountId, params, displayName);
     } catch (error) {
       this.logError(
         `${label} could not be created: ${(error as Error).message}`,
@@ -322,12 +375,10 @@ export abstract class BaseProvider<T> {
 
     if (global.app.started) {
       this.cluster
-        .broadcast(this.EVENT_ACCOUNT_ADD, { name, params })
+        .broadcast(this.EVENT_ACCOUNT_ADD, { accountId, params, displayName })
         .catch((error) => {
           this.context.log.error(
-            `${Inflector.upFirst(
-              this.name,
-            )}: Cannot send sync message to add account "${name}": ${error}`,
+            `${this.label}: Cannot send sync message to add account "${accountId}": ${error}`,
           );
         });
     }
@@ -354,7 +405,7 @@ export abstract class BaseProvider<T> {
           ),
       );
       throw new MultipleErrorsError(
-        `${Inflector.upFirst(this.name)}: account parameters do not match the provider's accountParamsSchema (${errors.length} error(s))`,
+        `${this.label}: account parameters do not match the provider's accountParamsSchema (${errors.length} error(s))`,
         errors,
       );
     }
@@ -378,7 +429,7 @@ export abstract class BaseProvider<T> {
       recipients.some((r) => typeof r !== "string" || r.length === 0)
     ) {
       throw new BadRequestError(
-        `${Inflector.upFirst(this.name)}: "recipients" must be a non-empty array of non-empty strings.`,
+        `${this.label}: "recipients" must be a non-empty array of non-empty strings.`,
       );
     }
 
@@ -405,7 +456,7 @@ export abstract class BaseProvider<T> {
 
     if (errors.length > 0) {
       throw new MultipleErrorsError(
-        `${Inflector.upFirst(this.name)}: ${errors.length} invalid recipient(s)`,
+        `${this.label}: ${errors.length} invalid recipient(s)`,
         errors,
       );
     }
@@ -416,7 +467,7 @@ export abstract class BaseProvider<T> {
   private getRecipientTypeRegistry(): RecipientTypeRegistry {
     if (!this.recipientTypeRegistry) {
       throw new InternalError(
-        `${Inflector.upFirst(this.name)} is not registered on the plugin yet: recipient types are only available once registerProvider() has been called.`,
+        `${this.label} is not registered on the plugin yet: recipient types are only available once registerProvider() has been called.`,
       );
     }
 
@@ -475,51 +526,56 @@ export abstract class BaseProvider<T> {
     }
   }
 
-  nodeAddAccount(name: string, params: Record<string, unknown>) {
-    this.logInfo(`${Inflector.upFirst(this.name)}: register account "${name}"`);
+  nodeAddAccount(
+    accountId: string,
+    params: Record<string, unknown>,
+    displayName?: string,
+  ) {
+    this.logInfo(`${this.label}: register account "${accountId}"`);
 
-    this.accounts.set(name, this._createAccount(name, params));
+    const account = this._createAccount(accountId, params);
+    account.displayName = displayName ?? accountId;
+
+    this.accounts.set(accountId, account);
   }
 
-  removeAccount(name: string) {
-    if (!this.accounts.has(name)) {
+  removeAccount(accountId: string) {
+    if (!this.accounts.has(accountId)) {
       throw new NotFoundError(
-        `${Inflector.upFirst(this.name)} account "${name}" does not exists.`,
+        `${this.label} account "${accountId}" does not exists.`,
       );
     }
 
-    this.nodeRemoveAccount(name);
+    this.nodeRemoveAccount(accountId);
 
     if (global.app.started) {
       this.cluster
-        .broadcast(this.EVENT_ACCOUNT_REMOVE, { name })
+        .broadcast(this.EVENT_ACCOUNT_REMOVE, { accountId })
         .catch((error) => {
           this.context.log.error(
-            `${Inflector.upFirst(
-              this.name,
-            )}: Cannot send sync message to add account "${name}": ${error}`,
+            `${this.label}: Cannot send sync message to remove account "${accountId}": ${error}`,
           );
         });
     }
   }
 
-  nodeRemoveAccount(name: string) {
-    this.logInfo(`${Inflector.upFirst(this.name)}: remove account "${name}"`);
+  nodeRemoveAccount(accountId: string) {
+    this.logInfo(`${this.label}: remove account "${accountId}"`);
 
-    this.accounts.delete(name);
+    this.accounts.delete(accountId);
   }
 
-  /** Names of the registered accounts. */
+  /** Identifiers of the registered accounts. */
   listAccounts(): string[] {
     return Array.from(this.accounts.keys());
   }
 
-  getAccount(accountName: string): T {
-    if (!this.accounts.has(accountName)) {
-      throw new NotFoundError(`Account "${accountName}" does not exists.`);
+  getAccount(accountId: string): T {
+    if (!this.accounts.has(accountId)) {
+      throw new NotFoundError(`Account "${accountId}" does not exists.`);
     }
 
-    return this.accounts.get(accountName) as T;
+    return this.accounts.get(accountId) as T;
   }
 
   private logInfo(message: string) {

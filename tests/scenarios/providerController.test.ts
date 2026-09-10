@@ -31,6 +31,13 @@ function fakeRequest(
       }
       return value;
     },
+    getBodyString(name: string) {
+      const value = body[name];
+      if (typeof value !== "string") {
+        throw new BadRequestError(`Wrong type for body argument "${name}"`);
+      }
+      return value;
+    },
     getBodyArray(name: string) {
       const value = body[name];
       if (!Array.isArray(value)) {
@@ -171,30 +178,46 @@ describe("ProviderController – accounts", () => {
     };
   }
 
-  it("addAccount registers the account named by `name` with `body.params`", async () => {
+  it("addAccount registers the account identified by `accountId` with `body.params`", async () => {
     const { controller, provider } = build();
 
     await controller.addAccount(
       fakeRequest(
-        { provider: "test", name: "common" },
+        { providerId: "test", accountId: "common" },
         { params: { sender: "a@b.co" } },
       ),
     );
 
     expect(provider.listAccounts()).toEqual(["common"]);
     expect(provider.getAccount("common").params).toEqual({ sender: "a@b.co" });
+    expect(provider.getAccount("common").displayName).toBe("common");
   });
 
-  it("addAccount requires the `name` argument and `body.params`", async () => {
+  it("addAccount accepts an optional body.displayName", async () => {
+    const { controller, provider } = build();
+
+    await controller.addAccount(
+      fakeRequest(
+        { providerId: "test", accountId: "common" },
+        { params: { sender: "a@b.co" }, displayName: "Common mailbox" },
+      ),
+    );
+
+    expect(provider.getAccount("common").displayName).toBe("Common mailbox");
+  });
+
+  it("addAccount requires the `accountId` argument and `body.params`", async () => {
     const { controller, provider } = build();
 
     await expect(
       controller.addAccount(
-        fakeRequest({ provider: "test" }, { params: { sender: "a@b.co" } }),
+        fakeRequest({ providerId: "test" }, { params: { sender: "a@b.co" } }),
       ),
-    ).rejects.toThrowError('Wrong type for argument "name"');
+    ).rejects.toThrowError('Wrong type for argument "accountId"');
     await expect(
-      controller.addAccount(fakeRequest({ provider: "test", name: "x" })),
+      controller.addAccount(
+        fakeRequest({ providerId: "test", accountId: "x" }),
+      ),
     ).rejects.toThrowError('Wrong type for body argument "params"');
 
     expect(provider.listAccounts()).toEqual([]);
@@ -206,7 +229,7 @@ describe("ProviderController – accounts", () => {
 
     await expect(
       controller.addAccount(
-        fakeRequest({ provider: "test", name: "bad" }, { params: {} }),
+        fakeRequest({ providerId: "test", accountId: "bad" }, { params: {} }),
       ),
     ).rejects.toThrowError("account parameters do not match");
     expect(provider.listAccounts()).toEqual([]);
@@ -219,30 +242,30 @@ describe("ProviderController – accounts", () => {
 
     await expect(
       controller.addAccount(
-        fakeRequest({ provider: "nope", name: "x" }, { params: {} }),
+        fakeRequest({ providerId: "nope", accountId: "x" }, { params: {} }),
       ),
     ).rejects.toThrowError("nope provider is not available");
   });
 
-  it("removeAccount removes the account named by `name`", async () => {
+  it("removeAccount removes the account identified by `accountId`", async () => {
     const { controller, provider } = build();
     provider.addAccount("common", { sender: "a@b.co" });
 
     await controller.removeAccount(
-      fakeRequest({ provider: "test", name: "common" }),
+      fakeRequest({ providerId: "test", accountId: "common" }),
     );
 
     expect(provider.listAccounts()).toEqual([]);
   });
 
-  it("sendMessage validates the body then sends through the account named by `name`", async () => {
+  it("sendMessage validates the body then sends through the account identified by `accountId`", async () => {
     const { controller, provider } = build();
     provider.addAccount("common", { sender: "a@b.co" });
     const sendSpy = vi.spyOn(provider, "sendMessage");
 
     await controller.sendMessage(
       fakeRequest(
-        { provider: "test", name: "common" },
+        { providerId: "test", accountId: "common" },
         { recipients: ["anyone"], content: { text: "hi" } },
       ),
     );
@@ -257,7 +280,7 @@ describe("ProviderController – accounts", () => {
     await expect(
       controller.sendMessage(
         fakeRequest(
-          { provider: "test", name: "common" },
+          { providerId: "test", accountId: "common" },
           { recipients: [], content: { text: "hi" } },
         ),
       ),

@@ -16,7 +16,7 @@ Recipients are always **plain strings**: an email address, a phone number, a top
 
 ## 1. Define the account type
 
-An account is what is stored in memory for each registered account: its `name`, the live client in `provider`, and the `params` it was created with (the `body.params` of `addAccount`, matching `accountParamsSchema`). `params` typically hold credentials and a default sender; they are read by the provider at send time and are **never** exposed by `listAccounts`, which only returns account names.
+An account is what is stored in memory for each registered account: its `accountId`, an optional `displayName` set by `BaseProvider`, the live client in `provider`, and the `params` it was created with (the `body.params` of `addAccount`, matching `accountParamsSchema`). `params` typically hold credentials and a default sender; they are read by the provider at send time and are **never** exposed by `listAccounts`, which only returns account names.
 
 ```typescript
 import { BaseAccount } from "kuzzle-plugin-hermes-messenger";
@@ -74,7 +74,7 @@ export class MyProvider extends BaseProvider<MyAccount> {
     };
 
     super(
-      "my-provider", // display name, returned by listProviders
+      "My Provider",          // displayName, a label returned by listProviders; the id is given to registerProvider()
       ["phoneNumber"], // acceptedRecipientTypes — must be registered on the plugin before registerProvider(), see below
       accountParamsSchema,
       messageContentSchema,
@@ -86,9 +86,9 @@ export class MyProvider extends BaseProvider<MyAccount> {
    * Called by addAccount() — create the live SDK client and keep the params
    * on the account. `params` is the raw object received by addAccount.
    */
-  protected _createAccount(name: string, params: MyAccountParams): MyAccount {
+  protected _createAccount(accountId: string, params: MyAccountParams): MyAccount {
     return {
-      name,
+      accountId,
       provider: new MyClient(params.apiKey),
       params,
     };
@@ -143,7 +143,7 @@ async sendMessage(accountName, recipients, content, params = {}) {
 
 `acceptedRecipientTypes` must already be known to the registry when the provider is registered — `registerProvider()` throws a `BadRequestError` otherwise. Built-in types (`email`, `phoneNumber`, `uri`) are registered by the plugin itself; register any custom type first (see below).
 
-The first argument of `registerProvider()` is the **route key** used in the `provider` argument of every API action. It may differ from the display name passed to the `BaseProvider` constructor.
+The first argument of `registerProvider()` is the **`providerId`**: the identifier used in routes and in the `providerId` argument of every account action, returned as such by `listProviders` and `listAccounts`. The string passed to the `BaseProvider` constructor is only the `displayName`, a label for user interfaces.
 
 ```typescript
 import { HermesMessengerPlugin } from "kuzzle-plugin-hermes-messenger";
@@ -275,11 +275,12 @@ Notes:
 
 | Method                                    | Description                                                                                                                                                                                                                            |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `addAccount(name, params)`                | Register an account; triggers cluster sync                                                                                                                                                                                             |
-| `removeAccount(name)`                     | Remove a registered account; triggers cluster sync                                                                                                                                                                                     |
-| `getAccount(name)`                        | Retrieve a registered account (throws `NotFoundError` if not found)                                                                                                                                                                    |
-| `listAccounts()`                          | Returns the names of the registered accounts                                                                                                                                                                                           |
-| `getName()`                               | Returns the provider display name                                                                                                                                                                                                      |
+| `addAccount(accountId, params, displayName?)`                | Register an account; triggers cluster sync                                                                                                                                                                                             |
+| `removeAccount(accountId)`                     | Remove a registered account; triggers cluster sync                                                                                                                                                                                     |
+| `getAccount(accountId)`                        | Retrieve a registered account (throws `NotFoundError` if not found)                                                                                                                                                                    |
+| `listAccounts()`                          | Returns the identifiers of the registered accounts                                                                                                                                                                                           |
+| `getProviderId()`                         | Returns the provider identifier given to `registerProvider()` (throws before registration)
+| `getDisplayName()`                        | Returns the provider display name given to the constructor                                                                                                                                                                                                      |
 | `getAcceptedRecipientTypes()`             | Returns the `recipientType` names this provider accepts                                                                                                                                                                                |
 | `getAcceptedRecipientTypeDefinitions()`   | Returns the full `RecipientTypeDefinition` of each accepted type (throws before `registerProvider()`)                                                                                                                                  |
 | `getAudiences()`                          | Returns the deduplicated union of the `audiences` of the accepted recipient types (throws before `registerProvider()`)                                                                                                                 |
@@ -291,14 +292,14 @@ Notes:
 | `validateRecipients(recipients)`          | Validate an array of recipient strings against the accepted recipient types; returns the matched type name of each entry (called by the controller before `sendMessage`)                                                               |
 | `validateMessageContent(content)`         | Validate against `messageContentSchema` (called by the controller before `sendMessage`)                                                                                                                                                |
 | `validateMessageAdditionalParams(params)` | Validate against `messageAdditionalParamsSchema` (called by the controller before `sendMessage()`)                                                                                                                                     |
-| `serialize()`                             | Returns a `SerializedProvider` (`name`, `capabilities`, `acceptedRecipientTypes`, `audiences`, `accountParamsSchema`, `messageContentSchema`, `messageAdditionalParamsSchema`) — what `hermes:listProviders` returns for each provider |
+| `serialize()`                             | Returns a `SerializedProvider` (`providerId`, `displayName`, `capabilities`, `acceptedRecipientTypes`, `audiences`, `accountParamsSchema`, `messageContentSchema`, `messageAdditionalParamsSchema`) — what `hermes:listProviders` returns for each provider |
 
 ### Abstract members to implement
 
 | Member                                               | Description                                                               |
 | ---------------------------------------------------- | ------------------------------------------------------------------------- |
 | `sendMessage(account, recipients, content, params?)` | Deliver the message                                                       |
-| `_createAccount(name, params)`                       | Build the in-memory account (`{ name, provider, params }`) from `params` |
+| `_createAccount(accountId, params)`                  | Build the in-memory account (`{ accountId, provider, params }`) from `params` |
 
 ### Public properties
 

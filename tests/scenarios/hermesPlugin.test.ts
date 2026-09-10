@@ -29,10 +29,20 @@ describe("HermesMessengerPlugin – default provider registration", () => {
     expect(plugin.getProvider("twilio")).toBeInstanceOf(TwilioProvider);
   });
 
-  it("providers return the correct names", () => {
+  it("providers carry their id and display name", () => {
     const plugin = new HermesMessengerPlugin();
-    expect(plugin.getProvider("smtp").getName()).toBe("smtp");
-    expect(plugin.getProvider("twilio").getName()).toBe("twilio");
+    const ids = ["smtp", "twilio", "sendgrid", "smsenvoi"];
+    const displayNames = ["SMTP", "Twilio", "SendGrid", "SMS Envoi"];
+
+    for (const [i, id] of ids.entries()) {
+      const provider = plugin.getProvider(id);
+      expect(provider.getProviderId()).toBe(id);
+      expect(provider.getDisplayName()).toBe(displayNames[i]);
+      expect(provider.serialize()).toMatchObject({
+        providerId: id,
+        displayName: displayNames[i],
+      });
+    }
   });
 });
 
@@ -70,8 +80,8 @@ describe("HermesMessengerPlugin – built-in recipient types", () => {
     expect(
       plugin.providerManager
         .listProviders({ capability: "file" })
-        .map((p) => p.getName()),
-    ).toEqual(["smtp", "SendGrid"]);
+        .map((p) => p.getProviderId()),
+    ).toEqual(["smtp", "sendgrid"]);
   });
 
   it("built-in providers all target the human audience", () => {
@@ -84,8 +94,8 @@ describe("HermesMessengerPlugin – built-in recipient types", () => {
     expect(
       plugin.providerManager
         .listProviders({ audience: "human" })
-        .map((p) => p.getName()),
-    ).toEqual(["smtp", "twilio", "SendGrid", "SMS Envoi"]);
+        .map((p) => p.getProviderId()),
+    ).toEqual(["smtp", "twilio", "sendgrid", "smsenvoi"]);
     expect(
       plugin.providerManager.listProviders({ audience: "technical" }),
     ).toEqual([]);

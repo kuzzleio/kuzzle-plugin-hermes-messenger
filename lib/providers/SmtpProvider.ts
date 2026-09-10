@@ -147,7 +147,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     };
 
     super(
-      "smtp",
+      "SMTP",
       ["email"],
       accountParamsSchema,
       messageContentSchema,
@@ -219,7 +219,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    * The parameters are kept on the account (`default_sender` is read at send time).
    */
   protected _createAccount(
-    name: string,
+    accountId: string,
     params: SMTPAccountParams,
   ): SMTPAccount {
     const { host_name, port, user, password } = params;
@@ -234,16 +234,16 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       secure: port === 465,
     });
 
-    return { name, provider: transporter, params };
+    return { accountId, provider: transporter, params };
   }
 
   private async deliver(account: SMTPAccount, email: Mail.Options) {
-    if (await this.mockedAccount(account.name)) {
+    if (await this.mockedAccount(account.accountId)) {
       await this.sdk.document.createOrReplace(
         this.config.adminIndex,
         "messages",
         (email.subject as string) || (email as any).templateId,
-        { account: account.name, ...email },
+        { account: account.accountId, ...email },
       );
     } else {
       try {

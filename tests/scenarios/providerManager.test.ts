@@ -31,13 +31,13 @@ function buildManager(): ProviderManager {
 
 /** Fields every account of `first` / `second` carries, besides its name. */
 const humanAccount = {
-  provider: "first",
+  providerId: "first",
   acceptedRecipientTypes: ["testRecipient"],
   capabilities: ["text"],
   audiences: ["human"],
 };
 const technicalAccount = {
-  provider: "second",
+  providerId: "second",
   acceptedRecipientTypes: ["uri"],
   capabilities: ["text"],
   audiences: ["technical"],
@@ -51,23 +51,23 @@ describe("ProviderManager – listAccounts", () => {
     expect(manager.listAccounts()).toEqual([]);
   });
 
-  it("lists the accounts of every provider with their provider route key", () => {
+  it("lists the accounts of every provider with their provider id", () => {
     expect(buildManager().listAccounts()).toEqual([
-      { name: "alpha", ...humanAccount },
-      { name: "beta", ...humanAccount },
-      { name: "alpha", ...technicalAccount },
+      { accountId: "alpha", displayName: "alpha", ...humanAccount },
+      { accountId: "beta", displayName: "beta", ...humanAccount },
+      { accountId: "alpha", displayName: "alpha", ...technicalAccount },
     ]);
   });
 
   it("only lists the accounts of the given provider", () => {
-    expect(buildManager().listAccounts({ provider: "second" })).toEqual([
-      { name: "alpha", ...technicalAccount },
+    expect(buildManager().listAccounts({ providerId: "second" })).toEqual([
+      { accountId: "alpha", displayName: "alpha", ...technicalAccount },
     ]);
   });
 
   it("throws when filtering on an unknown provider", () => {
     expect(() =>
-      buildManager().listAccounts({ provider: "unknown" }),
+      buildManager().listAccounts({ providerId: "unknown" }),
     ).toThrowError("unknown provider is not available");
   });
 
@@ -75,11 +75,11 @@ describe("ProviderManager – listAccounts", () => {
     const manager = buildManager();
 
     expect(manager.listAccounts({ audience: "human" })).toEqual([
-      { name: "alpha", ...humanAccount },
-      { name: "beta", ...humanAccount },
+      { accountId: "alpha", displayName: "alpha", ...humanAccount },
+      { accountId: "beta", displayName: "beta", ...humanAccount },
     ]);
     expect(manager.listAccounts({ audience: "technical" })).toEqual([
-      { name: "alpha", ...technicalAccount },
+      { accountId: "alpha", displayName: "alpha", ...technicalAccount },
     ]);
     expect(manager.listAccounts({ audience: "nobody" })).toEqual([]);
   });
@@ -106,8 +106,9 @@ describe("ProviderManager – listAccounts", () => {
 
     expect(manager.listAccounts()).toEqual([
       {
-        name: "both",
-        provider: "multi",
+        accountId: "both",
+        displayName: "both",
+        providerId: "multi",
         acceptedRecipientTypes: ["testRecipient", "uri"],
         capabilities: ["text"],
         audiences: ["human", "technical"],
@@ -125,8 +126,9 @@ describe("ProviderManager – listAccounts", () => {
     expect(manager.listAccounts({ capability: "text" })).toHaveLength(4);
     expect(manager.listAccounts({ capability: ["html", "file"] })).toEqual([
       {
-        name: "mail",
-        provider: "rich",
+        accountId: "mail",
+        displayName: "mail",
+        providerId: "rich",
         acceptedRecipientTypes: ["testRecipient"],
         capabilities: ["text", "html", "file"],
         audiences: ["human"],
@@ -142,10 +144,10 @@ describe("ProviderManager – listAccounts", () => {
     const manager = buildManager();
 
     expect(
-      manager.listAccounts({ provider: "first", audience: "human" }),
+      manager.listAccounts({ providerId: "first", audience: "human" }),
     ).toHaveLength(2);
     expect(
-      manager.listAccounts({ provider: "first", audience: "technical" }),
+      manager.listAccounts({ providerId: "first", audience: "technical" }),
     ).toEqual([]);
   });
 });
@@ -217,20 +219,21 @@ describe("ProviderManager – listProviders", () => {
       jsonSchema: { type: "string" },
     });
 
-    expect(new TestProvider(registry).serialize().audiences).toEqual(["human"]);
-    expect(new TestProvider(registry, ["uri"]).serialize().audiences).toEqual([
+    const manager = new ProviderManager();
+    const serialize = (id: string, types?: string[]) => {
+      const provider = new TestProvider(registry, types);
+      manager.set(id, provider);
+      return provider.serialize();
+    };
+
+    expect(serialize("a").audiences).toEqual(["human"]);
+    expect(serialize("b", ["uri"]).audiences).toEqual(["technical"]);
+    expect(serialize("c", ["testRecipient", "uri"]).audiences).toEqual([
+      "human",
       "technical",
     ]);
     expect(
-      new TestProvider(registry, ["testRecipient", "uri"]).serialize()
-        .audiences,
-    ).toEqual(["human", "technical"]);
-    expect(
-      new TestProvider(registry, [
-        "uri",
-        "pushToken",
-        "testRecipient",
-      ]).serialize().audiences,
+      serialize("d", ["uri", "pushToken", "testRecipient"]).audiences,
     ).toEqual(["technical", "human"]);
   });
 

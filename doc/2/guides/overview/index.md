@@ -12,14 +12,14 @@ This plugin gives the application the ability to send various types of messages 
 
 Built-in providers, registered by default:
 
-| Route key  | Display name | Channel | Recipient type |
-| ---------- | ------------ | ------- | -------------- |
-| `smtp`     | `smtp`       | email   | `email`        |
-| `sendgrid` | `SendGrid`   | email   | `email`        |
-| `twilio`   | `twilio`     | SMS     | `phoneNumber`  |
-| `smsenvoi` | `SMS Envoi`  | SMS     | `phoneNumber`  |
+| `providerId` | `displayName` | Channel | Recipient type |
+| ------------ | ------------- | ------- | -------------- |
+| `smtp`       | `SMTP`        | email   | `email`        |
+| `sendgrid`   | `SendGrid`    | email   | `email`        |
+| `twilio`     | `Twilio`      | SMS     | `phoneNumber`  |
+| `smsenvoi`   | `SMS Envoi`   | SMS     | `phoneNumber`  |
 
-The **route key** is the value to pass in the `provider` argument of every action. The display name is what [`hermes:listProviders`](/official-plugins/hermes-messenger/2/controllers/hermes/list-providers) returns in `name`.
+The **`providerId`** is the value to pass in the `providerId` argument of every account action and the key of the routes. The **`displayName`** is a label for user interfaces. Both are returned by [`hermes:listProviders`](/official-plugins/hermes-messenger/2/controllers/hermes/list-providers). Accounts follow the same pattern: an `accountId` used in arguments and routes, and an optional `displayName`.
 
 Coming from version 1? Read the [Migration guide](/official-plugins/hermes-messenger/2/guides/migration).
 
@@ -41,16 +41,16 @@ Coming from version 1? Read the [Migration guide](/official-plugins/hermes-messe
 
 ## API
 
-The plugin exposes a single `hermes` controller. Account and message actions take the provider route key as the `provider` argument and work the same way for every provider:
+The plugin exposes a single `hermes` controller. Account and message actions take the `providerId` and `accountId` arguments and work the same way for every provider:
 
 | Action               | HTTP                                                     | Description                                                                        |
 | -------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `listProviders`      | `GET /_/hermes/providers[?capability=…][&audience=…]`                   | Providers, capabilities, audiences and JSON Schemas                                |
 | `listRecipientTypes` | `GET /_/hermes/recipient-types[?audience=…]`             | Registered recipient types and their audiences                                     |
-| `addAccount`         | `PUT /_/hermes/providers/:provider/accounts/:name`            | Register an account (`body.params`)                                                |
-| `removeAccount`      | `DELETE /_/hermes/providers/:provider/accounts/:name` | Remove an account                                                                  |
-| `listAccounts`       | `GET /_/hermes/accounts[?provider=…][&audience=…][&capability=…]`       | Accounts of every provider (or of one), with their provider key, recipient types, audiences and capabilities |
-| `sendMessage`        | `POST /_/hermes/providers/:provider/accounts/:name`   | Send a message (`body.recipients`, `body.content`, `body.params`)                  |
+| `addAccount`         | `PUT /_/hermes/providers/:providerId/accounts/:accountId`            | Register an account (`body.params`)                                                |
+| `removeAccount`      | `DELETE /_/hermes/providers/:providerId/accounts/:accountId` | Remove an account                                                                  |
+| `listAccounts`       | `GET /_/hermes/accounts[?providerId=…][&audience=…][&capability=…]`       | Accounts of every provider (or of one), with their provider key, recipient types, audiences and capabilities |
+| `sendMessage`        | `POST /_/hermes/providers/:providerId/accounts/:accountId`   | Send a message (`body.recipients`, `body.content`, `body.params`)                  |
 
 The `sendMessage` body always has the same three parts:
 
@@ -70,11 +70,11 @@ Each provider supports multiple named accounts with different credentials. The f
 
 - [`hermes:addAccount`](/official-plugins/hermes-messenger/2/controllers/smtp/add-account)
 - [`hermes:removeAccount`](/official-plugins/hermes-messenger/2/controllers/smtp/remove-account)
-- [`hermes:listAccounts`](/official-plugins/hermes-messenger/2/controllers/hermes/list-accounts) (all providers, or one with the `provider` argument)
+- [`hermes:listAccounts`](/official-plugins/hermes-messenger/2/controllers/hermes/list-accounts) (all providers, or one with the `providerId` argument)
 
 ### Register an account at startup
 
-Accounts can be added programmatically once the application has started, using `getProvider(routeKey).addAccount(name, params)`. `params` must match the provider's `accountParamsSchema`.
+Accounts can be added programmatically once the application has started, using `getProvider(providerId).addAccount(accountId, params, displayName?)`. `params` must match the provider's `accountParamsSchema`.
 
 ```js
 import { HermesMessengerPlugin } from "kuzzle-plugin-hermes-messenger";
