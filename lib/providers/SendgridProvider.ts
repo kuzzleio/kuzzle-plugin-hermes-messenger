@@ -190,20 +190,6 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     account: SendgridAccount,
     email: object,
   ): Promise<void> {
-    if (await this.mockedAccount(account.accountId)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        (email as any).subject,
-        { account: account.accountId, ...email },
-      );
-    } else {
-      await account.provider.sendMultiple(email as any);
-    }
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
+    await account.provider.sendMultiple(email as any);
   }
 }

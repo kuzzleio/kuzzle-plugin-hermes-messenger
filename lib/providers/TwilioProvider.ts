@@ -120,20 +120,6 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
     account: TwilioAccount,
     sms: { from: string; to: string; body: string },
   ) {
-    if (await this.mockedAccount(account.accountId)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        sms.body,
-        { account: account.accountId, ...sms },
-      );
-    } else {
-      await account.provider.messages.create(sms);
-    }
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
+    await account.provider.messages.create(sms);
   }
 }

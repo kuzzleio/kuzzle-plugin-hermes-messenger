@@ -158,14 +158,9 @@ export class HermesMessengerPlugin extends Plugin {
         }
       }
 
-      await Promise.all([
-        this.sdk.collection.create(this.config.adminIndex, "messages", {
-          mappings: this.config.collections.messages,
-        }),
-        this.sdk.collection.create(this.config.adminIndex, "config", {
-          mappings: this.config.collections.config,
-        }),
-      ]);
+      await this.sdk.collection.create(this.config.adminIndex, "config", {
+        mappings: this.config.collections.config,
+      });
     } finally {
       await mutex.unlock();
     }

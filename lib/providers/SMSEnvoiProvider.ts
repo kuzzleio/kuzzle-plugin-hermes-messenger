@@ -101,16 +101,6 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
   ): Promise<void> {
     const { user_key, access_token: Access_token } = account.params;
 
-    if (await this.mockedAccount(account.accountId)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        message,
-        { account: account.accountId },
-      );
-      return;
-    }
-
     const headers = {
       user_key,
       Access_token,
@@ -128,10 +118,5 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     await axios.post("https://api.smsenvoi.com/API/v1.0/REST/sms", payload, {
       headers,
     });
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
   }
 }

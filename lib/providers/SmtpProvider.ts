@@ -238,25 +238,11 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
   }
 
   private async deliver(account: SMTPAccount, email: Mail.Options) {
-    if (await this.mockedAccount(account.accountId)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        (email.subject as string) || (email as any).templateId,
-        { account: account.accountId, ...email },
-      );
-    } else {
-      try {
-        await account.provider.verify();
-        return account.provider.sendMail(email);
-      } catch (error) {
-        throw new ExternalServiceError(error);
-      }
+    try {
+      await account.provider.verify();
+      return account.provider.sendMail(email);
+    } catch (error) {
+      throw new ExternalServiceError(error);
     }
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
   }
 }
