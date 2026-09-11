@@ -96,20 +96,20 @@ jobs:
           SEMANTIC_RELEASE_SLACK_WEBHOOK: ${{ secrets.SEMANTIC_RELEASE_SLACK_WEBHOOK }}
         run: npx semantic-release
 
-  # documentation_deploy:
-  #   needs: [release]
-  #   name: Documentation - Deploy
-  #   if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/2-dev') }}
-  #   runs-on: ubuntu-24.04
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  documentation_deploy:
+    needs: [release]
+    name: Documentation - Deploy
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/2-dev') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - uses: convictional/trigger-workflow-and-wait@v1.6.3
-  #       with:
-  #         owner: kuzzleio
-  #         repo: documentation
-  #         github_token: ${{ secrets.ACCESS_TOKEN_CI }}
-  #         workflow_file_name: child_repo.workflow.yml
-  #         ref: ${{ github.ref_name == 'master' && 'master' || 'develop' }}
-  #         client_payload: '{"repo_name":"kuzzle-plugin-hermes-messenger","branch":"${{ github.ref_name }}","version":"1"}'
+      - uses: convictional/trigger-workflow-and-wait@v1.6.3
+        with:
+          owner: kuzzleio
+          repo: documentation
+          github_token: ${{ secrets.ACCESS_TOKEN_CI }}
+          workflow_file_name: child_repo.workflow.yml
+          ref: ${{ github.ref_name == 'master' && 'master' || 'develop' }}
+          client_payload: '{"repo_name":"kuzzle-plugin-hermes-messenger","branch":"${{ github.ref_name }}","version":"2"}'
