@@ -1,3 +1,13 @@
+## [2.0.0-2-dev.11](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.10...v2.0.0-2-dev.11) (2026-09-11)
+
+### ⚠ BREAKING CHANGES
+
+* **v2:** recipient audiences, string capabilities, providerId/accountId, account params and validation (#46)
+
+### Features
+
+* **v2:** recipient audiences, string capabilities, providerId/accountId, account params and validation ([#46](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/46)) ([def29e9](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/def29e974447e5d7b7e4245f71e97c45bb2e7898))
+
 ## [2.0.0-2-dev.10](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v2.0.0-2-dev.9...v2.0.0-2-dev.10) (2026-09-01)
 
 ### Bug Fixes
