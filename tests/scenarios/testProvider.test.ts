@@ -1,5 +1,6 @@
 import { defineReflectProperties } from "tests/helpers";
-import { context, TestProvider } from "tests/mocks";
+import { context, TestAccount, TestProvider } from "tests/mocks";
+import { NotFoundError } from "kuzzle";
 import { RecipientTypeDefinition, RecipientTypeRegistry } from "lib/recipients";
 import { describe, it, expect, vi } from "vitest";
 
@@ -20,9 +21,11 @@ describe("TestProvider", () => {
     expect(addAccountSpy).toHaveBeenCalledWith("myaccount", {
       option: "myoptions",
     });
-    expect(nodeAddAccountSpy).toHaveBeenCalledWith("myaccount", {
-      option: "myoptions",
-    });
+    expect(nodeAddAccountSpy).toHaveBeenCalledWith(
+      "myaccount",
+      { option: "myoptions" },
+      undefined,
+    );
     expect(createAccountSpy).toHaveBeenCalledWith("myaccount", {
       option: "myoptions",
     });
@@ -71,7 +74,9 @@ describe("TestProvider", () => {
     const account = testProvider.getAccount("myaccount");
 
     expect(getAccountSpy).toHaveBeenCalledWith("myaccount");
-    expect(account.name).toBe("myaccount");
+    expect(account.accountId).toBe("myaccount");
+    expect(account.displayName).toBe("myaccount");
+    expect(account.params).toEqual({ option: "myoptions" });
 
     getAccountSpy.mockRestore();
   });
@@ -95,8 +100,10 @@ describe("TestProvider", () => {
 
     const listAccountsSpy = vi.spyOn(testProvider, "listAccounts");
 
-    testProvider.listAccounts();
+    testProvider.addAccount("first", {});
+    testProvider.addAccount("second", {});
 
+    expect(testProvider.listAccounts()).toEqual(["first", "second"]);
     expect(listAccountsSpy).toHaveBeenCalledWith();
 
     listAccountsSpy.mockRestore();
@@ -119,43 +126,54 @@ describe("TestProvider", () => {
 
     const validateRecipientsSpy = vi.spyOn(testProvider, "validateRecipients");
 
-    testProvider.validateRecipients({ type: "object" });
+    expect(testProvider.validateRecipients(["anything"])).toEqual([
+      "testRecipient",
+    ]);
 
-    expect(validateRecipientsSpy).toHaveBeenCalledWith({ type: "object" });
+    expect(validateRecipientsSpy).toHaveBeenCalledWith(["anything"]);
 
     validateRecipientsSpy.mockRestore();
   });
 
-  it("Validate content", async () => {
+  it("Validate message content", async () => {
     const testProvider = new TestProvider();
 
-    const validateContentSpy = vi.spyOn(testProvider, "validateContent");
+    const validateContentSpy = vi.spyOn(testProvider, "validateMessageContent");
 
-    testProvider.validateContent({ type: "object" });
+    testProvider.validateMessageContent({ type: "object" });
 
     expect(validateContentSpy).toHaveBeenCalledWith({ type: "object" });
 
     validateContentSpy.mockRestore();
   });
 
-  it("Get name", async () => {
+  it("Get display name and provider id", () => {
     const testProvider = new TestProvider();
 
-    const getNameSpy = vi.spyOn(testProvider, "getName");
+    expect(testProvider.getDisplayName()).toBe("testProvider");
+    expect(() => testProvider.getProviderId()).toThrowError(
+      "not registered on the plugin yet",
+    );
 
-    testProvider.getName();
-
-    expect(getNameSpy).toHaveBeenCalledWith();
-
-    getNameSpy.mockRestore();
+    testProvider.setProviderId("test");
+    expect(testProvider.getProviderId()).toBe("test");
+    expect(testProvider.getDisplayName()).toBe("testProvider");
   });
 
-  it("Get params json", async () => {
+  it("Register an account with a display name", () => {
     const testProvider = new TestProvider();
 
-    const getNameSpy = vi.spyOn(testProvider, "getAccountParamsJsonSchema");
+    testProvider.addAccount("acc", {}, "My account");
 
-    testProvider.getAccountParamsJsonSchema();
+    expect(testProvider.getAccount("acc").displayName).toBe("My account");
+  });
+
+  it("Get account params schema", async () => {
+    const testProvider = new TestProvider();
+
+    const getNameSpy = vi.spyOn(testProvider, "getAccountParamsSchema");
+
+    testProvider.getAccountParamsSchema();
 
     expect(getNameSpy).toHaveBeenCalledWith();
 
@@ -165,13 +183,13 @@ describe("TestProvider", () => {
   it("Send a message", async () => {
     const testProvider = new TestProvider();
 
-    const sendSpy = vi.spyOn(testProvider, "send");
+    const sendSpy = vi.spyOn(testProvider, "sendMessage");
 
     const accountName = "myaccount";
     const recipients = ["recipient1"];
     const content = { text: "mycontent" };
 
-    await testProvider.send(accountName, recipients, content);
+    await testProvider.sendMessage(accountName, recipients, content);
 
     expect(sendSpy).toHaveBeenCalledWith(accountName, recipients, content);
 
@@ -191,9 +209,11 @@ describe("TestProvider", () => {
 
     testProvider.addAccount("myaccount", { option: "myoptions" });
 
-    expect(nodeAddAccountSpy).toHaveBeenCalledWith("myaccount", {
-      option: "myoptions",
-    });
+    expect(nodeAddAccountSpy).toHaveBeenCalledWith(
+      "myaccount",
+      { option: "myoptions" },
+      undefined,
+    );
 
     testProvider.removeAccount("myaccount");
     expect(nodeRemoveAccountSpy).toHaveBeenCalledWith("myaccount");
@@ -201,15 +221,104 @@ describe("TestProvider", () => {
     initSpy.mockRestore();
   });
 
+  describe("Account params validation on addAccount", () => {
+    const strictSchema = {
+      type: "object" as const,
+      properties: {
+        sender: { type: "string" as const, minLength: 1 },
+        port: { type: "integer" as const },
+      },
+      required: ["sender"],
+    };
+
+    function strictProvider(): TestProvider {
+      return new TestProvider(undefined, undefined, strictSchema);
+    }
+
+    it("registers an account whose params match the schema", () => {
+      const provider = strictProvider();
+
+      provider.addAccount("ok", { sender: "a@b.co", port: 25 });
+
+      expect(provider.listAccounts()).toEqual(["ok"]);
+      expect(provider.getAccount("ok").params).toEqual({
+        sender: "a@b.co",
+        port: 25,
+      });
+    });
+
+    it("rejects params violating the schema and lists every error", () => {
+      const provider = strictProvider();
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      let error: any;
+      try {
+        provider.addAccount("bad", { port: "25" });
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error.message).toBe(
+        "TestProvider: account parameters do not match the provider's accountParamsSchema (2 error(s))",
+      );
+      expect(error.errors.map((e: Error) => e.message)).toEqual([
+        "params must have required property 'sender'",
+        "/port must be integer",
+      ]);
+      expect(provider.listAccounts()).toEqual([]);
+
+      expect(warnSpy).toHaveBeenCalledOnce();
+      const logged = warnSpy.mock.calls[0][0] as string;
+      expect(logged).toContain('account "bad" rejected, invalid parameters');
+      expect(logged).toContain("/port must be integer");
+      // credentials must never reach the logs
+      expect(logged).not.toContain("25");
+
+      warnSpy.mockRestore();
+    });
+
+    it("wraps and logs an error thrown while creating the account", () => {
+      class FailingProvider extends TestProvider {
+        override _createAccount(): TestAccount {
+          throw new Error("SDK client refused the credentials");
+        }
+      }
+      const provider = new FailingProvider();
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(() => provider.addAccount("boom", { any: "thing" })).toThrowError(
+        'TestProvider: account "boom" could not be created: SDK client refused the credentials',
+      );
+      expect(provider.listAccounts()).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledOnce();
+      expect(errorSpy.mock.calls[0][0]).toContain(
+        'account "boom" could not be created',
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    it("re-throws Kuzzle errors thrown while creating the account as-is", () => {
+      class FailingProvider extends TestProvider {
+        override _createAccount(): TestAccount {
+          throw new NotFoundError("no such region");
+        }
+      }
+      const provider = new FailingProvider();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(() => provider.addAccount("boom", {})).toThrowError(NotFoundError);
+
+      vi.restoreAllMocks();
+    });
+  });
+
   describe("Custom recipient type registration", () => {
     const webhookRecipient: RecipientTypeDefinition = {
       name: "webhookUrl",
       description: "An HTTP endpoint to POST the message to",
-      jsonSchema: {
-        type: "object",
-        properties: { to: { type: "string" } },
-        required: ["to"],
-      },
+      audiences: ["technical"],
+      jsonSchema: { type: "string", format: "uri" },
     };
 
     it("accepts a provider referencing a custom registered recipient type", () => {
@@ -219,9 +328,9 @@ describe("TestProvider", () => {
       const testProvider = new TestProvider(registry, ["webhookUrl"]);
 
       expect(testProvider.getAcceptedRecipientTypes()).toEqual(["webhookUrl"]);
-      expect(() =>
-        testProvider.validateRecipients({ to: "https://example.com/hook" }),
-      ).not.toThrow();
+      expect(
+        testProvider.validateRecipients(["https://example.com/hook"]),
+      ).toEqual(["webhookUrl"]);
     });
 
     it("rejects a recipient that does not match the custom type's schema", () => {
@@ -230,7 +339,18 @@ describe("TestProvider", () => {
 
       const testProvider = new TestProvider(registry, ["webhookUrl"]);
 
-      expect(() => testProvider.validateRecipients({})).toThrowError();
+      let error: any;
+      try {
+        testProvider.validateRecipients(["ok://fine", "not a url"]);
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error.message).toBe("TestProvider: 1 invalid recipient(s)");
+      expect(error.errors).toHaveLength(1);
+      expect(error.errors[0].message).toContain(
+        'Recipient #1 "not a url" matches none of the accepted recipient types (webhookUrl)',
+      );
     });
 
     it("throws when a provider references an unregistered recipient type", () => {
@@ -239,6 +359,51 @@ describe("TestProvider", () => {
       expect(() => new TestProvider(registry, ["unknownType"])).toThrowError(
         'Recipient type "unknownType" is not registered.',
       );
+    });
+
+    it("refuses to validate recipients before the registry is bound", () => {
+      class UnboundProvider extends TestProvider {
+        override bindRecipientTypes(): void {
+          // skip the binding performed by the mock constructor
+        }
+      }
+
+      const provider = new UnboundProvider();
+
+      expect(() => provider.validateRecipients(["x"])).toThrowError(
+        "not registered on the plugin yet",
+      );
+    });
+
+    it("reports the matched type of each recipient for a multi-type provider", () => {
+      const registry = new RecipientTypeRegistry();
+      registry.register(webhookRecipient);
+      registry.register({
+        name: "topic",
+        description: "A topic name",
+        audiences: ["technical"],
+        jsonSchema: { type: "string", pattern: "^[a-z][a-z0-9-]*$" },
+      });
+
+      const testProvider = new TestProvider(registry, ["webhookUrl", "topic"]);
+
+      expect(
+        testProvider.validateRecipients([
+          "alerts",
+          "https://example.com/hook",
+          "alerts-2",
+        ]),
+      ).toEqual(["topic", "webhookUrl", "topic"]);
+    });
+
+    it("rejects recipients that are not a non-empty array of strings", () => {
+      const testProvider = new TestProvider();
+
+      for (const invalid of [[], [""], [{ to: "x" }], "x", undefined]) {
+        expect(() => testProvider.validateRecipients(invalid)).toThrowError(
+          "must be a non-empty array of non-empty strings",
+        );
+      }
     });
 
     it("registering the same recipient type twice with an identical definition is a no-op", () => {
@@ -259,7 +424,7 @@ describe("TestProvider", () => {
           jsonSchema: { type: "object" },
         }),
       ).toThrowError(
-        'Recipient type "webhookUrl" is already registered with a different jsonSchema.',
+        'Recipient type "webhookUrl" is already registered with a different definition.',
       );
     });
   });

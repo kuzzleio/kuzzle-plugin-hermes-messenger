@@ -3,24 +3,21 @@ import { JSONSchema7 } from "json-schema";
 import { Twilio } from "twilio";
 
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
-import { ProviderCapabilities } from "../types";
+import { PROVIDER_CAPABILITY_TEXT, ProviderCapabilities } from "../types";
 
-export interface TwilioAccount extends BaseAccount<Twilio> {
-  options: {
-    defaultSender: string;
-  };
+export interface TwilioAccountParams {
+  account_sid: string;
+  auth_token: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
 
+export type TwilioAccount = BaseAccount<Twilio, TwilioAccountParams>;
+
 export class TwilioProvider extends BaseProvider<TwilioAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: false,
-    shortMessage: true,
-    fileAttachment: false,
-    json: false,
-  };
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+  override capabilities: ProviderCapabilities = [PROVIDER_CAPABILITY_TEXT];
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         account_sid: {
@@ -43,7 +40,7 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
       required: ["account_sid", "auth_token", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         body: {
@@ -55,20 +52,20 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
       required: ["body"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
       },
     };
 
     super(
-      "twilio",
+      "Twilio",
       ["phoneNumber"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
@@ -76,27 +73,27 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
    * Sends an SMS to each recipient using one of the registered Twilio accounts.
    *
    * @param accountName - Name of the registered account to use
-   * @param recipients - Array of recipient objects with `to` (phone number)
+   * @param recipients - Recipient phone numbers (E.164)
    * @param content - SMS content: `body`
    * @param params.from - Sender override; falls back to the account's `default_sender`
    */
-  async send(
+  async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     { from }: { from?: string } = {},
   ) {
     const account = this.getAccount(accountName);
-    const fromNumber = from || account.options.defaultSender;
+    const fromNumber = from || account.params.default_sender;
 
     try {
-      for (const recipient of recipients) {
+      for (const to of recipients) {
         this.context.log.debug(
-          `SMS (${accountName}): FROM ${fromNumber} TO ${recipient.to}`,
+          `SMS (${accountName}): FROM ${fromNumber} TO ${to}`,
         );
-        await this.sendMessage(account, {
+        await this.deliver(account, {
           from: fromNumber,
-          to: recipient.to,
+          to,
           body: content.body,
         });
       }
@@ -109,45 +106,20 @@ export class TwilioProvider extends BaseProvider<TwilioAccount> {
   }
 
   protected _createAccount(
-    name: string,
-    {
-      account_sid,
-      auth_token,
-      default_sender,
-    }: {
-      account_sid: string;
-      auth_token: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    accountId: string,
+    params: TwilioAccountParams,
   ): TwilioAccount {
     return {
-      provider: new Twilio(account_sid, auth_token),
-      name,
-      options: {
-        defaultSender: default_sender,
-      },
+      accountId,
+      provider: new Twilio(params.account_sid, params.auth_token),
+      params,
     };
   }
 
-  private async sendMessage(
+  private async deliver(
     account: TwilioAccount,
     sms: { from: string; to: string; body: string },
   ) {
-    if (await this.mockedAccount(account.name)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        sms.body,
-        { account: account.name, ...sms },
-      );
-    } else {
-      await account.provider.messages.create(sms);
-    }
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
+    await account.provider.messages.create(sms);
   }
 }

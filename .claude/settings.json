@@ -5,12 +5,12 @@
       "Bash(npm *)",
       "Bash(npx *)",
       "Bash(find *)",
-      "Bash(grep *)"
-    ],
-    "deny": [
+      "Bash(grep *)",
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)"
+    ],
+    "deny": [
     ]
   }
 }

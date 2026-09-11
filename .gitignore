@@ -14,3 +14,4 @@ dist/
 # Doc
 doc/framework
 frontmatter-errors.json
+doc/*/.vuepress

@@ -4,28 +4,51 @@ import { Transporter, createTransport } from "nodemailer";
 import Mail from "nodemailer/lib/mailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
-import { Attachment, ProviderCapabilities } from "../types";
+import {
+  Attachment,
+  PROVIDER_CAPABILITY_FILE,
+  PROVIDER_CAPABILITY_HTML,
+  PROVIDER_CAPABILITY_TEXT,
+  ProviderCapabilities,
+} from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
 
-export interface SMTPAccount extends BaseAccount<
-  Transporter<SMTPTransport.SentMessageInfo>
-> {
-  options: {
-    defaultSender: string;
-  };
+/**
+ * Body part of an email: `message` goes to `text` when `content.format` is
+ * `"text"`, to `html` otherwise (the default).
+ */
+export function emailBody(content: {
+  message: string;
+  format?: "html" | "text";
+}): { text: string } | { html: string } {
+  return content.format === "text"
+    ? { text: content.message }
+    : { html: content.message };
 }
 
-export class SmtpProvider extends BaseProvider<SMTPAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: true,
-    shortMessage: true,
-    fileAttachment: true,
-    json: false,
-  };
+export interface SMTPAccountParams {
+  host_name: string;
+  port: number;
+  user: string;
+  password: string;
+  default_sender: string;
+  [key: string]: unknown;
+}
 
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+export type SMTPAccount = BaseAccount<
+  Transporter<SMTPTransport.SentMessageInfo>,
+  SMTPAccountParams
+>;
+
+export class SmtpProvider extends BaseProvider<SMTPAccount> {
+  override capabilities: ProviderCapabilities = [
+    PROVIDER_CAPABILITY_TEXT,
+    PROVIDER_CAPABILITY_HTML,
+    PROVIDER_CAPABILITY_FILE,
+  ];
+
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         host_name: {
@@ -59,7 +82,7 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       required: ["host_name", "port", "user", "password", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         subject: {
@@ -71,21 +94,32 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
           title: "Message",
           $comment: "long-text",
         },
+        format: {
+          type: "string",
+          title: "Format",
+          description:
+            "How `message` is sent: as HTML (default) or as plain text.",
+          enum: ["html", "text"],
+          default: "html",
+        },
       },
       required: ["subject", "message"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
         cc: {
-          type: "string",
+          type: "array",
           title: "Cc",
+          items: { type: "string", format: "email" },
         },
         bcc: {
-          type: "string",
+          type: "array",
           title: "Bcc",
+          items: { type: "string", format: "email" },
         },
         attachments: {
           type: "array",
@@ -113,12 +147,11 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     };
 
     super(
-      "smtp",
+      "SMTP",
       ["email"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
@@ -126,14 +159,17 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
    * Sends an email using one of the registered SMTP accounts.
    *
    * @param accountName - Name of the registered account to use
-   * @param recipients - Array of recipient objects with `to` (required)
-   * @param content - Email content: `subject` and `message` (HTML), plus optional `cc` and `bcc`
+   * @param recipients - Recipient email addresses
+   * @param content - Email content: `subject`, `message` and optional `format`
+   *   (`html`, the default, or `text`)
    * @param params.from - Sender override; falls back to the account's `default_sender`
+   * @param params.cc - Optional carbon-copy email addresses
+   * @param params.bcc - Optional blind carbon-copy email addresses
    * @param params.attachments - Optional file attachments
    */
-  async send(
+  async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     {
       attachments,
@@ -143,12 +179,12 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     }: {
       attachments?: Attachment[];
       from?: string;
-      cc?: string;
-      bcc?: string;
+      cc?: string[];
+      bcc?: string[];
     } = {},
   ) {
     const account = this.getAccount(accountName);
-    const fromEmail = from || account.options.defaultSender;
+    const fromEmail = from || account.params.default_sender;
 
     const email: Mail.Options = {
       attachments: attachments?.map((attachment) => ({
@@ -157,14 +193,14 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       })),
       from: fromEmail,
       subject: content.subject,
-      html: content.message,
-      to: recipients.map((r) => r.to).join(", "),
-      cc: cc,
-      bcc: bcc,
+      ...emailBody(content),
+      to: recipients,
+      cc,
+      bcc,
     };
 
     try {
-      await this.sendMessage(account, email);
+      await this.deliver(account, email);
     } catch (error) {
       this.context.log.warn(
         `An error occured while trying to send a message: ${JSON.stringify(error, null, 2)}`,
@@ -180,25 +216,14 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
 
   /**
    * Creates a nodemailer transporter for the given SMTP credentials.
-   * Only `defaultSender` is exposed in `options`; credentials are never stored there.
+   * The parameters are kept on the account (`default_sender` is read at send time).
    */
   protected _createAccount(
-    name: string,
-    {
-      host_name,
-      port,
-      user,
-      password,
-      default_sender,
-    }: {
-      host_name: string;
-      port: number;
-      user: string;
-      password: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    accountId: string,
+    params: SMTPAccountParams,
   ): SMTPAccount {
+    const { host_name, port, user, password } = params;
+
     const transporter = createTransport({
       auth: {
         pass: password,
@@ -208,35 +233,16 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
       port,
       secure: port === 465,
     });
-    return {
-      provider: transporter,
-      name,
-      options: {
-        defaultSender: default_sender,
-      },
-    };
+
+    return { accountId, provider: transporter, params };
   }
 
-  private async sendMessage(account: SMTPAccount, email: Mail.Options) {
-    if (await this.mockedAccount(account.name)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        (email.subject as string) || (email as any).templateId,
-        { account: account.name, ...email },
-      );
-    } else {
-      try {
-        await account.provider.verify();
-        return account.provider.sendMail(email);
-      } catch (error) {
-        throw new ExternalServiceError(error);
-      }
+  private async deliver(account: SMTPAccount, email: Mail.Options) {
+    try {
+      await account.provider.verify();
+      return account.provider.sendMail(email);
+    } catch (error) {
+      throw new ExternalServiceError(error);
     }
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
   }
 }

@@ -2,12 +2,12 @@
 type: page
 code: true
 title: addAccount
-description: Add a Sendgrid account
+description: Add a SMS Envoi account
 ---
 
 # addAccount
 
-Adds a Sendgrid account. This account can then be used to send emails.
+Adds a SMS Envoi account. This account can then be used to send SMS.
 
 The `params` object must match the provider's account JSON Schema (`accountParamsSchema`), exposed by [`hermes:listProviders`](/official-plugins/hermes-messenger/2/controllers/hermes/list-providers).
 
@@ -18,7 +18,7 @@ The `params` object must match the provider's account JSON Schema (`accountParam
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/sendgrid/accounts/:accountId
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:accountId
 Method: PUT
 ```
 
@@ -28,13 +28,14 @@ Method: PUT
 {
   "controller": "hermes",
   "action": "addAccount",
-  "providerId": "sendgrid",
+  "providerId": "smsenvoi",
   "accountId": "<account id>",
   "body": {
     "displayName": "<label>",   // optional
     "params": {
-      "api_key": "<sendgrid api key>",
-      "default_sender": "<default sender email>"
+      "user_key": "<SMS Envoi user key>",
+      "access_token": "<SMS Envoi access token>",
+      "default_sender": "<default sender>"
     }
   }
 }
@@ -43,10 +44,11 @@ Method: PUT
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a providerId=sendgrid -a accountId=<account id> --body '{
+kourou hermes:addAccount -a providerId=smsenvoi -a accountId=<account id> --body '{
   "params": {
-    "api_key": "<sendgrid api key>",
-    "default_sender": "<default sender email>"
+    "user_key": "<SMS Envoi user key>",
+    "access_token": "<SMS Envoi access token>",
+    "default_sender": "<default sender>"
   }
 }'
 ```
@@ -55,14 +57,15 @@ kourou hermes:addAccount -a providerId=sendgrid -a accountId=<account id> --body
 
 ## Arguments
 
-- `providerId`: provider identifier, `sendgrid`
+- `providerId`: provider identifier, `smsenvoi`
 - `accountId`: identifier to register the account under, unique within the provider
 
 ## Body properties
 
 - `displayName` (optional): label for user interfaces; defaults to `accountId`
-- `params.api_key`: Sendgrid API key
-- `params.default_sender`: email address used as sender when `params.from` is not provided on `sendMessage`
+- `params.user_key`: SMS Envoi user key
+- `params.access_token`: SMS Envoi access token
+- `params.default_sender`: sender used when `params.from` is not provided on `sendMessage`
 
 ---
 

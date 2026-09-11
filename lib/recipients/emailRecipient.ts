@@ -1,17 +1,16 @@
-import { RecipientTypeDefinition } from "./RecipientType";
+import {
+  RECIPIENT_AUDIENCE_HUMAN,
+  RecipientTypeDefinition,
+} from "./RecipientType";
 
 export const emailRecipient: RecipientTypeDefinition = {
   name: "email",
   description: "An email address",
+  audiences: [RECIPIENT_AUDIENCE_HUMAN],
   jsonSchema: {
-    type: "object",
-    properties: {
-      to: {
-        type: "string",
-        title: "Email",
-        pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
-      },
-    },
-    required: ["to"],
+    type: "string",
+    title: "Email",
+    description: "e.g. jane.doe@example.com",
+    format: "email",
   },
 };

@@ -8,25 +8,25 @@ order: 200
 
 # Custom Provider
 
-Hermes Messenger is extensible. Any messaging service can be integrated by extending the `BaseProvider<T>` abstract class exported from the package.
+Hermes Messenger is extensible. Any messaging service can be integrated by extending the `BaseProvider<T>` abstract class exported from the package: an SMS gateway, a push service, a webhook endpoint, a message broker topic, ...
 
-Recipient validation is **mutualized** across providers: a provider does not define its own recipient schema. Instead it declares which `recipientType`s it accepts (e.g. `email`, `phoneNumber`, or a custom one you register), and validation is delegated to the [`RecipientTypeRegistry`](#registering-a-custom-recipient-type). This lets several providers share the same recipient shape (e.g. two email providers both accepting `email`).
+Recipients are always **plain strings**: an email address, a phone number, a topic name, a webhook URL, a device token... Their formats are **shared** across providers: a provider does not define its own recipient schema. Instead it declares which `recipientType`s it accepts (e.g. `email`, `phoneNumber`, or a custom one you register), and the format of each recipient string is described once in the [`RecipientTypeRegistry`](#registering-a-custom-recipient-type). This lets several providers share the same recipient format (e.g. two email providers both accepting `email`). Delivery options that are not a recipient (carbon copies, headers, priority...) belong to `messageAdditionalParamsSchema`.
 
 ---
 
-## 1. Define the account interface
+## 1. Define the account type
 
-The account interface describes what is stored in memory for each registered account. The `options` field is the only part exposed by `listAccounts` — never put credentials there.
+An account is what is stored in memory for each registered account: its `accountId`, an optional `displayName` set by `BaseProvider`, the live client in `provider`, and the `params` it was created with (the `body.params` of `addAccount`, matching `accountParamsSchema`). `params` typically hold credentials and a default sender; they are read by the provider at send time and are **never** exposed by `listAccounts`, which only returns account names.
 
 ```typescript
 import { BaseAccount } from "kuzzle-plugin-hermes-messenger";
 
-interface MyAccount extends BaseAccount<MyClient> {
-  provider: MyClient; // the live SDK client
-  options: {
-    defaultSender: string; // safe to expose
-  };
+interface MyAccountParams {
+  apiKey: string;
+  defaultSender: string;
 }
+
+type MyAccount = BaseAccount<MyClient, MyAccountParams>;
 ```
 
 ---
@@ -36,23 +36,18 @@ interface MyAccount extends BaseAccount<MyClient> {
 ```typescript
 import {
   BaseProvider,
+  PROVIDER_CAPABILITY_TEXT,
   ProviderCapabilities,
-  RecipientTypeRegistry,
 } from "kuzzle-plugin-hermes-messenger";
 import { JSONSchema7 } from "json-schema";
 
 export class MyProvider extends BaseProvider<MyAccount> {
-  // Declares what this provider supports — defaults are all `false`.
-  override capabilities: ProviderCapabilities = {
-    fileAttachment: false,
-    shortMessage: true,
-    longMessage: false,
-    json: false,
-  };
+  // What this provider can carry in a message — empty by default.
+  override capabilities: ProviderCapabilities = [PROVIDER_CAPABILITY_TEXT];
 
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    // paramsJsonSchema: shape of the credentials passed to addAccount
-    const paramsJsonSchema: JSONSchema7 = {
+  constructor() {
+    // accountParamsSchema: shape of body.params passed to addAccount
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         apiKey: { type: "string", minLength: 1 },
@@ -61,8 +56,8 @@ export class MyProvider extends BaseProvider<MyAccount> {
       required: ["apiKey", "defaultSender"],
     };
 
-    // contentJsonSchema: shape of the content object
-    const contentJsonSchema: JSONSchema7 = {
+    // messageContentSchema: shape of body.content passed to sendMessage
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         text: { type: "string" },
@@ -70,8 +65,8 @@ export class MyProvider extends BaseProvider<MyAccount> {
       required: ["text"],
     };
 
-    // sendParamsJsonSchema: shape of the optional `params` object passed to send()
-    const sendParamsJsonSchema: JSONSchema7 = {
+    // messageAdditionalParamsSchema: shape of the optional body.params passed to sendMessage
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         from: { type: "string" },
@@ -79,58 +74,76 @@ export class MyProvider extends BaseProvider<MyAccount> {
     };
 
     super(
-      "my-provider",
-      ["phoneNumber"], // acceptedRecipientTypes — must already be registered, see below
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      "My Provider",          // displayName, a label returned by listProviders; the id is given to registerProvider()
+      ["phoneNumber"], // acceptedRecipientTypes — must be registered on the plugin before registerProvider(), see below
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
   /**
-   * Called by addAccount() — create and store a live SDK client.
-   * `params` is the raw object validated against paramsJsonSchema.
+   * Called by addAccount() — create the live SDK client and keep the params
+   * on the account. `params` is the raw object received by addAccount.
    */
-  protected _createAccount(
-    name: string,
-    { apiKey, defaultSender }: { apiKey: string; defaultSender: string },
-  ): MyAccount {
+  protected _createAccount(accountId: string, params: MyAccountParams): MyAccount {
     return {
-      name,
-      provider: new MyClient(apiKey),
-      options: { defaultSender }, // credentials are NOT included here
+      accountId,
+      provider: new MyClient(params.apiKey),
+      params,
     };
   }
 
   /**
-   * Send a message. `recipients` are entries matching one of acceptedRecipientTypes'
-   * jsonSchema (here: `phoneNumber`'s `{ to: string }`). `params` is passed directly
-   * from the request body's "params" field by the controller.
+   * Send a message. `recipients` are strings, each already validated against one
+   * of acceptedRecipientTypes' jsonSchema (here: `phoneNumber`, an E.164 string).
+   * `content` and `params` are validated against messageContentSchema and
+   * messageAdditionalParamsSchema before this method is called.
    */
-  async send(
+  async sendMessage(
     accountName: string,
-    recipients: Array<{ to: string }>,
+    recipients: string[],
     content: { text: string },
     params: { from?: string } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
-    const sender = params.from ?? account.options.defaultSender;
+    const sender = params.from ?? account.params.defaultSender;
 
     await Promise.all(
-      recipients.map((r) =>
-        account.provider.send({ to: r.to, from: sender, text: content.text }),
+      recipients.map((to) =>
+        account.provider.send({ to, from: sender, text: content.text }),
       ),
     );
   }
 }
 ```
 
+### What is validated, and when
+
+Before calling your `sendMessage()` method, the `hermes` controller validates the three parts of the request body:
+
+- `body.recipients` with `validateRecipients()`: it must be a non-empty array of strings, and each string must match the JSON Schema of at least one accepted recipient type. The error lists every offending entry with its index.
+- `body.content` with `validateMessageContent()` against `messageContentSchema`.
+- `body.params` with `validateMessageAdditionalParams()` against `messageAdditionalParamsSchema`.
+
+`validateRecipients()` returns, for each recipient, the name of the recipient type it matched. A provider accepting several types can use it to route each recipient without parsing anything itself:
+
+```typescript
+async sendMessage(accountName, recipients, content, params = {}) {
+  const types = this.validateRecipients(recipients); // e.g. ["email", "phoneNumber", "email"]
+  // ...
+}
+```
+
+`body.params` of `addAccount` is validated by `BaseProvider.addAccount()` against `accountParamsSchema` before `_createAccount()` is called, so your provider can rely on the shape it declared. An invalid call is refused with a `MultipleErrorsError` listing every violation (`/port must be integer`, `params must have required property 'default_sender'`...) and logged as a warning, without the parameter values. If `_createAccount()` throws (e.g. the SDK refuses the credentials), the error is logged and rethrown, wrapped in a `BadRequestError` unless it already is a Kuzzle error. Nothing is registered nor synchronized to the cluster in either case.
+
 ---
 
 ## 3. Register the provider
 
-`acceptedRecipientTypes` must already be known to the registry when the provider is registered — `registerProvider()` throws a `BadRequestError` otherwise. Built-in types (`email`, `phoneNumber`) are registered by the plugin itself; register any custom type first (see below).
+`acceptedRecipientTypes` must already be known to the registry when the provider is registered — `registerProvider()` throws a `BadRequestError` otherwise. Built-in types (`email`, `phoneNumber`, `uri`) are registered by the plugin itself; register any custom type first (see below).
+
+The first argument of `registerProvider()` is the **`providerId`**: the identifier used in routes and in the `providerId` argument of every account action, returned as such by `listProviders` and `listAccounts`. The string passed to the `BaseProvider` constructor is only the `displayName`, a label for user interfaces.
 
 ```typescript
 import { HermesMessengerPlugin } from "kuzzle-plugin-hermes-messenger";
@@ -141,10 +154,7 @@ const plugin = new HermesMessengerPlugin();
 // only needed if 'my-provider' references a recipientType that isn't built in
 // plugin.registerRecipientType(myCustomRecipientType);
 
-plugin.registerProvider(
-  "my-provider",
-  new MyProvider(plugin.recipientTypeRegistry),
-);
+plugin.registerProvider("my-provider", new MyProvider());
 app.plugin.use(plugin);
 ```
 
@@ -164,7 +174,7 @@ plugin.getProvider("my-provider").addAccount("default", {
 Or via the HTTP API:
 
 ```http
-POST /_/hermes/providers/my-provider/accounts
+PUT /_/hermes/providers/my-provider/accounts/default
 Content-Type: application/json
 
 {
@@ -184,7 +194,7 @@ POST /_/hermes/providers/my-provider/accounts/default
 Content-Type: application/json
 
 {
-  "recipients": [{ "to": "+33600000000" }],
+  "recipients": ["+33600000000"],
   "content": { "text": "Hello!" },
   "params": {}
 }
@@ -194,68 +204,114 @@ Content-Type: application/json
 
 ## Registering a custom recipient type
 
-A recipient type is a named, reusable JSON Schema describing the shape of **one** recipient entry (e.g. `{ to: "…" }`). Providers reference recipient types by name in `acceptedRecipientTypes` instead of each declaring their own schema — this is what lets the `hermes:listRecipientTypes` action work across every provider.
+A recipient type is a named, reusable JSON Schema describing the format of **one** recipient string. Providers reference recipient types by name in `acceptedRecipientTypes` instead of each declaring their own schema — this is what lets the `hermes:listRecipientTypes` action work across every provider.
+
+Nothing forces a recipient to be an address: any string format works. A webhook URL, a message broker topic or a device token are valid recipient types. If a provider needs structured delivery options (a partition key, a priority, a platform), declare them in its `messageAdditionalParamsSchema` rather than in the recipient.
+
+Every definition declares its `audiences`: a non-empty array telling who a recipient of this type designates. Two values are well known and exported as constants, `RECIPIENT_AUDIENCE_HUMAN` (`"human"`: a person) and `RECIPIENT_AUDIENCE_TECHNICAL` (`"technical"`: a resource), but any string is accepted and a type may belong to several audiences. Applications rely on it to show only human oriented channels when editing a user's contacts, see the `audience` argument of `hermes:listRecipientTypes`, `hermes:listProviders` and `hermes:listAccounts`.
+
+The built-in `uri` type (`format: "uri"`, audience `technical`) already covers webhook URLs and `scheme://` addresses of any kind; register a dedicated type only when a stricter format is needed.
 
 ```typescript
 import {
+  RECIPIENT_AUDIENCE_HUMAN,
+  RECIPIENT_AUDIENCE_TECHNICAL,
   RecipientTypeDefinition,
   HermesMessengerPlugin,
 } from "kuzzle-plugin-hermes-messenger";
 
 const webhookUrlRecipient: RecipientTypeDefinition = {
   name: "webhookUrl", // unique registry key, referenced by acceptedRecipientTypes
-  description: "An HTTP endpoint to POST the message to",
+  description: "An HTTPS endpoint to POST the message to",
+  audiences: [RECIPIENT_AUDIENCE_TECHNICAL],
   jsonSchema: {
-    type: "object",
-    properties: {
-      to: { type: "string", format: "uri", title: "Webhook URL" },
-    },
-    required: ["to"],
+    type: "string",
+    format: "uri",
+    pattern: "^https://",
+    title: "Webhook URL",
+  },
+};
+
+const pushTokenRecipient: RecipientTypeDefinition = {
+  name: "pushToken",
+  description: "A mobile device push token",
+  audiences: [RECIPIENT_AUDIENCE_HUMAN], // a device belongs to a person
+  jsonSchema: { type: "string", title: "Push token", minLength: 1 },
+};
+
+const kafkaTopicRecipient: RecipientTypeDefinition = {
+  name: "kafkaTopic",
+  description: "A Kafka topic name",
+  audiences: [RECIPIENT_AUDIENCE_TECHNICAL],
+  jsonSchema: {
+    type: "string",
+    title: "Topic",
+    pattern: "^[a-zA-Z0-9._-]{1,249}$",
   },
 };
 
 const plugin = new HermesMessengerPlugin();
 
-// Must be registered before any provider that lists 'webhookUrl' in its
+// Must be registered before any provider that lists these names in its
 // acceptedRecipientTypes.
 plugin.registerRecipientType(webhookUrlRecipient);
+plugin.registerRecipientType(pushTokenRecipient);
+plugin.registerRecipientType(kafkaTopicRecipient);
 ```
+
+A provider accepting `kafkaTopic` receives topic names in `recipients`; a partition key, if needed, would be declared in its `messageAdditionalParamsSchema` and read from `params`.
 
 Notes:
 
-- Registering the same `name` twice with an identical definition is a no-op;
-- `recipientTypeRegistry.get(name)` / `.has(name)` / `.list()` are available wherever the registry is passed (providers, controllers) to look up or enumerate definitions at runtime.
-- `hermes:listRecipientTypes` (`GET /_/hermes/recipient-types`) exposes every registered `RecipientTypeDefinition` over the API.
+- Registering the same `name` twice with an identical definition is a no-op; a different definition under an existing name throws. A definition without a non-empty `audiences` array throws.
+- The provider never receives the registry in its constructor. `registerProvider()` injects the plugin's registry into the provider (`bindRecipientTypes()`) and compiles one validator per accepted recipient type at that moment; every accepted type must therefore be registered **before** `registerProvider()` is called, otherwise it throws. Until then, `validateRecipients()` throws.
+- `plugin.getRecipientType(name)` / `hasRecipientType(name)` / `listRecipientTypes({ audience? })` look up or enumerate definitions at runtime.
+- `hermes:listRecipientTypes` (`GET /_/hermes/recipient-types[?audience=…]`) exposes every registered `RecipientTypeDefinition` over the API.
+- When a provider accepts **several** recipient types, each recipient string is matched against the accepted types in declaration order and the first match wins. Keep the formats distinguishable (an email and an E.164 number cannot be confused; two free-form `{ type: "string" }` types can).
 
 ---
 
 ## BaseProvider API reference
 
-| Method                                              | Description                                                                                                                                                                                                       |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `addAccount(name, params)`                          | Register an account; triggers cluster sync                                                                                                                                                                        |
-| `removeAccount(name)`                               | Remove a registered account                                                                                                                                                                                       |
-| `getAccount(name)`                                  | Retrieve a registered account (throws if not found)                                                                                                                                                               |
-| `listAccounts()`                                    | Returns `[{ name, options }]` for all accounts                                                                                                                                                                    |
-| `getAcceptedRecipientTypes()`                       | Returns the `recipientType` names this provider accepts                                                                                                                                                           |
-| `validateAccountParams(params)`                     | Validate against `accountParamsJsonSchema`                                                                                                                                                                        |
-| `validateRecipients(recipient, recipientTypeName?)` | Validate one recipient against the named type's schema; if the provider accepts only one type, `recipientTypeName` can be omitted                                                                                 |
-| `validateContent(content)`                          | Validate against `contentJsonSchema`                                                                                                                                                                              |
-| `validateSendParams(params)`                        | Validate against `sendParamsJsonSchema`                                                                                                                                                                           |
-| `getName()`                                         | Returns the provider name                                                                                                                                                                                         |
-| `serialize()`                                       | Returns a `SerializedProvider` (`name`, `capabilities`, `acceptedRecipientTypes`, `accountParamsJsonSchema`, `contentJsonSchema`, `sendParamsJsonSchema`) — what `hermes:listProviders` returns for each provider |
+| Method                                    | Description                                                                                                                                                                                                                            |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `addAccount(accountId, params, displayName?)`                | Register an account; triggers cluster sync                                                                                                                                                                                             |
+| `removeAccount(accountId)`                     | Remove a registered account; triggers cluster sync                                                                                                                                                                                     |
+| `getAccount(accountId)`                        | Retrieve a registered account (throws `NotFoundError` if not found)                                                                                                                                                                    |
+| `listAccounts()`                          | Returns the identifiers of the registered accounts                                                                                                                                                                                           |
+| `getProviderId()`                         | Returns the provider identifier given to `registerProvider()` (throws before registration)
+| `getDisplayName()`                        | Returns the provider display name given to the constructor                                                                                                                                                                                                      |
+| `getAcceptedRecipientTypes()`             | Returns the `recipientType` names this provider accepts                                                                                                                                                                                |
+| `getAcceptedRecipientTypeDefinitions()`   | Returns the full `RecipientTypeDefinition` of each accepted type (throws before `registerProvider()`)                                                                                                                                  |
+| `getAudiences()`                          | Returns the deduplicated union of the `audiences` of the accepted recipient types (throws before `registerProvider()`)                                                                                                                 |
+| `acceptsRecipientTypes({ audience? })`    | `true` when at least one accepted recipient type belongs to the audience (a string or an array of strings); used by `listProviders` / `listAccounts` filtering                                                                         |
+| `getAccountParamsSchema()`                | Returns `accountParamsSchema`, the JSON Schema of `addAccount` params                                                                                                                                                                  |
+| `getMessageContentSchema()`               | Returns `messageContentSchema`, the JSON Schema of `sendMessage` content                                                                                                                                                               |
+| `getMessageAdditionalParamsSchema()`      | Returns `messageAdditionalParamsSchema`, the JSON Schema of the optional `sendMessage` params                                                                                                                                          |
+| `validateAccountParams(params)`           | Validate against `accountParamsSchema`; called by `addAccount()`, also usable ahead of time                                                                                                                                                                      |
+| `validateRecipients(recipients)`          | Validate an array of recipient strings against the accepted recipient types; returns the matched type name of each entry (called by the controller before `sendMessage`)                                                               |
+| `validateMessageContent(content)`         | Validate against `messageContentSchema` (called by the controller before `sendMessage`)                                                                                                                                                |
+| `validateMessageAdditionalParams(params)` | Validate against `messageAdditionalParamsSchema` (called by the controller before `sendMessage()`)                                                                                                                                     |
+| `serialize()`                             | Returns a `SerializedProvider` (`providerId`, `displayName`, `capabilities`, `acceptedRecipientTypes`, `audiences`, `accountParamsSchema`, `messageContentSchema`, `messageAdditionalParamsSchema`) — what `hermes:listProviders` returns for each provider |
+
+### Abstract members to implement
+
+| Member                                               | Description                                                               |
+| ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| `sendMessage(account, recipients, content, params?)` | Deliver the message                                                       |
+| `_createAccount(accountId, params)`                  | Build the in-memory account (`{ accountId, provider, params }`) from `params` |
 
 ### Public properties
 
 | Property       | Description                                                                                                                                                                                                                               |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `capabilities` | A `ProviderCapabilities` object declaring what this provider supports — `fileAttachment`, `shortMessage`, `longMessage`, `json` (all default `false`). Exposed via `serialize()` so `hermes:listProviders` can be filtered by capability. |
+| `capabilities` | Array of strings declaring what this provider can carry in a message. Well-known values, exported as constants: `text` (`PROVIDER_CAPABILITY_TEXT`), `html`, `json`, `file`; add your own if needed. Empty by default. Exposed via `serialize()` so `hermes:listProviders` can be filtered with `capability`. |
 
-### Protected properties available in `send()` and `sendMessage()`
+### Protected properties available once the plugin is initialized
 
-| Property       | Description                                                    |
-| -------------- | -------------------------------------------------------------- |
-| `this.context` | Kuzzle plugin context                                          |
-| `this.config`  | Plugin configuration (includes `adminIndex`, `mockedAccounts`) |
-| `this.sdk`     | Kuzzle embedded SDK shortcut                                   |
-| `this.cluster` | Kuzzle cluster accessor                                        |
+| Property       | Description                              |
+| -------------- | ---------------------------------------- |
+| `this.context` | Kuzzle plugin context                    |
+| `this.config`  | Plugin configuration (e.g. `adminIndex`) |
+| `this.sdk`     | Kuzzle embedded SDK shortcut             |
+| `this.cluster` | Kuzzle cluster accessor                  |

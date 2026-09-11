@@ -2,12 +2,12 @@
 type: page
 code: true
 title: removeAccount
-description: Delete a SMTP account
+description: Delete a SMS Envoi account
 ---
 
 # removeAccount
 
-Delete a SMTP account.
+Delete a SMS Envoi account.
 
 ---
 
@@ -16,7 +16,7 @@ Delete a SMTP account.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/smtp/accounts/:accountId
+URL: http://kuzzle:7512/_/hermes/providers/smsenvoi/accounts/:accountId
 Method: DELETE
 ```
 
@@ -26,7 +26,7 @@ Method: DELETE
 {
   "controller": "hermes",
   "action": "removeAccount",
-  "providerId": "smtp",
+  "providerId": "smsenvoi",
   "accountId": "<account id>"
 }
 ```
@@ -34,7 +34,7 @@ Method: DELETE
 ### Kourou
 
 ```bash
-kourou hermes:removeAccount -a providerId=smtp -a accountId=<account id>
+kourou hermes:removeAccount -a providerId=smsenvoi -a accountId=<account id>
 ```
 
 ---

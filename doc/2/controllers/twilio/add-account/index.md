@@ -16,8 +16,8 @@ Adds a Twilio account. This account can then be used to send SMS.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts
-Method: POST
+URL: http://kuzzle:7512/_/hermes/providers/twilio/accounts/:accountId
+Method: PUT
 ```
 
 ### Other protocols
@@ -26,8 +26,10 @@ Method: POST
 {
   "controller": "hermes",
   "action": "addAccount",
-  "provider": "twilio",
+  "providerId": "twilio",
+  "accountId": "<account id>",
   "body": {
+    "displayName": "<label>",   // optional
     "params": {
       "account_sid": "<twilio account sid>",
       "auth_token": "<twilio auth token>",
@@ -40,7 +42,7 @@ Method: POST
 ### Kourou
 
 ```bash
-kourou hermes:addAccount -a provider=twilio --body '{
+kourou hermes:addAccount -a providerId=twilio -a accountId=<account id> --body '{
   "params": {
     "account_sid": "<twilio account sid>",
     "auth_token": "<twilio auth token>",
@@ -48,4 +50,34 @@ kourou hermes:addAccount -a provider=twilio --body '{
   }
 }'
 ```
+
 ---
+
+## Arguments
+
+- `providerId`: provider identifier, `twilio`
+- `accountId`: identifier to register the account under, unique within the provider
+
+## Body properties
+
+- `displayName` (optional): label for user interfaces; defaults to `accountId`
+- `params.account_sid`: Twilio account SID
+- `params.auth_token`: Twilio auth token
+- `params.default_sender`: phone number used as sender when `params.from` is not provided on `sendMessage`
+
+---
+
+## Response
+
+Returns an empty result on success.
+
+```js
+{
+  "requestId": "d16d5e8c-464a-4589-938f-fd84f46080b9",
+  "status": 200,
+  "error": null,
+  "controller": "hermes",
+  "action": "addAccount",
+  "result": null
+}
+```

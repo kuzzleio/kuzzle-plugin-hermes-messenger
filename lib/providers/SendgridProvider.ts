@@ -2,26 +2,34 @@ import { ExternalServiceError } from "kuzzle";
 import { MailService } from "@sendgrid/mail";
 import { JSONSchema7 } from "json-schema";
 
-import { Attachment, ProviderCapabilities, SendgridAttachment } from "../types";
+import {
+  Attachment,
+  PROVIDER_CAPABILITY_FILE,
+  PROVIDER_CAPABILITY_HTML,
+  PROVIDER_CAPABILITY_TEXT,
+  ProviderCapabilities,
+  SendgridAttachment,
+} from "../types";
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
+import { emailBody } from "./SmtpProvider";
 
-export interface SendgridAccount extends BaseAccount<MailService> {
-  options: {
-    defaultSender: string;
-  };
+export interface SendgridAccountParams {
+  api_key: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
 
-export class SendgridProvider extends BaseProvider<SendgridAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: true,
-    shortMessage: true,
-    fileAttachment: true,
-    json: false,
-  };
+export type SendgridAccount = BaseAccount<MailService, SendgridAccountParams>;
 
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+export class SendgridProvider extends BaseProvider<SendgridAccount> {
+  override capabilities: ProviderCapabilities = [
+    PROVIDER_CAPABILITY_TEXT,
+    PROVIDER_CAPABILITY_HTML,
+    PROVIDER_CAPABILITY_FILE,
+  ];
+
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         api_key: {
@@ -41,7 +49,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       required: ["api_key", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         subject: {
@@ -53,21 +61,32 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
           title: "Message",
           $comment: "long-text",
         },
+        format: {
+          type: "string",
+          title: "Format",
+          description:
+            "How `message` is sent: as HTML (default) or as plain text.",
+          enum: ["html", "text"],
+          default: "html",
+        },
       },
       required: ["subject", "message"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
         cc: {
-          type: "string",
+          type: "array",
           title: "Cc",
+          items: { type: "string", format: "email" },
         },
         bcc: {
-          type: "string",
+          type: "array",
           title: "Bcc",
+          items: { type: "string", format: "email" },
         },
         attachments: {
           type: "array",
@@ -97,16 +116,15 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     super(
       "SendGrid",
       ["email"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
-  async send(
+  async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     {
       from,
@@ -116,13 +134,13 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     }: {
       from?: string;
       attachments?: Attachment[];
-      cc?: string;
-      bcc?: string;
+      cc?: string[];
+      bcc?: string[];
     } = {},
   ): Promise<void> {
     const account = this.getAccount(accountName);
-    const fromEmail = from || account.options.defaultSender;
-    const to = recipients.map((r) => r.to);
+    const fromEmail = from || account.params.default_sender;
+    const to = recipients;
 
     const email = {
       from: fromEmail,
@@ -130,7 +148,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
       cc,
       bcc,
       subject: content.subject,
-      html: content.message,
+      ...emailBody(content),
       attachments: attachments?.map(
         (att): SendgridAttachment => ({
           content: att.content,
@@ -147,7 +165,7 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
     );
 
     try {
-      await this.sendMessage(account, email);
+      await this.deliver(account, email);
     } catch (error: any) {
       if (error.response) {
         throw new ExternalServiceError(
@@ -159,46 +177,19 @@ export class SendgridProvider extends BaseProvider<SendgridAccount> {
   }
 
   protected _createAccount(
-    name: string,
-    {
-      api_key,
-      default_sender,
-    }: {
-      api_key: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    accountId: string,
+    params: SendgridAccountParams,
   ): SendgridAccount {
     const mailService = new MailService();
-    mailService.setApiKey(api_key);
+    mailService.setApiKey(params.api_key);
 
-    return {
-      name,
-      provider: mailService,
-      options: {
-        defaultSender: default_sender,
-      },
-    };
+    return { accountId, provider: mailService, params };
   }
 
-  private async sendMessage(
+  private async deliver(
     account: SendgridAccount,
     email: object,
   ): Promise<void> {
-    if (await this.mockedAccount(account.name)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        (email as any).subject,
-        { account: account.name, ...email },
-      );
-    } else {
-      await account.provider.sendMultiple(email as any);
-    }
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
+    await account.provider.sendMultiple(email as any);
   }
 }

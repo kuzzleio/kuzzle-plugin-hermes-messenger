@@ -5,53 +5,53 @@ import { RecipientTypeRegistry } from "lib/recipients";
 import { ProviderCapabilities } from "lib/types";
 import { vi } from "vitest";
 
-export interface TestAccount extends BaseAccount<null> {
-  options: Record<string, any>;
-}
+export type TestAccount = BaseAccount<null, Record<string, any>>;
 
 export class TestProvider extends BaseProvider<TestAccount> {
-  override capabilities: ProviderCapabilities = {
-    fileAttachment: false,
-    longMessage: false,
-    shortMessage: true,
-    json: false,
-  };
+  override capabilities: ProviderCapabilities = ["text"];
   constructor(
     recipientTypeRegistry: RecipientTypeRegistry = new RecipientTypeRegistry(),
     acceptedRecipientTypes: string[] = ["testRecipient"],
+    accountParamsSchema: JSONSchema7 = { type: "object" },
   ) {
-    const paramsJsonSchema: JSONSchema7 = { type: "object" };
-    const contentJsonSchema: JSONSchema7 = { type: "object" };
-    const sendParamsJsonSchema: JSONSchema7 = { type: "object" };
+    const messageContentSchema: JSONSchema7 = { type: "object" };
+    const messageAdditionalParamsSchema: JSONSchema7 = { type: "object" };
 
     if (!recipientTypeRegistry.has("testRecipient")) {
       recipientTypeRegistry.register({
         name: "testRecipient",
         description: "Test recipient type",
-        jsonSchema: { type: "object" },
+        audiences: ["human"],
+        jsonSchema: { type: "string" },
       });
     }
 
     super(
       "testProvider",
       acceptedRecipientTypes,
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
+
+    // The plugin does this in registerProvider(); the mock binds itself so
+    // that unit tests can exercise recipient validation directly.
+    this.bindRecipientTypes(recipientTypeRegistry);
   }
 
-  async send(account: string, recipients: any[], content: any): Promise<any> {
+  async sendMessage(
+    account: string,
+    recipients: string[],
+    content: any,
+  ): Promise<any> {
     return { account, recipients, content };
   }
 
-  _createAccount(name: string, params: Record<string, any> = {}): TestAccount {
-    return {
-      name,
-      provider: null,
-      options: params,
-    };
+  _createAccount(
+    accountId: string,
+    params: Record<string, any> = {},
+  ): TestAccount {
+    return { accountId, provider: null, params };
   }
 }
 

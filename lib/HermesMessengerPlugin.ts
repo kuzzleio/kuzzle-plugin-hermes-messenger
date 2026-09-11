@@ -21,7 +21,9 @@ import {
   emailRecipient,
   phoneRecipient,
   RecipientTypeDefinition,
+  RecipientTypeFilter,
   RecipientTypeRegistry,
+  uriRecipient,
 } from "./recipients";
 export class HermesMessengerPlugin extends Plugin {
   readonly defaultConfig: JSONObject;
@@ -54,22 +56,13 @@ export class HermesMessengerPlugin extends Plugin {
     this.providerManager = new ProviderManager();
 
     this.registerRecipientType(emailRecipient);
-
     this.registerRecipientType(phoneRecipient);
+    this.registerRecipientType(uriRecipient);
 
-    this.registerProvider("smtp", new SmtpProvider(this.recipientTypeRegistry));
-    this.registerProvider(
-      "twilio",
-      new TwilioProvider(this.recipientTypeRegistry),
-    );
-    this.registerProvider(
-      "sendgrid",
-      new SendgridProvider(this.recipientTypeRegistry),
-    );
-    this.registerProvider(
-      "smsenvoi",
-      new SMSEnvoiProvider(this.recipientTypeRegistry),
-    );
+    this.registerProvider("smtp", new SmtpProvider());
+    this.registerProvider("twilio", new TwilioProvider());
+    this.registerProvider("sendgrid", new SendgridProvider());
+    this.registerProvider("smsenvoi", new SMSEnvoiProvider());
 
     this.controller = new ProviderController(
       this.config,
@@ -101,24 +94,30 @@ export class HermesMessengerPlugin extends Plugin {
     await this.initConfig();
   }
 
-  registerProvider(name: string, provider: BaseProvider<any>) {
+  /**
+   * Register a provider under `providerId`, the identifier used in routes and
+   * arguments (`smtp`, `sendgrid`, `my-provider`...). The provider's display
+   * name, given to the `BaseProvider` constructor, is only a label.
+   */
+  registerProvider(providerId: string, provider: BaseProvider<any>) {
     for (const recipientTypeName of provider.getAcceptedRecipientTypes()) {
       if (!this.recipientTypeRegistry.has(recipientTypeName)) {
         throw new BadRequestError(
-          `Provider "${name}" references unknown recipient type "${recipientTypeName}" — register it via registerRecipientType() before registering this provider.`,
+          `Provider "${providerId}" references unknown recipient type "${recipientTypeName}" — register it via registerRecipientType() before registering this provider.`,
         );
       }
     }
 
-    this.providerManager.set(name, provider);
+    provider.bindRecipientTypes(this.recipientTypeRegistry);
+    this.providerManager.set(providerId, provider);
   }
 
-  hasProvider(name: string): boolean {
-    return this.providerManager.has(name);
+  hasProvider(providerId: string): boolean {
+    return this.providerManager.has(providerId);
   }
 
-  getProvider(name: string) {
-    return this.providerManager.get(name);
+  getProvider(providerId: string) {
+    return this.providerManager.get(providerId);
   }
 
   registerRecipientType(definition: RecipientTypeDefinition): void {
@@ -133,8 +132,8 @@ export class HermesMessengerPlugin extends Plugin {
     return this.recipientTypeRegistry.get(name);
   }
 
-  listRecipientTypes(): RecipientTypeDefinition[] {
-    return this.recipientTypeRegistry.list();
+  listRecipientTypes(filter?: RecipientTypeFilter): RecipientTypeDefinition[] {
+    return this.recipientTypeRegistry.list(filter);
   }
 
   private async initDatabase() {
@@ -159,14 +158,9 @@ export class HermesMessengerPlugin extends Plugin {
         }
       }
 
-      await Promise.all([
-        this.sdk.collection.create(this.config.adminIndex, "messages", {
-          mappings: this.config.collections.messages,
-        }),
-        this.sdk.collection.create(this.config.adminIndex, "config", {
-          mappings: this.config.collections.config,
-        }),
-      ]);
+      await this.sdk.collection.create(this.config.adminIndex, "config", {
+        mappings: this.config.collections.config,
+      });
     } finally {
       await mutex.unlock();
     }

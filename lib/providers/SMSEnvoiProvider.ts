@@ -3,26 +3,22 @@ import axios from "axios";
 import { JSONSchema7 } from "json-schema";
 
 import { BaseAccount, BaseProvider } from "./BaseProvider";
-import { RecipientTypeRegistry } from "../recipients";
-import { ProviderCapabilities } from "../types";
+import { PROVIDER_CAPABILITY_TEXT, ProviderCapabilities } from "../types";
 
-export interface SMSEnvoiAccount extends BaseAccount<null> {
-  options: {
-    userKey: string;
-    accessToken: string;
-    defaultSender: string;
-  };
+export interface SMSEnvoiAccountParams {
+  user_key: string;
+  access_token: string;
+  default_sender: string;
+  [key: string]: unknown;
 }
 
+/** SMS Envoi is a plain HTTP API: there is no client, credentials are read from `params`. */
+export type SMSEnvoiAccount = BaseAccount<null, SMSEnvoiAccountParams>;
+
 export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
-  override capabilities: ProviderCapabilities = {
-    longMessage: false,
-    shortMessage: true,
-    fileAttachment: false,
-    json: false,
-  };
-  constructor(recipientTypeRegistry: RecipientTypeRegistry) {
-    const paramsJsonSchema: JSONSchema7 = {
+  override capabilities: ProviderCapabilities = [PROVIDER_CAPABILITY_TEXT];
+  constructor() {
+    const accountParamsSchema: JSONSchema7 = {
       type: "object",
       properties: {
         user_key: {
@@ -31,6 +27,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
         },
         access_token: {
           type: "string",
+          format: "password",
           title: "Access Token",
         },
         default_sender: {
@@ -41,7 +38,7 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       required: ["user_key", "access_token", "default_sender"],
     };
 
-    const contentJsonSchema: JSONSchema7 = {
+    const messageContentSchema: JSONSchema7 = {
       type: "object",
       properties: {
         message: {
@@ -52,8 +49,9 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
       required: ["message"],
     };
 
-    const sendParamsJsonSchema: JSONSchema7 = {
+    const messageAdditionalParamsSchema: JSONSchema7 = {
       type: "object",
+      additionalProperties: false,
       properties: {
         from: { type: "string" },
       },
@@ -62,16 +60,15 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     super(
       "SMS Envoi",
       ["phoneNumber"],
-      paramsJsonSchema,
-      contentJsonSchema,
-      sendParamsJsonSchema,
-      recipientTypeRegistry,
+      accountParamsSchema,
+      messageContentSchema,
+      messageAdditionalParamsSchema,
     );
   }
 
-  async send(
+  async sendMessage(
     accountName: string,
-    recipients: any[],
+    recipients: string[],
     content: any,
     { from }: { from?: string } = {},
   ): Promise<void> {
@@ -80,16 +77,9 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     }
 
     const account = this.getAccount(accountName);
-    const fromNumber = from || account.options.defaultSender;
-    const phoneNumbers = recipients.map((recipient) => recipient.to);
-
+    const fromNumber = from || account.params.default_sender;
     try {
-      await this.sendMessage(
-        account,
-        phoneNumbers,
-        content.message,
-        fromNumber,
-      );
+      await this.deliver(account, recipients, content.message, fromNumber);
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || error?.message || error;
@@ -98,46 +88,19 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
   }
 
   protected _createAccount(
-    name: string,
-    {
-      user_key,
-      access_token,
-      default_sender,
-    }: {
-      user_key: string;
-      access_token: string;
-      default_sender: string;
-      [key: string]: unknown;
-    },
+    accountId: string,
+    params: SMSEnvoiAccountParams,
   ): SMSEnvoiAccount {
-    return {
-      name,
-      provider: null,
-      options: {
-        userKey: user_key,
-        accessToken: access_token,
-        defaultSender: default_sender,
-      },
-    };
+    return { accountId, provider: null, params };
   }
 
-  private async sendMessage(
+  private async deliver(
     account: SMSEnvoiAccount,
     phoneNumbers: string[],
     message: string,
     fromNumber: string,
   ): Promise<void> {
-    const { userKey: user_key, accessToken: Access_token } = account.options;
-
-    if (await this.mockedAccount(account.name)) {
-      await this.sdk.document.createOrReplace(
-        this.config.adminIndex,
-        "messages",
-        message,
-        { account: account.name },
-      );
-      return;
-    }
+    const { user_key, access_token: Access_token } = account.params;
 
     const headers = {
       user_key,
@@ -156,10 +119,5 @@ export class SMSEnvoiProvider extends BaseProvider<SMSEnvoiAccount> {
     await axios.post("https://api.smsenvoi.com/API/v1.0/REST/sms", payload, {
       headers,
     });
-  }
-
-  private async mockedAccount(accountName: string): Promise<boolean> {
-    const mockedAccounts = (this.config.mockedAccounts as string[]) ?? [];
-    return mockedAccounts.includes(accountName);
   }
 }
