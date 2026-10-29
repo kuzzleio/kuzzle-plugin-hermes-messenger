@@ -1,0 +1,48 @@
+## [2.0.0-beta.1](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/compare/v1.3.0...v2.0.0-beta.1) (2026-10-29)
+
+### ⚠ BREAKING CHANGES
+
+* **v2:** recipient audiences, string capabilities, providerId/accountId, account params and validation (#46)
+* **release:** bump version to 2.0.0
+
+### Features
+
+* add a type to provider ([f1b5d9d](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/f1b5d9db73a4b5c5e63f0bcc8af0bb6db9f50e6b))
+* add content type param ([5da73e6](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/5da73e64ebb01a5439f67acac57f89bf232eb504))
+* add endpoint to list providers and jsonschema property ([fa75a27](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/fa75a27eea1731432dc55a159a20dd686e60e529))
+* add jsonschema for recipients and content ([d377fdc](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/d377fdc0bc08ce58248babd6e0dcafe2de36596b))
+* add jsonschema validator ([2bdb133](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/2bdb1334c98e4ffb86e68fa17ea76a236e589590))
+* add test ([d7125cf](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/d7125cf9d5d9d5f266dccff2a67a2fcffea3c42f))
+* **base provider:** add support attachement property ([d32b92d](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/d32b92d1808bf58aaa3a47bf690da42102fa9937))
+* change naming ([b0fd7eb](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b0fd7ebb85bb419c93d4497c0c28742a2fb92c6a))
+* **ci:** update semantic to release 2-dev ([f6026e3](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/f6026e3a5f9fe3876f2f1a0efd5d9ef6eb88615f))
+* **default providers:** add twilio and smtp default providers ([562823e](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/562823e8f64474a76721fabb8d92da8d5d80c17c))
+* improve test ([f9f96bc](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/f9f96bc796058476534a8d3ae7d173e70becd7e7))
+* **providers:** add default providers ([6db44ad](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6db44ad4500cc77de6d872817623681f98464716))
+* **providers:** add messageType property to differentiate long / short messages ([6084e82](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6084e8249be8aad22d60b01cafd2545847a164d0))
+* **providers:** add sendParamsJsonSchema validation and multi-channel support ([a3c4e62](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/a3c4e6220437715354cfc588a29d443d34813c3a))
+* **providers:** mutualize recipientType and validation ([d130240](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/d13024017374ac560ac7fbcb2e3a583620ab74a9))
+* remove previous mocked account logic ([cea1ae5](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/cea1ae5890d251eb029a8f36632b941dc78fc55c))
+* **twilio:** add regex for numbers ([b8c6cf1](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b8c6cf140de5f63a3f7691b923a3106c05254715))
+* unify controller and provider ([6414a6f](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6414a6f1788b43b56c1e90b97ec57dfe1e7a71bf))
+* update send method and correct typo ([3352c36](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/3352c36dd2db437e635a69346d4c5f76286d0019))
+* **v2:** recipient audiences, string capabilities, providerId/accountId, account params and validation ([#46](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/46)) ([def29e9](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/def29e974447e5d7b7e4245f71e97c45bb2e7898))
+
+### Bug Fixes
+
+* ci ([6f88ef9](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6f88ef9736065e17c185687fdd2a591399c7dea5))
+* **ci:** add good properties ([164b11c](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/164b11c1f268105cd2dd351cbf90e889b7d63be8))
+* **ci:** add permissions ([b1bbbcc](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b1bbbcc8db419aa5e6a6e2deb966476b1b8f0001))
+* **lint:** lint SMTPProvider ([5393f13](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/5393f130ed162eb0094d31a19b73e03ecd1e6f15))
+* make correction on workflow ([dbb4e04](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/dbb4e04734105b80474ce89722fbdffd591d7de8))
+* **package:** align package lock to package ([b389f3b](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/b389f3bb0d7aac1d118a98213b7b4cd16c619faf))
+* **packages:** bump kuzzle ([6dfed2f](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/6dfed2f253bc38495c78b10d3a2147bc801460a6))
+* **providers:** fix name of SMS Envoi and SendGrid ([#45](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/issues/45)) ([51a70cc](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/51a70cc8312c2ef2350d81432ffde25d6872a2e9))
+* **providers:** improve providers ([fcc0158](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/fcc0158bcec44fb01cf760360854e6c4175fdded))
+* **release:** bump version to 2.0.0 ([f50eaf4](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/f50eaf4213c7feba52b51fd71170d8391e63b8ca))
+* **release:** fix package version and tag ([e5c6d05](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/e5c6d05008c6ddd045c85dd78d687f7fa20f6ffe))
+* **smtp/types:** add supportAttachement to smtp and export types ([0f21009](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/0f21009662f14cab9dcda4c6bce7c76c52da0522))
+* **smtpProvider:** encode attachement in base64 ([1ed6491](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/1ed64910842a2a9e781c7b2ccf46617a787c789c))
+* temporary prevent release ([9929323](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/99293238a976002467ab8b873f32deb0f8c52306))
+* **test:** add tests for default providers ([c621933](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/c62193312ef6c609ace43ca719347ca26efc3305))
+* **test:** fix testProvider ([20f2e0a](https://github.com/kuzzleio/kuzzle-plugin-hermes-messenger/commit/20f2e0a8f81102221c6c34e9ffae47f2e40fcfb7))
