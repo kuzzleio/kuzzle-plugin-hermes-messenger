@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - beta
+      - "[0-9]+-beta"
       - "[0-9]+-dev"
   pull_request:
 
@@ -57,7 +58,7 @@ jobs:
   release:
     name: Release process
     needs: unit-tests
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/2-dev') }}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/2-beta' || github.ref == 'refs/heads/2-dev') }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write

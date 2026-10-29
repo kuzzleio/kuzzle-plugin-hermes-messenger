@@ -4,6 +4,7 @@ export default {
   branches: [
     "master",
     { name: "1-dev", prerelease: "dev" },
+    { name: "2-beta", prerelease: "beta" },
     { name: "2-dev", prerelease: "2-dev" },
   ],
 };
