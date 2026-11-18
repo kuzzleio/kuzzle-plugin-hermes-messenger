@@ -69,6 +69,7 @@ kourou hermes:addAccount -a providerId=smtp -a accountId=<account id> --body '{
 - `params.port`: SMTP port (465 enables TLS)
 - `params.user`, `params.password`: SMTP credentials
 - `params.default_sender`: email address used as sender when `params.from` is not provided on `sendMessage`
+- `params.connection_timeout`, `params.greeting_timeout`, `params.socket_timeout` (optional): milliseconds to wait for the connection, for the server greeting, and of socket inactivity. Unset, nodemailer's defaults apply (2 min, 30 s, 10 min)
 
 ---
 

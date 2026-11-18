@@ -32,7 +32,39 @@ export interface SMTPAccountParams {
   user: string;
   password: string;
   default_sender: string;
+  /** Milliseconds to wait for the connection (nodemailer default: 2 min). */
+  connection_timeout?: number;
+  /** Milliseconds to wait for the server greeting (nodemailer default: 30 s). */
+  greeting_timeout?: number;
+  /** Milliseconds of inactivity before closing (nodemailer default: 10 min). */
+  socket_timeout?: number;
   [key: string]: unknown;
+}
+
+/**
+ * A failed send, with what the SMTP exchange said beyond the message, so a
+ * caller can tell a permanent refusal (5xx reply, rejected login) from a
+ * transient one (4xx reply, network error) and decide whether to retry.
+ */
+export class SmtpError extends ExternalServiceError {
+  /** nodemailer error code: `EAUTH`, `ECONNECTION`, `ETIMEDOUT`, `EENVELOPE`... */
+  readonly smtpCode?: string;
+  /** SMTP reply code (`550`, `451`...), when the server answered. */
+  readonly responseCode?: number;
+  /** SMTP reply line, when the server answered. */
+  readonly response?: string;
+
+  constructor(error: {
+    message?: string;
+    code?: string;
+    responseCode?: number;
+    response?: string;
+  }) {
+    super(error?.message ?? String(error));
+    this.smtpCode = error?.code;
+    this.responseCode = error?.responseCode;
+    this.response = error?.response;
+  }
 }
 
 export type SMTPAccount = BaseAccount<
@@ -77,6 +109,21 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
           title: "Default Sender",
           pattern: String.raw`^[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
           minLength: 1,
+        },
+        connection_timeout: {
+          type: "integer",
+          title: "Connection timeout (ms)",
+          minimum: 1,
+        },
+        greeting_timeout: {
+          type: "integer",
+          title: "Greeting timeout (ms)",
+          minimum: 1,
+        },
+        socket_timeout: {
+          type: "integer",
+          title: "Socket timeout (ms)",
+          minimum: 1,
         },
       },
       required: ["host_name", "port", "user", "password", "default_sender"],
@@ -202,15 +249,12 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     try {
       await this.deliver(account, email);
     } catch (error) {
+      const smtpError = new SmtpError(error);
+
       this.context.log.warn(
-        `An error occured while trying to send a message: ${JSON.stringify(error, null, 2)}`,
+        `An error occured while trying to send a message: ${smtpError.message}`,
       );
-      if (error.response?.body) {
-        throw new ExternalServiceError(
-          "SMTP " + JSON.stringify(error.response.body),
-        );
-      }
-      throw new ExternalServiceError(error);
+      throw smtpError;
     }
   }
 
@@ -222,27 +266,35 @@ export class SmtpProvider extends BaseProvider<SMTPAccount> {
     accountId: string,
     params: SMTPAccountParams,
   ): SMTPAccount {
-    const { host_name, port, user, password } = params;
+    const {
+      connection_timeout,
+      greeting_timeout,
+      host_name,
+      password,
+      port,
+      socket_timeout,
+      user,
+    } = params;
 
     const transporter = createTransport({
       auth: {
         pass: password,
         user,
       },
+      connectionTimeout: connection_timeout,
+      greetingTimeout: greeting_timeout,
       host: host_name,
       port,
       secure: port === 465,
+      socketTimeout: socket_timeout,
     });
 
     return { accountId, provider: transporter, params };
   }
 
+  /** Both steps are awaited: a `sendMail` failure gets the same handling. */
   private async deliver(account: SMTPAccount, email: Mail.Options) {
-    try {
-      await account.provider.verify();
-      return account.provider.sendMail(email);
-    } catch (error) {
-      throw new ExternalServiceError(error);
-    }
+    await account.provider.verify();
+    await account.provider.sendMail(email);
   }
 }

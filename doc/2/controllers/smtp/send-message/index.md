@@ -105,3 +105,25 @@ Returns an empty result on success.
   "result": null
 }
 ```
+
+## Errors
+
+A failed send raises an `ExternalServiceError` (status 500) whose message is nodemailer's, SMTP reply included (`Can't send mail - all recipients were rejected: 550 5.1.1 User unknown`).
+
+Application code calling `getProvider("smtp").sendMessage()` directly gets an `SmtpError`, a subclass carrying what the exchange said, to tell a permanent refusal from a transient one:
+
+- `smtpCode`: nodemailer error code (`EAUTH`, `ECONNECTION`, `ETIMEDOUT`, `EENVELOPE`...)
+- `responseCode`: SMTP reply code (`550`, `451`...), when the server answered
+- `response`: SMTP reply line, when the server answered
+
+```js
+import { SmtpError } from "kuzzle-plugin-hermes-messenger";
+
+try {
+  await hermes.getProvider("smtp").sendMessage(accountId, recipients, content);
+} catch (error) {
+  const permanent =
+    error instanceof SmtpError &&
+    (error.smtpCode === "EAUTH" || error.responseCode >= 500);
+}
+```
